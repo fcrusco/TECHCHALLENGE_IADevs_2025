@@ -1,91 +1,65 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import joblib
 import os
-
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
-from imblearn.over_sampling import SMOTE  # Para lidar com desbalanceamento
-
-df = pd.read_csv('C:/Users/Rafael/Desktop/FIAP/TechChallenge/data/diabetes.csv')
-
-############    inspecionando os dados    ############
-print(df.head())
-print(df.describe())
-
-sns.countplot(x='Outcome', data=df)
-plt.title("Distribuição de Outcome")
-plt.show()
-
-# -----------------------------
-#    Mapa de Correlação
-# -----------------------------
-plt.figure(figsize=(10,8))
-sns.heatmap(df.corr(), annot=True, cmap='coolwarm')
-plt.title("Mapa de Correlação")
-plt.show()
-
-############    Normalizando os dados    ############
-cols_zero = ['Glucose','BloodPressure','SkinThickness','Insulin','BMI']
-df[cols_zero] = df[cols_zero].replace(0, np.nan)
-print(df.isnull().sum())
-df.fillna(df.median(), inplace=True)
-
-X = df.drop('Outcome', axis=1)
-y = df['Outcome']
-
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-# -----------------------------
-#    Dividindo treino e teste
-# -----------------------------
-X_train, X_test, y_train, y_test = train_test_split(
-    X_scaled, y, test_size=0.2, random_state=42, stratify=y
-)
-
-# -----------------------------
-#  lidando com o desbalanceamento
-# -----------------------------
-smote = SMOTE(random_state=42)
-X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
-
-# -----------------------------
-#   Parte de treinamento
-# -----------------------------
-lr = LogisticRegression(random_state=42)
-lr.fit(X_train_res, y_train_res)
-y_pred_lr = lr.predict(X_test)
-
-rf = RandomForestClassifier(random_state=42, n_estimators=100)
-rf.fit(X_train_res, y_train_res)
-y_pred_rf = rf.predict(X_test)
+import json
+import logging
+from openai import OpenAI
+from dotenv import load_dotenv
+from sklearn.metrics import accuracy_score, recall_score, f1_score
 
 
-############   Salvando os modelos treinados    ############
-os.makedirs('outputs', exist_ok=True)
+# LOGGING
+logger = logging.getLogger(__name__)
 
-joblib.dump(lr, 'C:/Users/Rafael/Desktop/FIAP/TechChallenge/outputs/lr_model.pkl')
-joblib.dump(rf, 'C:/Users/Rafael/Desktop/FIAP/TechChallenge/outputs/rf_model.pkl')
-joblib.dump(scaler, 'C:/Users/Rafael/Desktop/FIAP/TechChallenge/outputs/scaler.pkl')
+#  func pra metrica
+def calcular_metricas(y_true, y_pred):
+    return {
+        "accuracy": accuracy_score(y_true, y_pred),
+        "recall": recall_score(y_true, y_pred),
+        "f1": f1_score(y_true, y_pred)
+    }
 
-# -----------------------------
-#  Avaliação
-# -----------------------------
-def avaliar_modelo(y_true, y_pred, modelo_name):
-    print(f"Resultados para {modelo_name}:")
-    print(classification_report(y_true, y_pred))
-    cm = confusion_matrix(y_true, y_pred)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    plt.title(f"Matriz de Confusão - {modelo_name}")
-    plt.xlabel("Predito")
-    plt.ylabel("Real")
-    plt.show()
 
-avaliar_modelo(y_test, y_pred_lr, "Regressão Logística")
-avaliar_modelo(y_test, y_pred_rf, "Random Forest")
+#  conexao com openai e llm
+load_dotenv("C:/Users/Rafael/Desktop/FIAP/TechChallenge/src/.env")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
+def gerar_explicacao_llm(predicao, probabilidades, paciente_info, metricas_modelo):
+    """
+    Gera explicações em linguagem natural usando LLM.
+    """
+
+    prompt = f"""
+Você é um assistente médico que apoia um(a) profissional de saúde.
+
+Objetivo: gerar um resumo CLÍNICO, conciso e objetivo (máx. 6-8 linhas).
+
+IMPORTANTE:
+- Não usar linguagem leiga.
+- Não dar recomendações ao paciente.
+- Não sugerir consulta médica.
+- Não afirmar diagnóstico; descreva como "probabilidade" ou "risco".
+- Focar em interpretação dos dados e possíveis hipóteses clínicas.
+
+RESULTADO DO MODELO
+Predição: {predicao}
+Probabilidades: {probabilidades}
+
+DADOS DO PACIENTE
+{json.dumps(paciente_info, indent=2, ensure_ascii=False)}
+
+MÉTRICAS DO MODELO
+{metricas_modelo}
+
+Produza o texto em formato de parágrafo único, claro e técnico.
+"""
+
+    resposta = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,
+        max_tokens=450
+    )
+
+    return resposta.choices[0].message.content.strip()

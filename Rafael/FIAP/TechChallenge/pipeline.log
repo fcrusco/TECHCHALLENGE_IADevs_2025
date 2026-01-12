@@ -1,0 +1,577 @@
+2026-01-06 10:37:20,372 - INFO - ===== INÍCIO DA EXECUÇÃO =====
+2026-01-06 10:37:20,373 - INFO - Carregando dataset...
+2026-01-06 10:37:20,377 - INFO - Dataset carregado com 768 linhas e 9 colunas.
+2026-01-06 10:37:20,380 - INFO - Valores ausentes encontrados: 652
+2026-01-06 10:37:20,384 - INFO - Normalizando variáveis...
+2026-01-06 10:37:20,387 - INFO - Separando treino e teste...
+2026-01-06 10:37:20,389 - INFO - Aplicando SMOTE (balanceamento)...
+2026-01-06 10:37:20,392 - INFO - Dados preparados com sucesso.
+2026-01-06 10:37:20,392 - INFO - Treinando modelos base...
+2026-01-06 10:37:20,601 - INFO - BASE LR -> acc=0.721 recall=0.685 f1=0.632
+2026-01-06 10:37:20,607 - INFO - BASE RF -> acc=0.734 recall=0.704 f1=0.650
+2026-01-06 10:37:20,607 - INFO - Iniciando otimização genética...
+2026-01-06 10:37:20,607 - INFO - --- Geração 1/8 ---
+2026-01-06 10:37:20,607 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:20,915 - INFO - Fitness calculado: 0.8306
+2026-01-06 10:37:20,915 - INFO - Avaliando indivíduo: {'n_estimators': 159, 'max_depth': 4, 'min_samples_split': 8}
+2026-01-06 10:37:21,636 - INFO - Fitness calculado: 0.7884
+2026-01-06 10:37:21,636 - INFO - Avaliando indivíduo: {'n_estimators': 106, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-06 10:37:22,184 - INFO - Fitness calculado: 0.8232
+2026-01-06 10:37:22,184 - INFO - Avaliando indivíduo: {'n_estimators': 96, 'max_depth': 10, 'min_samples_split': 8}
+2026-01-06 10:37:22,683 - INFO - Fitness calculado: 0.8197
+2026-01-06 10:37:22,684 - INFO - Avaliando indivíduo: {'n_estimators': 196, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 10:37:23,788 - INFO - Fitness calculado: 0.8244
+2026-01-06 10:37:23,788 - INFO - Avaliando indivíduo: {'n_estimators': 84, 'max_depth': 10, 'min_samples_split': 7}
+2026-01-06 10:37:24,207 - INFO - Fitness calculado: 0.8173
+2026-01-06 10:37:24,207 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:24,786 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:24,786 - INFO - Avaliando indivíduo: {'n_estimators': 174, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-06 10:37:25,667 - INFO - Fitness calculado: 0.8127
+2026-01-06 10:37:25,667 - INFO - Avaliando indivíduo: {'n_estimators': 73, 'max_depth': 8, 'min_samples_split': 6}
+2026-01-06 10:37:26,039 - INFO - Fitness calculado: 0.8190
+2026-01-06 10:37:26,039 - INFO - Avaliando indivíduo: {'n_estimators': 118, 'max_depth': 4, 'min_samples_split': 9}
+2026-01-06 10:37:26,570 - INFO - Fitness calculado: 0.7913
+2026-01-06 10:37:26,570 - INFO - Avaliando indivíduo: {'n_estimators': 161, 'max_depth': 8, 'min_samples_split': 7}
+2026-01-06 10:37:27,379 - INFO - Fitness calculado: 0.8257
+2026-01-06 10:37:27,379 - INFO - Avaliando indivíduo: {'n_estimators': 68, 'max_depth': 8, 'min_samples_split': 3}
+2026-01-06 10:37:27,732 - INFO - Fitness calculado: 0.8265
+2026-01-06 10:37:27,732 - INFO - Melhor indivíduo da geração: (np.float64(0.8319730130860661), {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4})
+2026-01-06 10:37:27,732 - INFO - Crossover gerou filho: {'n_estimators': 68, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,732 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 68, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Crossover gerou filho: {'n_estimators': 68, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 68, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 8, 'min_samples_split': 3}
+2026-01-06 10:37:27,733 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 8, 'min_samples_split': 3}
+2026-01-06 10:37:27,733 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:27,733 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:27,733 - INFO - Crossover gerou filho: {'n_estimators': 68, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 68, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 10:37:27,733 - INFO - --- Geração 2/8 ---
+2026-01-06 10:37:27,734 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:28,213 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:28,213 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:28,516 - INFO - Fitness calculado: 0.8306
+2026-01-06 10:37:28,516 - INFO - Avaliando indivíduo: {'n_estimators': 68, 'max_depth': 8, 'min_samples_split': 3}
+2026-01-06 10:37:28,855 - INFO - Fitness calculado: 0.8265
+2026-01-06 10:37:28,855 - INFO - Avaliando indivíduo: {'n_estimators': 68, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:29,200 - INFO - Fitness calculado: 0.8282
+2026-01-06 10:37:29,200 - INFO - Avaliando indivíduo: {'n_estimators': 68, 'max_depth': 10, 'min_samples_split': 10}
+2026-01-06 10:37:29,547 - INFO - Fitness calculado: 0.8125
+2026-01-06 10:37:29,547 - INFO - Avaliando indivíduo: {'n_estimators': 190, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:30,477 - INFO - Fitness calculado: 0.8261
+2026-01-06 10:37:30,477 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:30,846 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:30,846 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 8, 'min_samples_split': 5}
+2026-01-06 10:37:31,155 - INFO - Fitness calculado: 0.8189
+2026-01-06 10:37:31,155 - INFO - Avaliando indivíduo: {'n_estimators': 87, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:31,612 - INFO - Fitness calculado: 0.8306
+2026-01-06 10:37:31,612 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:31,929 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:31,929 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 7}
+2026-01-06 10:37:32,437 - INFO - Fitness calculado: 0.8226
+2026-01-06 10:37:32,437 - INFO - Avaliando indivíduo: {'n_estimators': 148, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 10:37:33,183 - INFO - Fitness calculado: 0.8303
+2026-01-06 10:37:33,183 - INFO - Melhor indivíduo da geração: (np.float64(0.8319730130860661), {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4})
+2026-01-06 10:37:33,183 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,183 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,183 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,183 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,183 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:33,183 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:33,183 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,183 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,183 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:33,183 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:33,183 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,184 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,184 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,184 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,184 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,184 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:33,184 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:33,184 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:33,184 - INFO - --- Geração 3/8 ---
+2026-01-06 10:37:33,184 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:33,675 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:33,675 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:34,000 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:34,000 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:34,331 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:34,331 - INFO - Avaliando indivíduo: {'n_estimators': 96, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:34,827 - INFO - Fitness calculado: 0.8239
+2026-01-06 10:37:34,827 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 7}
+2026-01-06 10:37:35,137 - INFO - Fitness calculado: 0.8230
+2026-01-06 10:37:35,137 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:35,644 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:35,644 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 10:37:35,973 - INFO - Fitness calculado: 0.8251
+2026-01-06 10:37:35,973 - INFO - Avaliando indivíduo: {'n_estimators': 70, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:36,359 - INFO - Fitness calculado: 0.8316
+2026-01-06 10:37:36,359 - INFO - Avaliando indivíduo: {'n_estimators': 97, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:36,848 - INFO - Fitness calculado: 0.8254
+2026-01-06 10:37:36,848 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 10}
+2026-01-06 10:37:37,149 - INFO - Fitness calculado: 0.8078
+2026-01-06 10:37:37,149 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,455 - INFO - Fitness calculado: 0.8306
+2026-01-06 10:37:37,455 - INFO - Avaliando indivíduo: {'n_estimators': 56, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Fitness calculado: 0.8246
+2026-01-06 10:37:37,757 - INFO - Melhor indivíduo da geração: (np.float64(0.8319730130860661), {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4})
+2026-01-06 10:37:37,757 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,757 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,757 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,757 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,757 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:37,757 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,758 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,758 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,758 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,758 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,758 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:37,758 - INFO - --- Geração 4/8 ---
+2026-01-06 10:37:37,758 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:38,235 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:38,235 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:38,732 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:38,733 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:39,048 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:39,048 - INFO - Avaliando indivíduo: {'n_estimators': 171, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:39,913 - INFO - Fitness calculado: 0.8257
+2026-01-06 10:37:39,913 - INFO - Avaliando indivíduo: {'n_estimators': 123, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:40,545 - INFO - Fitness calculado: 0.8264
+2026-01-06 10:37:40,545 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 10:37:40,876 - INFO - Fitness calculado: 0.8251
+2026-01-06 10:37:40,876 - INFO - Avaliando indivíduo: {'n_estimators': 152, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:41,662 - INFO - Fitness calculado: 0.8310
+2026-01-06 10:37:41,662 - INFO - Avaliando indivíduo: {'n_estimators': 198, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:42,725 - INFO - Fitness calculado: 0.8276
+2026-01-06 10:37:42,725 - INFO - Avaliando indivíduo: {'n_estimators': 139, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:43,564 - INFO - Fitness calculado: 0.8280
+2026-01-06 10:37:43,564 - INFO - Avaliando indivíduo: {'n_estimators': 111, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,159 - INFO - Fitness calculado: 0.8289
+2026-01-06 10:37:44,159 - INFO - Avaliando indivíduo: {'n_estimators': 86, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,617 - INFO - Fitness calculado: 0.8283
+2026-01-06 10:37:44,617 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,954 - INFO - Fitness calculado: 0.8306
+2026-01-06 10:37:44,954 - INFO - Melhor indivíduo da geração: (np.float64(0.8319730130860661), {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4})
+2026-01-06 10:37:44,954 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,954 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,955 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,955 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,955 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,955 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,955 - INFO - Crossover gerou filho: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,955 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:44,955 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:44,955 - INFO - --- Geração 5/8 ---
+2026-01-06 10:37:44,956 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:45,471 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:45,471 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:45,985 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:45,985 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:46,305 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:46,305 - INFO - Avaliando indivíduo: {'n_estimators': 121, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:46,919 - INFO - Fitness calculado: 0.8249
+2026-01-06 10:37:46,919 - INFO - Avaliando indivíduo: {'n_estimators': 113, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:47,493 - INFO - Fitness calculado: 0.8295
+2026-01-06 10:37:47,493 - INFO - Avaliando indivíduo: {'n_estimators': 60, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-06 10:37:47,792 - INFO - Fitness calculado: 0.8162
+2026-01-06 10:37:47,792 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:48,206 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:37:48,206 - INFO - Avaliando indivíduo: {'n_estimators': 53, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:48,476 - INFO - Fitness calculado: 0.8283
+2026-01-06 10:37:48,476 - INFO - Avaliando indivíduo: {'n_estimators': 111, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:49,039 - INFO - Fitness calculado: 0.8282
+2026-01-06 10:37:49,040 - INFO - Avaliando indivíduo: {'n_estimators': 84, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:37:49,462 - INFO - Fitness calculado: 0.8293
+2026-01-06 10:37:49,463 - INFO - Avaliando indivíduo: {'n_estimators': 100, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:49,968 - INFO - Fitness calculado: 0.8285
+2026-01-06 10:37:49,969 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 5}
+2026-01-06 10:37:50,441 - INFO - Fitness calculado: 0.8274
+2026-01-06 10:37:50,441 - INFO - Melhor indivíduo da geração: (np.float64(0.8343169649874688), {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4})
+2026-01-06 10:37:50,441 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,441 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,442 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,442 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,442 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,442 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,442 - INFO - --- Geração 6/8 ---
+2026-01-06 10:37:50,442 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:50,854 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:37:50,854 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:51,344 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:51,344 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:51,841 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:51,841 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 10}
+2026-01-06 10:37:52,279 - INFO - Fitness calculado: 0.8117
+2026-01-06 10:37:52,279 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:52,720 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:37:52,720 - INFO - Avaliando indivíduo: {'n_estimators': 178, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:53,648 - INFO - Fitness calculado: 0.8271
+2026-01-06 10:37:53,648 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 5}
+2026-01-06 10:37:54,160 - INFO - Fitness calculado: 0.8274
+2026-01-06 10:37:54,160 - INFO - Avaliando indivíduo: {'n_estimators': 146, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:55,115 - INFO - Fitness calculado: 0.8280
+2026-01-06 10:37:55,115 - INFO - Avaliando indivíduo: {'n_estimators': 194, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:56,156 - INFO - Fitness calculado: 0.8266
+2026-01-06 10:37:56,156 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-06 10:37:56,615 - INFO - Fitness calculado: 0.8263
+2026-01-06 10:37:56,615 - INFO - Avaliando indivíduo: {'n_estimators': 116, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,255 - INFO - Fitness calculado: 0.8314
+2026-01-06 10:37:57,255 - INFO - Avaliando indivíduo: {'n_estimators': 56, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,571 - INFO - Fitness calculado: 0.8246
+2026-01-06 10:37:57,571 - INFO - Melhor indivíduo da geração: (np.float64(0.8343169649874688), {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4})
+2026-01-06 10:37:57,571 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,571 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,571 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,571 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,571 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Crossover gerou filho: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:57,572 - INFO - --- Geração 7/8 ---
+2026-01-06 10:37:57,572 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:58,011 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:37:58,011 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:58,465 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:37:58,465 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:58,981 - INFO - Fitness calculado: 0.8320
+2026-01-06 10:37:58,981 - INFO - Avaliando indivíduo: {'n_estimators': 174, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:37:59,968 - INFO - Fitness calculado: 0.8271
+2026-01-06 10:37:59,968 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 3}
+2026-01-06 10:38:00,729 - INFO - Fitness calculado: 0.8241
+2026-01-06 10:38:00,729 - INFO - Avaliando indivíduo: {'n_estimators': 151, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:01,559 - INFO - Fitness calculado: 0.8247
+2026-01-06 10:38:01,560 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 10}
+2026-01-06 10:38:01,977 - INFO - Fitness calculado: 0.8117
+2026-01-06 10:38:01,977 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:02,424 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:38:02,424 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 5}
+2026-01-06 10:38:02,884 - INFO - Fitness calculado: 0.8283
+2026-01-06 10:38:02,884 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:03,508 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:38:03,508 - INFO - Avaliando indivíduo: {'n_estimators': 108, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,144 - INFO - Fitness calculado: 0.8305
+2026-01-06 10:38:04,144 - INFO - Avaliando indivíduo: {'n_estimators': 94, 'max_depth': 10, 'min_samples_split': 10}
+2026-01-06 10:38:04,660 - INFO - Fitness calculado: 0.8124
+2026-01-06 10:38:04,660 - INFO - Melhor indivíduo da geração: (np.float64(0.8343169649874688), {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4})
+2026-01-06 10:38:04,660 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,660 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,660 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,660 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,660 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,660 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:04,661 - INFO - --- Geração 8/8 ---
+2026-01-06 10:38:04,661 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:05,081 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:38:05,081 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:05,503 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:38:05,504 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:05,929 - INFO - Fitness calculado: 0.8343
+2026-01-06 10:38:05,929 - INFO - Avaliando indivíduo: {'n_estimators': 58, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:06,245 - INFO - Fitness calculado: 0.8268
+2026-01-06 10:38:06,245 - INFO - Avaliando indivíduo: {'n_estimators': 166, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:07,143 - INFO - Fitness calculado: 0.8248
+2026-01-06 10:38:07,144 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 10}
+2026-01-06 10:38:07,644 - INFO - Fitness calculado: 0.8117
+2026-01-06 10:38:07,645 - INFO - Avaliando indivíduo: {'n_estimators': 143, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:08,486 - INFO - Fitness calculado: 0.8271
+2026-01-06 10:38:08,486 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 10}
+2026-01-06 10:38:08,968 - INFO - Fitness calculado: 0.8117
+2026-01-06 10:38:08,968 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 5}
+2026-01-06 10:38:09,386 - INFO - Fitness calculado: 0.8283
+2026-01-06 10:38:09,386 - INFO - Avaliando indivíduo: {'n_estimators': 123, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:10,040 - INFO - Fitness calculado: 0.8301
+2026-01-06 10:38:10,040 - INFO - Avaliando indivíduo: {'n_estimators': 98, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:10,567 - INFO - Fitness calculado: 0.8310
+2026-01-06 10:38:10,567 - INFO - Avaliando indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 8}
+2026-01-06 10:38:11,007 - INFO - Fitness calculado: 0.8170
+2026-01-06 10:38:11,007 - INFO - Melhor indivíduo da geração: (np.float64(0.8343169649874688), {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4})
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,008 - INFO - Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,009 - INFO - Mutação aplicada no indivíduo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,009 - INFO - Tempo total de execução do GA: 50.40 segundos
+2026-01-06 10:38:11,009 - INFO - Melhores parâmetros encontrados: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 4}
+2026-01-06 10:38:11,178 - INFO - OTIMIZADO RF -> acc=0.740 recall=0.741 f1=0.667
+2026-01-06 10:38:11,244 - INFO - Modelos salvos com sucesso!
+2026-01-06 10:38:11,244 - INFO - ===== FIM DA EXECUÇÃO =====
+2026-01-06 10:41:23,798 - INFO - ===== INICIO DA EXECUCAO =====
+2026-01-06 10:41:23,798 - INFO - Carregando dataset...
+2026-01-06 10:41:23,802 - INFO - Dataset carregado com 768 linhas e 9 colunas.
+2026-01-06 10:41:23,804 - INFO - Valores ausentes encontrados: 652
+2026-01-06 10:41:23,809 - INFO - Normalizando variáveis...
+2026-01-06 10:41:23,812 - INFO - Separando treino e teste...
+2026-01-06 10:41:23,814 - INFO - Aplicando SMOTE (balanceamento)...
+2026-01-06 10:41:23,817 - INFO - Dados preparados com sucesso.
+2026-01-06 10:41:23,817 - INFO - Treinando modelos base...
+2026-01-06 10:41:24,022 - INFO - BASE LR -> acc=0.721 recall=0.685 f1=0.632
+2026-01-06 10:41:24,027 - INFO - BASE RF -> acc=0.734 recall=0.704 f1=0.650
+2026-01-06 10:41:24,027 - INFO - Iniciando otimizacao genetica...
+2026-01-06 10:41:24,027 - INFO - --- Geracao 1/3 ---
+2026-01-06 10:41:24,027 - INFO - Avaliando individuo: {'n_estimators': 177, 'max_depth': 4, 'min_samples_split': 9}
+2026-01-06 10:41:24,820 - INFO - Fitness calculado: 0.7937
+2026-01-06 10:41:24,820 - INFO - Avaliando individuo: {'n_estimators': 167, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:25,603 - INFO - Fitness calculado: 0.8060
+2026-01-06 10:41:25,603 - INFO - Avaliando individuo: {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-06 10:41:26,483 - INFO - Fitness calculado: 0.8170
+2026-01-06 10:41:26,483 - INFO - Avaliando individuo: {'n_estimators': 67, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:26,807 - INFO - Fitness calculado: 0.8138
+2026-01-06 10:41:26,807 - INFO - Avaliando individuo: {'n_estimators': 147, 'max_depth': 4, 'min_samples_split': 3}
+2026-01-06 10:41:27,469 - INFO - Fitness calculado: 0.7910
+2026-01-06 10:41:27,469 - INFO - Melhor indivíduo da geracao: (np.float64(0.8170108754680984), {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9})
+2026-01-06 10:41:27,469 - INFO - Crossover gerou filho: {'n_estimators': 176, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:27,469 - INFO - Mutacao aplicada no individuo: {'n_estimators': 176, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:27,469 - INFO - Crossover gerou filho: {'n_estimators': 167, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:27,469 - INFO - Mutacao aplicada no individuo: {'n_estimators': 167, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:27,469 - INFO - --- Geracao 2/3 ---
+2026-01-06 10:41:27,470 - INFO - Avaliando individuo: {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-06 10:41:28,340 - INFO - Fitness calculado: 0.8170
+2026-01-06 10:41:28,340 - INFO - Avaliando individuo: {'n_estimators': 67, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:28,661 - INFO - Fitness calculado: 0.8138
+2026-01-06 10:41:28,662 - INFO - Avaliando individuo: {'n_estimators': 167, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:29,439 - INFO - Fitness calculado: 0.8060
+2026-01-06 10:41:29,439 - INFO - Avaliando individuo: {'n_estimators': 91, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:29,888 - INFO - Fitness calculado: 0.8050
+2026-01-06 10:41:29,888 - INFO - Avaliando individuo: {'n_estimators': 123, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:30,518 - INFO - Fitness calculado: 0.8059
+2026-01-06 10:41:30,519 - INFO - Melhor indivíduo da geracao: (np.float64(0.8170108754680984), {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9})
+2026-01-06 10:41:30,519 - INFO - Crossover gerou filho: {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-06 10:41:30,519 - INFO - Mutacao aplicada no individuo: {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-06 10:41:30,519 - INFO - Crossover gerou filho: {'n_estimators': 167, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:30,519 - INFO - Mutacao aplicada no individuo: {'n_estimators': 167, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:30,519 - INFO - --- Geracao 3/3 ---
+2026-01-06 10:41:30,519 - INFO - Avaliando individuo: {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-06 10:41:31,447 - INFO - Fitness calculado: 0.8170
+2026-01-06 10:41:31,447 - INFO - Avaliando individuo: {'n_estimators': 67, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:31,823 - INFO - Fitness calculado: 0.8138
+2026-01-06 10:41:31,823 - INFO - Avaliando individuo: {'n_estimators': 167, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-06 10:41:32,821 - INFO - Fitness calculado: 0.8060
+2026-01-06 10:41:32,821 - INFO - Avaliando individuo: {'n_estimators': 76, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-06 10:41:33,233 - INFO - Fitness calculado: 0.8119
+2026-01-06 10:41:33,234 - INFO - Avaliando individuo: {'n_estimators': 192, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:34,306 - INFO - Fitness calculado: 0.8122
+2026-01-06 10:41:34,307 - INFO - Melhor indivíduo da geracao: (np.float64(0.8170108754680984), {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9})
+2026-01-06 10:41:34,307 - INFO - Crossover gerou filho: {'n_estimators': 192, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:34,307 - INFO - Mutacao aplicada no individuo: {'n_estimators': 192, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:34,307 - INFO - Crossover gerou filho: {'n_estimators': 67, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:34,307 - INFO - Mutacao aplicada no individuo: {'n_estimators': 67, 'max_depth': 6, 'min_samples_split': 2}
+2026-01-06 10:41:34,307 - INFO - Tempo total de execucao do GA: 10.28 segundos
+2026-01-06 10:41:34,307 - INFO - Melhores parametros encontrados: {'n_estimators': 176, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-06 10:41:34,645 - INFO - OTIMIZADO RF -> acc=0.734 recall=0.741 f1=0.661
+2026-01-06 10:41:34,782 - INFO - Modelos salvos com sucesso!
+2026-01-06 10:41:34,782 - INFO - ===== FIM DA EXECUCAO =====
+2026-01-06 10:41:48,082 - INFO - ===== INICIO DA EXECUCAO =====
+2026-01-06 10:41:48,082 - INFO - Carregando dataset...
+2026-01-06 10:41:48,086 - INFO - Dataset carregado com 768 linhas e 9 colunas.
+2026-01-06 10:41:48,089 - INFO - Valores ausentes encontrados: 652
+2026-01-06 10:41:48,093 - INFO - Normalizando variáveis...
+2026-01-06 10:41:48,096 - INFO - Separando treino e teste...
+2026-01-06 10:41:48,098 - INFO - Aplicando SMOTE (balanceamento)...
+2026-01-06 10:41:48,101 - INFO - Dados preparados com sucesso.
+2026-01-06 10:41:48,101 - INFO - Treinando modelos base...
+2026-01-06 10:41:48,307 - INFO - BASE LR -> acc=0.721 recall=0.685 f1=0.632
+2026-01-06 10:41:48,312 - INFO - BASE RF -> acc=0.734 recall=0.704 f1=0.650
+2026-01-06 10:41:48,312 - INFO - Iniciando otimizacao genetica...
+2026-01-06 10:41:48,312 - INFO - --- Geracao 1/3 ---
+2026-01-06 10:41:48,312 - INFO - Avaliando individuo: {'n_estimators': 137, 'max_depth': None, 'min_samples_split': 9}
+2026-01-06 10:41:48,999 - INFO - Fitness calculado: 0.8180
+2026-01-06 10:41:48,999 - INFO - Avaliando individuo: {'n_estimators': 110, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:49,600 - INFO - Fitness calculado: 0.8253
+2026-01-06 10:41:49,601 - INFO - Avaliando individuo: {'n_estimators': 173, 'max_depth': None, 'min_samples_split': 10}
+2026-01-06 10:41:50,549 - INFO - Fitness calculado: 0.8245
+2026-01-06 10:41:50,550 - INFO - Avaliando individuo: {'n_estimators': 124, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:51,198 - INFO - Fitness calculado: 0.8287
+2026-01-06 10:41:51,198 - INFO - Avaliando individuo: {'n_estimators': 199, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 10:41:52,192 - INFO - Fitness calculado: 0.8268
+2026-01-06 10:41:52,193 - INFO - Melhor indivíduo da geracao: (np.float64(0.8286935227538391), {'n_estimators': 124, 'max_depth': None, 'min_samples_split': 7})
+2026-01-06 10:41:52,193 - INFO - Crossover gerou filho: {'n_estimators': 110, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:52,193 - INFO - Mutacao aplicada no individuo: {'n_estimators': 110, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:52,193 - INFO - Crossover gerou filho: {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:52,193 - INFO - Mutacao aplicada no individuo: {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:52,193 - INFO - --- Geracao 2/3 ---
+2026-01-06 10:41:52,193 - INFO - Avaliando individuo: {'n_estimators': 124, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:52,818 - INFO - Fitness calculado: 0.8287
+2026-01-06 10:41:52,818 - INFO - Avaliando individuo: {'n_estimators': 199, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 10:41:53,797 - INFO - Fitness calculado: 0.8268
+2026-01-06 10:41:53,798 - INFO - Avaliando individuo: {'n_estimators': 110, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:54,381 - INFO - Fitness calculado: 0.8253
+2026-01-06 10:41:54,381 - INFO - Avaliando individuo: {'n_estimators': 110, 'max_depth': None, 'min_samples_split': 8}
+2026-01-06 10:41:55,018 - INFO - Fitness calculado: 0.8180
+2026-01-06 10:41:55,018 - INFO - Avaliando individuo: {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 4}
+2026-01-06 10:41:56,158 - INFO - Fitness calculado: 0.8307
+2026-01-06 10:41:56,158 - INFO - Melhor indivíduo da geracao: (np.float64(0.8307038308379888), {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 4})
+2026-01-06 10:41:56,158 - INFO - Crossover gerou filho: {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 4}
+2026-01-06 10:41:56,158 - INFO - Mutacao aplicada no individuo: {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 4}
+2026-01-06 10:41:56,158 - INFO - Crossover gerou filho: {'n_estimators': 199, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 10:41:56,158 - INFO - Mutacao aplicada no individuo: {'n_estimators': 199, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 10:41:56,158 - INFO - --- Geracao 3/3 ---
+2026-01-06 10:41:56,158 - INFO - Avaliando individuo: {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 4}
+2026-01-06 10:41:57,323 - INFO - Fitness calculado: 0.8307
+2026-01-06 10:41:57,324 - INFO - Avaliando individuo: {'n_estimators': 124, 'max_depth': None, 'min_samples_split': 7}
+2026-01-06 10:41:57,990 - INFO - Fitness calculado: 0.8287
+2026-01-06 10:41:57,990 - INFO - Avaliando individuo: {'n_estimators': 199, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 10:41:59,009 - INFO - Fitness calculado: 0.8268
+2026-01-06 10:41:59,009 - INFO - Avaliando individuo: {'n_estimators': 91, 'max_depth': None, 'min_samples_split': 4}
+2026-01-06 10:41:59,508 - INFO - Fitness calculado: 0.8260
+2026-01-06 10:41:59,508 - INFO - Avaliando individuo: {'n_estimators': 199, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-06 10:42:00,547 - INFO - Fitness calculado: 0.8272
+2026-01-06 10:42:00,547 - INFO - Melhor indivíduo da geracao: (np.float64(0.8307038308379888), {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 4})
+2026-01-06 10:42:00,548 - INFO - Crossover gerou filho: {'n_estimators': 124, 'max_depth': None, 'min_samples_split': 4}
+2026-01-06 10:42:00,548 - INFO - Mutacao aplicada no individuo: {'n_estimators': 124, 'max_depth': None, 'min_samples_split': 4}
+2026-01-06 10:42:00,548 - INFO - Crossover gerou filho: {'n_estimators': 199, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-06 10:42:00,548 - INFO - Mutacao aplicada no individuo: {'n_estimators': 199, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-06 10:42:00,548 - INFO - Tempo total de execucao do GA: 12.24 segundos
+2026-01-06 10:42:00,548 - INFO - Melhores parametros encontrados: {'n_estimators': 199, 'max_depth': None, 'min_samples_split': 4}
+2026-01-06 10:42:00,977 - INFO - OTIMIZADO RF -> acc=0.727 recall=0.685 f1=0.638
+2026-01-06 10:42:01,087 - INFO - Modelos salvos com sucesso!
+2026-01-06 10:42:01,088 - INFO - ===== FIM DA EXECUCAO =====
+2026-01-06 11:23:45,522 - INFO - ===== INICIO DA EXECUCAO =====
+2026-01-06 11:23:45,523 - INFO - Carregando dataset...
+2026-01-06 11:23:45,535 - INFO - Dataset carregado com 768 linhas e 9 colunas.
+2026-01-06 11:23:45,555 - INFO - Iniciando processamento em lotes...
+2026-01-06 11:23:45,555 - INFO - Processando lote 1 -> linhas 0 a 150
+2026-01-06 11:23:45,555 - INFO - Carga alta detectada — aumentando lote para 200
+2026-01-06 11:23:45,556 - INFO - Processando lote 1 -> linhas 150 a 350
+2026-01-06 11:23:45,556 - INFO - Carga alta detectada — aumentando lote para 250
+2026-01-06 11:23:45,556 - INFO - Processando lote 2 -> linhas 300 a 550
+2026-01-06 11:23:45,556 - INFO - Carga alta detectada — aumentando lote para 300
+2026-01-06 11:23:45,556 - INFO - Processando lote 2 -> linhas 450 a 750
+2026-01-06 11:23:45,556 - INFO - Carga alta detectada — aumentando lote para 350
+2026-01-06 11:23:45,556 - INFO - Processando lote 2 -> linhas 600 a 768
+2026-01-06 11:23:45,556 - INFO - Carga alta detectada — aumentando lote para 400
+2026-01-06 11:23:45,556 - INFO - Processando lote 2 -> linhas 750 a 768
+2026-01-06 11:23:45,556 - INFO - Carga baixa — reduzindo lote para 380
+2026-01-06 11:23:45,557 - INFO - Processamento em lotes finalizado.
+2026-01-06 11:23:45,558 - INFO - Normalizando variáveis...
+2026-01-06 11:23:45,561 - INFO - Separando treino e teste...
+2026-01-06 11:23:45,566 - INFO - Aplicando SMOTE (balanceamento)...
+2026-01-06 11:23:45,575 - INFO - Dados preparados com sucesso.
+2026-01-06 11:23:45,575 - INFO - Treinando modelos base...
+2026-01-06 11:23:45,938 - INFO - BASE LR -> acc=0.729 recall=0.730 f1=0.647
+2026-01-06 11:23:45,943 - INFO - BASE RF -> acc=0.904 recall=0.865 f1=0.859
+2026-01-06 11:23:45,944 - INFO - Iniciando otimizacao genetica...
+2026-01-06 11:23:45,944 - INFO - --- Geracao 1/3 ---
+2026-01-06 11:23:45,944 - INFO - Avaliando individuo: {'n_estimators': 86, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-06 11:23:46,438 - INFO - Fitness calculado: 0.8391
+2026-01-06 11:23:46,438 - INFO - Avaliando individuo: {'n_estimators': 166, 'max_depth': 10, 'min_samples_split': 7}
+2026-01-06 11:23:47,830 - INFO - Fitness calculado: 0.8526
+2026-01-06 11:23:47,830 - INFO - Avaliando individuo: {'n_estimators': 168, 'max_depth': 8, 'min_samples_split': 6}
+2026-01-06 11:23:49,004 - INFO - Fitness calculado: 0.8507
+2026-01-06 11:23:49,004 - INFO - Avaliando individuo: {'n_estimators': 64, 'max_depth': 10, 'min_samples_split': 8}
+2026-01-06 11:23:49,397 - INFO - Fitness calculado: 0.8481
+2026-01-06 11:23:49,397 - INFO - Avaliando individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:50,279 - INFO - Fitness calculado: 0.8516
+2026-01-06 11:23:50,279 - INFO - Melhor indivíduo da geracao: (np.float64(0.8526099466055124), {'n_estimators': 166, 'max_depth': 10, 'min_samples_split': 7})
+2026-01-06 11:23:50,279 - INFO - Crossover gerou filho: {'n_estimators': 166, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 11:23:50,280 - INFO - Mutacao aplicada no individuo: {'n_estimators': 166, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-06 11:23:50,280 - INFO - Crossover gerou filho: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:50,280 - INFO - Mutacao aplicada no individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:50,280 - INFO - --- Geracao 2/3 ---
+2026-01-06 11:23:50,280 - INFO - Avaliando individuo: {'n_estimators': 166, 'max_depth': 10, 'min_samples_split': 7}
+2026-01-06 11:23:51,181 - INFO - Fitness calculado: 0.8526
+2026-01-06 11:23:51,181 - INFO - Avaliando individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:51,981 - INFO - Fitness calculado: 0.8516
+2026-01-06 11:23:51,981 - INFO - Avaliando individuo: {'n_estimators': 168, 'max_depth': 8, 'min_samples_split': 6}
+2026-01-06 11:23:52,855 - INFO - Fitness calculado: 0.8507
+2026-01-06 11:23:52,855 - INFO - Avaliando individuo: {'n_estimators': 166, 'max_depth': 10, 'min_samples_split': 8}
+2026-01-06 11:23:53,746 - INFO - Fitness calculado: 0.8450
+2026-01-06 11:23:53,746 - INFO - Avaliando individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 2}
+2026-01-06 11:23:54,552 - INFO - Fitness calculado: 0.8570
+2026-01-06 11:23:54,552 - INFO - Melhor indivíduo da geracao: (np.float64(0.8569950316790512), {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 2})
+2026-01-06 11:23:54,552 - INFO - Crossover gerou filho: {'n_estimators': 166, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:54,552 - INFO - Mutacao aplicada no individuo: {'n_estimators': 166, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:54,552 - INFO - Crossover gerou filho: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 7}
+2026-01-06 11:23:54,552 - INFO - Mutacao aplicada no individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 7}
+2026-01-06 11:23:54,553 - INFO - --- Geracao 3/3 ---
+2026-01-06 11:23:54,553 - INFO - Avaliando individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 2}
+2026-01-06 11:23:55,387 - INFO - Fitness calculado: 0.8570
+2026-01-06 11:23:55,387 - INFO - Avaliando individuo: {'n_estimators': 166, 'max_depth': 10, 'min_samples_split': 7}
+2026-01-06 11:23:56,320 - INFO - Fitness calculado: 0.8526
+2026-01-06 11:23:56,320 - INFO - Avaliando individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:57,222 - INFO - Fitness calculado: 0.8516
+2026-01-06 11:23:57,222 - INFO - Avaliando individuo: {'n_estimators': 128, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:57,945 - INFO - Fitness calculado: 0.8451
+2026-01-06 11:23:57,945 - INFO - Avaliando individuo: {'n_estimators': 116, 'max_depth': 8, 'min_samples_split': 7}
+2026-01-06 11:23:58,607 - INFO - Fitness calculado: 0.8369
+2026-01-06 11:23:58,607 - INFO - Melhor indivíduo da geracao: (np.float64(0.8569950316790512), {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 2})
+2026-01-06 11:23:58,607 - INFO - Crossover gerou filho: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:58,607 - INFO - Mutacao aplicada no individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 4}
+2026-01-06 11:23:58,607 - INFO - Crossover gerou filho: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 2}
+2026-01-06 11:23:58,607 - INFO - Mutacao aplicada no individuo: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 2}
+2026-01-06 11:23:58,607 - INFO - Tempo total de execucao do GA: 12.66 segundos
+2026-01-06 11:23:58,607 - INFO - Melhores parametros encontrados: {'n_estimators': 154, 'max_depth': 8, 'min_samples_split': 2}
+2026-01-06 11:23:58,918 - INFO - OTIMIZADO RF -> acc=0.849 recall=0.851 f1=0.792
+2026-01-06 11:23:58,997 - INFO - Modelos salvos com sucesso!
+2026-01-06 11:23:58,997 - INFO - ===== FIM DA EXECUCAO =====
