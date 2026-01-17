@@ -1,0 +1,10 @@
+openai
+dotenv
+pandas
+numpy
+matplotlib
+seaborn
+imbalanced-learn
+joblib
+scikit-learn
+logging
