@@ -1,24 +1,46 @@
+import os
 import pandas as pd
 import numpy as np
 import joblib
 import traceback
 from utils import gerar_explicacao_llm
 from pathlib import Path
+from azure.storage.blob import BlobServiceClient
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 OUTPUT_DIR = BASE_DIR / "outputs"
 
+# CONFIGURAÇÃO DE NUVEM
+connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+
+if not connection_string:
+    raise ValueError("AZURE_STORAGE_CONNECTION_STRING não definida")
+
+blob_service = BlobServiceClient.from_connection_string(connection_string)
+container_client = blob_service.get_container_client("modelos")
+
 #   CARREGAR MODELOS + DATASET
+
+def download_model(blob_name, local_path):
+    with open(local_path, "wb") as f:
+        f.write(container_client.download_blob(blob_name).readall())
 
 try:
     df = pd.read_csv(DATA_DIR / "diabetes.csv")
 
     OUTPUT_DIR.mkdir(exist_ok=True)
 
-    lr = joblib.load(OUTPUT_DIR / "lr_model.pkl")
-    rf = joblib.load(OUTPUT_DIR / "rf_model.pkl")
-    scaler = joblib.load(OUTPUT_DIR / "scaler.pkl")
+    #lr = joblib.load(OUTPUT_DIR / "lr_model.pkl")
+    #rf = joblib.load(OUTPUT_DIR / "rf_model.pkl")
+    #scaler = joblib.load(OUTPUT_DIR / "scaler.pkl")
+    download_model("lr_model.pkl", "lr_model.pkl")
+    download_model("rf_model.pkl", "rf_model.pkl")
+    download_model("scaler.pkl", "scaler.pkl")
+
+    lr = joblib.load("lr_model.pkl")
+    rf = joblib.load("rf_model.pkl")
+    scaler = joblib.load("scaler.pkl")
 except Exception as e:
     print("Erro ao carregar arquivos do modelo:")
     print(e)
