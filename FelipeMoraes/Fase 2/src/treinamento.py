@@ -17,11 +17,31 @@ from sklearn.metrics import accuracy_score, recall_score, f1_score
 from imblearn.over_sampling import SMOTE
 from utils import medir_tempo
 
-# CONFIGURAÇÃO DE LOGGING
+from azure.storage.blob import BlobServiceClient
+
+# CONFIGURAÇÃO DE DIRETÓRIOS E NUVEM
+
+connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+container_name = "modelos"
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 OUTPUT_DIR = BASE_DIR / "outputs"
+
+blob_service = BlobServiceClient.from_connection_string(connection_string)
+container_client = blob_service.get_container_client(container_name)
+
+# CRIAR CONTAINER SE NAO EXISTIR
+try:
+    container_client.create_container()
+except:
+    pass
+
+def upload_model(local_path, blob_name):
+    with open(local_path, "rb") as f:
+        container_client.upload_blob(name=blob_name, data=f, overwrite=True)
+
+# CONFIGURAÇÃO DE LOGGING
 
 logging.basicConfig(
     level=logging.INFO,
@@ -254,3 +274,8 @@ joblib.dump(scaler, OUTPUT_DIR / "scaler.pkl")
 
 logger.info("Modelos salvos com sucesso!")
 logger.info("===== FIM DA EXECUCAO =====")
+
+upload_model(OUTPUT_DIR / "lr_model.pkl",  "lr_model.pkl")
+upload_model(OUTPUT_DIR / "rf_model.pkl", "rf_model.pkl")
+upload_model(OUTPUT_DIR / "rf_optimized.pkl", "rf_optimized.pkl")
+upload_model(OUTPUT_DIR / "scaler.pkl", "scaler.pkl")
