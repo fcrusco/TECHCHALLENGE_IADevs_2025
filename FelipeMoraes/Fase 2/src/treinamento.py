@@ -1,5 +1,7 @@
 import os
 import logging
+from pathlib import Path
+import pathlib
 import random
 import numpy as np
 import pandas as pd
@@ -15,7 +17,11 @@ from sklearn.metrics import accuracy_score, recall_score, f1_score
 from imblearn.over_sampling import SMOTE
 from utils import medir_tempo
 
-# CONFIGURAÇÃO DE LOGGINg
+# CONFIGURAÇÃO DE LOGGING
+
+BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "outputs"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,7 +52,7 @@ def fitness(model, X, y):
 logger.info("Carregando dataset...")
 
 try:
-    df = pd.read_csv('C:/Users/Rafael/Desktop/FIAP/TechChallenge/data/diabetes.csv')
+    df = pd.read_csv(DATA_DIR / "diabetes.csv")
 except Exception as e:
     logger.exception("Erro ao carregar dataset")
     raise e
@@ -239,12 +245,12 @@ logger.info(
 
 # SALVAR MODELOS
 
-os.makedirs("C:/Users/Rafael/Desktop/FIAP/TechChallenge/outputs", exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-joblib.dump(lr_base, "C:/Users/Rafael/Desktop/FIAP/TechChallenge/outputs/lr_model.pkl")
-joblib.dump(rf_base, "C:/Users/Rafael/Desktop/FIAP/TechChallenge/outputs/rf_model.pkl")
-joblib.dump(rf_otimizado, "C:/Users/Rafael/Desktop/FIAP/TechChallenge/outputs/rf_optimized.pkl")
-joblib.dump(scaler, "C:/Users/Rafael/Desktop/FIAP/TechChallenge/outputs/scaler.pkl")
+joblib.dump(lr_base, OUTPUT_DIR /"lr_model.pkl")
+joblib.dump(rf_base, OUTPUT_DIR / "rf_model.pkl")
+joblib.dump(rf_otimizado, OUTPUT_DIR / "rf_optimized.pkl")
+joblib.dump(scaler, OUTPUT_DIR / "scaler.pkl")
 
 logger.info("Modelos salvos com sucesso!")
 logger.info("===== FIM DA EXECUCAO =====")
