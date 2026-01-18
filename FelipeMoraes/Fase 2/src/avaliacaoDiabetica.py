@@ -20,7 +20,7 @@ if not connection_string:
 blob_service = BlobServiceClient.from_connection_string(connection_string)
 container_client = blob_service.get_container_client("modelos")
 
-#   CARREGAR MODELOS + DATASET
+# CARREGAR MODELOS + DATASET
 
 def download_model(blob_name, local_path):
     with open(local_path, "wb") as f:
@@ -34,13 +34,13 @@ try:
     #lr = joblib.load(OUTPUT_DIR / "lr_model.pkl")
     #rf = joblib.load(OUTPUT_DIR / "rf_model.pkl")
     #scaler = joblib.load(OUTPUT_DIR / "scaler.pkl")
-    download_model("lr_model.pkl", "lr_model.pkl")
-    download_model("rf_model.pkl", "rf_model.pkl")
-    download_model("scaler.pkl", "scaler.pkl")
+    download_model("lr_model.pkl", OUTPUT_DIR / "lr_model.pkl")
+    download_model("rf_model.pkl", OUTPUT_DIR / "rf_model.pkl")
+    download_model("scaler.pkl", OUTPUT_DIR / "scaler.pkl")
 
-    lr = joblib.load("lr_model.pkl")
-    rf = joblib.load("rf_model.pkl")
-    scaler = joblib.load("scaler.pkl")
+    lr = joblib.load(OUTPUT_DIR / "lr_model.pkl")
+    rf = joblib.load(OUTPUT_DIR / "rf_model.pkl")
+    scaler = joblib.load(OUTPUT_DIR / "scaler.pkl")
 except Exception as e:
     print("Erro ao carregar arquivos do modelo:")
     print(e)
