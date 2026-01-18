@@ -1,0 +1,172 @@
+2026-01-17 16:17:45,356 | INFO | treinamento | ===== INICIO DA EXECUCAO =====
+2026-01-17 16:17:45,358 | INFO | treinamento | Carregando dataset...
+2026-01-17 16:17:45,386 | INFO | treinamento | Dataset carregado com 768 linhas e 9 colunas.
+2026-01-17 16:17:45,418 | INFO | treinamento | Iniciando processamento em lotes...
+2026-01-17 16:17:45,419 | INFO | treinamento | Processando lote 1 -> linhas 0 a 150
+2026-01-17 16:17:45,419 | INFO | treinamento | Carga alta detectada — aumentando lote para 200
+2026-01-17 16:17:45,420 | INFO | treinamento | Processando lote 1 -> linhas 150 a 350
+2026-01-17 16:17:45,421 | INFO | treinamento | Carga alta detectada — aumentando lote para 250
+2026-01-17 16:17:45,421 | INFO | treinamento | Processando lote 2 -> linhas 300 a 550
+2026-01-17 16:17:45,423 | INFO | treinamento | Carga alta detectada — aumentando lote para 300
+2026-01-17 16:17:45,423 | INFO | treinamento | Processando lote 2 -> linhas 450 a 750
+2026-01-17 16:17:45,424 | INFO | treinamento | Carga alta detectada — aumentando lote para 350
+2026-01-17 16:17:45,426 | INFO | treinamento | Processando lote 2 -> linhas 600 a 768
+2026-01-17 16:17:45,426 | INFO | treinamento | Carga alta detectada — aumentando lote para 400
+2026-01-17 16:17:45,427 | INFO | treinamento | Processando lote 2 -> linhas 750 a 768
+2026-01-17 16:17:45,427 | INFO | treinamento | Carga baixa — reduzindo lote para 380
+2026-01-17 16:17:45,427 | INFO | treinamento | Processamento em lotes finalizado.
+2026-01-17 16:17:45,428 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.01s
+2026-01-17 16:17:45,431 | INFO | treinamento | Normalizando variáveis...
+2026-01-17 16:17:45,437 | INFO | treinamento | Separando treino e teste...
+2026-01-17 16:17:45,441 | INFO | treinamento | Aplicando SMOTE (balanceamento)...
+2026-01-17 16:17:45,452 | INFO | treinamento | Dados preparados com sucesso.
+2026-01-17 16:17:45,452 | INFO | treinamento | Treinando modelos base...
+2026-01-17 16:17:45,706 | INFO | treinamento | BASE LR -> acc=0.729 recall=0.730 f1=0.647
+2026-01-17 16:17:45,711 | INFO | treinamento | BASE RF -> acc=0.904 recall=0.865 f1=0.859
+2026-01-17 16:17:45,712 | INFO | treinamento | {'evento': 'metricas_finais', 'modelo': 'RandomForest_Otimizado', 'accuracy': <function accuracy_score at 0x0000022738F72160>, 'recall': <function recall_score at 0x0000022738F73240>, 'f1': <function f1_score at 0x0000022738F72A20>}
+2026-01-17 16:17:45,712 | INFO | treinamento | Iniciando otimizacao genetica...
+2026-01-17 16:17:45,712 | INFO | treinamento | --- Geracao 1/3 ---
+2026-01-17 16:17:45,713 | INFO | treinamento | Avaliando individuo: {'n_estimators': 62, 'max_depth': 4, 'min_samples_split': 4}
+2026-01-17 16:17:46,150 | INFO | treinamento | Fitness calculado: 0.8245
+2026-01-17 16:17:46,151 | INFO | treinamento | Avaliando individuo: {'n_estimators': 165, 'max_depth': 8, 'min_samples_split': 10}
+2026-01-17 16:17:47,075 | INFO | treinamento | Fitness calculado: 0.8321
+2026-01-17 16:17:47,075 | INFO | treinamento | Avaliando individuo: {'n_estimators': 92, 'max_depth': 4, 'min_samples_split': 5}
+2026-01-17 16:17:47,503 | INFO | treinamento | Fitness calculado: 0.8225
+2026-01-17 16:17:47,503 | INFO | treinamento | Avaliando individuo: {'n_estimators': 65, 'max_depth': 6, 'min_samples_split': 6}
+2026-01-17 16:17:47,838 | INFO | treinamento | Fitness calculado: 0.8327
+2026-01-17 16:17:47,838 | INFO | treinamento | Avaliando individuo: {'n_estimators': 135, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:48,564 | INFO | treinamento | Fitness calculado: 0.8548
+2026-01-17 16:17:48,565 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8547717012348434), {'n_estimators': 135, 'max_depth': 10, 'min_samples_split': 6})
+2026-01-17 16:17:48,565 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:48,565 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:17:48,566 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:48,566 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:48,566 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:17:48,567 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:48,567 | INFO | treinamento | --- Geracao 2/3 ---
+2026-01-17 16:17:48,567 | INFO | treinamento | Avaliando individuo: {'n_estimators': 135, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:49,392 | INFO | treinamento | Fitness calculado: 0.8548
+2026-01-17 16:17:49,393 | INFO | treinamento | Avaliando individuo: {'n_estimators': 65, 'max_depth': 6, 'min_samples_split': 6}
+2026-01-17 16:17:49,758 | INFO | treinamento | Fitness calculado: 0.8327
+2026-01-17 16:17:49,759 | INFO | treinamento | Avaliando individuo: {'n_estimators': 165, 'max_depth': 8, 'min_samples_split': 10}
+2026-01-17 16:17:50,615 | INFO | treinamento | Fitness calculado: 0.8321
+2026-01-17 16:17:50,615 | INFO | treinamento | Avaliando individuo: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-17 16:17:51,001 | INFO | treinamento | Fitness calculado: 0.8689
+2026-01-17 16:17:51,002 | INFO | treinamento | Avaliando individuo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:51,451 | INFO | treinamento | Fitness calculado: 0.8578
+2026-01-17 16:17:51,451 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8689270697573388), {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 2})
+2026-01-17 16:17:51,451 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:51,452 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:17:51,452 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:51,452 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-17 16:17:51,453 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:17:51,453 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-17 16:17:51,453 | INFO | treinamento | --- Geracao 3/3 ---
+2026-01-17 16:17:51,453 | INFO | treinamento | Avaliando individuo: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-17 16:17:51,815 | INFO | treinamento | Fitness calculado: 0.8689
+2026-01-17 16:17:51,816 | INFO | treinamento | Avaliando individuo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:52,261 | INFO | treinamento | Fitness calculado: 0.8578
+2026-01-17 16:17:52,262 | INFO | treinamento | Avaliando individuo: {'n_estimators': 135, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:52,975 | INFO | treinamento | Fitness calculado: 0.8548
+2026-01-17 16:17:52,975 | INFO | treinamento | Avaliando individuo: {'n_estimators': 185, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:53,947 | INFO | treinamento | Fitness calculado: 0.8541
+2026-01-17 16:17:53,947 | INFO | treinamento | Avaliando individuo: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 9}
+2026-01-17 16:17:54,305 | INFO | treinamento | Fitness calculado: 0.8429
+2026-01-17 16:17:54,306 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8689270697573388), {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 2})
+2026-01-17 16:17:54,306 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 135, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:54,306 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:17:54,307 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 135, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:54,307 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:54,308 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:17:54,308 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 82, 'max_depth': 10, 'min_samples_split': 6}
+2026-01-17 16:17:54,309 | INFO | treinamento | Tempo total de execucao do GA: 8.60 segundos
+2026-01-17 16:17:54,309 | INFO | treinamento | Melhores parametros encontrados: {'n_estimators': 65, 'max_depth': 10, 'min_samples_split': 2}
+2026-01-17 16:17:54,459 | INFO | treinamento | OTIMIZADO RF -> acc=0.890 recall=0.865 f1=0.842
+2026-01-17 16:17:54,531 | INFO | treinamento | Modelos salvos com sucesso!
+2026-01-17 16:17:54,531 | INFO | treinamento | ===== FIM DA EXECUCAO =====
+2026-01-17 16:27:40,571 | INFO | treinamento | ===== INICIO DA EXECUCAO =====
+2026-01-17 16:27:40,571 | INFO | treinamento | Carregando dataset...
+2026-01-17 16:27:40,575 | INFO | treinamento | Dataset carregado com 768 linhas e 9 colunas.
+2026-01-17 16:27:40,582 | INFO | treinamento | Iniciando processamento em lotes...
+2026-01-17 16:27:40,582 | INFO | treinamento | Processando lote 1 -> linhas 0 a 150
+2026-01-17 16:27:40,582 | INFO | treinamento | Carga alta detectada — aumentando lote para 200
+2026-01-17 16:27:40,583 | INFO | treinamento | Processando lote 1 -> linhas 150 a 350
+2026-01-17 16:27:40,583 | INFO | treinamento | Carga alta detectada — aumentando lote para 250
+2026-01-17 16:27:40,583 | INFO | treinamento | Processando lote 2 -> linhas 300 a 550
+2026-01-17 16:27:40,583 | INFO | treinamento | Carga alta detectada — aumentando lote para 300
+2026-01-17 16:27:40,583 | INFO | treinamento | Processando lote 2 -> linhas 450 a 750
+2026-01-17 16:27:40,584 | INFO | treinamento | Carga alta detectada — aumentando lote para 350
+2026-01-17 16:27:40,584 | INFO | treinamento | Processando lote 2 -> linhas 600 a 768
+2026-01-17 16:27:40,584 | INFO | treinamento | Carga alta detectada — aumentando lote para 400
+2026-01-17 16:27:40,584 | INFO | treinamento | Processando lote 2 -> linhas 750 a 768
+2026-01-17 16:27:40,584 | INFO | treinamento | Carga baixa — reduzindo lote para 380
+2026-01-17 16:27:40,585 | INFO | treinamento | Processamento em lotes finalizado.
+2026-01-17 16:27:40,585 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:27:40,586 | INFO | treinamento | Normalizando variáveis...
+2026-01-17 16:27:40,589 | INFO | treinamento | Separando treino e teste...
+2026-01-17 16:27:40,591 | INFO | treinamento | Aplicando SMOTE (balanceamento)...
+2026-01-17 16:27:40,596 | INFO | treinamento | Dados preparados com sucesso.
+2026-01-17 16:27:40,596 | INFO | treinamento | Treinando modelos base...
+2026-01-17 16:27:40,875 | INFO | treinamento | BASE LR -> acc=0.729 recall=0.730 f1=0.647
+2026-01-17 16:27:40,880 | INFO | treinamento | BASE RF -> acc=0.904 recall=0.865 f1=0.859
+2026-01-17 16:27:40,881 | INFO | treinamento | {'evento': 'metricas_finais', 'modelo': 'RandomForest_Otimizado', 'accuracy': <function accuracy_score at 0x000001A199432160>, 'recall': <function recall_score at 0x000001A199433240>, 'f1': <function f1_score at 0x000001A199432A20>}
+2026-01-17 16:27:40,881 | INFO | treinamento | Iniciando otimizacao genetica...
+2026-01-17 16:27:40,881 | INFO | treinamento | --- Geracao 1/3 ---
+2026-01-17 16:27:40,881 | INFO | treinamento | Avaliando individuo: {'n_estimators': 97, 'max_depth': 8, 'min_samples_split': 6}
+2026-01-17 16:27:41,409 | INFO | treinamento | Fitness calculado: 0.8458
+2026-01-17 16:27:41,409 | INFO | treinamento | Avaliando individuo: {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5}
+2026-01-17 16:27:41,784 | INFO | treinamento | Fitness calculado: 0.8665
+2026-01-17 16:27:41,784 | INFO | treinamento | Avaliando individuo: {'n_estimators': 99, 'max_depth': 4, 'min_samples_split': 5}
+2026-01-17 16:27:42,279 | INFO | treinamento | Fitness calculado: 0.8189
+2026-01-17 16:27:42,280 | INFO | treinamento | Avaliando individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:42,828 | INFO | treinamento | Fitness calculado: 0.8572
+2026-01-17 16:27:42,829 | INFO | treinamento | Avaliando individuo: {'n_estimators': 116, 'max_depth': 6, 'min_samples_split': 8}
+2026-01-17 16:27:43,420 | INFO | treinamento | Fitness calculado: 0.8296
+2026-01-17 16:27:43,421 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8665417382184953), {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5})
+2026-01-17 16:27:43,421 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:43,421 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:27:43,421 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:43,422 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 97, 'max_depth': 8, 'min_samples_split': 10}
+2026-01-17 16:27:43,422 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:27:43,422 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 97, 'max_depth': 8, 'min_samples_split': 10}
+2026-01-17 16:27:43,423 | INFO | treinamento | --- Geracao 2/3 ---
+2026-01-17 16:27:43,423 | INFO | treinamento | Avaliando individuo: {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5}
+2026-01-17 16:27:43,775 | INFO | treinamento | Fitness calculado: 0.8665
+2026-01-17 16:27:43,775 | INFO | treinamento | Avaliando individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:44,309 | INFO | treinamento | Fitness calculado: 0.8572
+2026-01-17 16:27:44,310 | INFO | treinamento | Avaliando individuo: {'n_estimators': 97, 'max_depth': 8, 'min_samples_split': 6}
+2026-01-17 16:27:44,818 | INFO | treinamento | Fitness calculado: 0.8458
+2026-01-17 16:27:44,818 | INFO | treinamento | Avaliando individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:45,372 | INFO | treinamento | Fitness calculado: 0.8572
+2026-01-17 16:27:45,372 | INFO | treinamento | Avaliando individuo: {'n_estimators': 97, 'max_depth': 8, 'min_samples_split': 10}
+2026-01-17 16:27:46,111 | INFO | treinamento | Fitness calculado: 0.8420
+2026-01-17 16:27:46,112 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8665417382184953), {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5})
+2026-01-17 16:27:46,112 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:46,113 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:27:46,113 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:46,113 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 5}
+2026-01-17 16:27:46,114 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:27:46,114 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 5}
+2026-01-17 16:27:46,114 | INFO | treinamento | --- Geracao 3/3 ---
+2026-01-17 16:27:46,114 | INFO | treinamento | Avaliando individuo: {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5}
+2026-01-17 16:27:46,524 | INFO | treinamento | Fitness calculado: 0.8665
+2026-01-17 16:27:46,525 | INFO | treinamento | Avaliando individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:47,178 | INFO | treinamento | Fitness calculado: 0.8572
+2026-01-17 16:27:47,178 | INFO | treinamento | Avaliando individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:47,736 | INFO | treinamento | Fitness calculado: 0.8572
+2026-01-17 16:27:47,737 | INFO | treinamento | Avaliando individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 8}
+2026-01-17 16:27:48,275 | INFO | treinamento | Fitness calculado: 0.8538
+2026-01-17 16:27:48,276 | INFO | treinamento | Avaliando individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:48,841 | INFO | treinamento | Fitness calculado: 0.8572
+2026-01-17 16:27:48,841 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8665417382184953), {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5})
+2026-01-17 16:27:48,842 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:48,843 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:27:48,843 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 99, 'max_depth': None, 'min_samples_split': 10}
+2026-01-17 16:27:48,843 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5}
+2026-01-17 16:27:48,843 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-17 16:27:48,844 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5}
+2026-01-17 16:27:48,844 | INFO | treinamento | Tempo total de execucao do GA: 7.96 segundos
+2026-01-17 16:27:48,844 | INFO | treinamento | Melhores parametros encontrados: {'n_estimators': 61, 'max_depth': None, 'min_samples_split': 5}
+2026-01-17 16:27:49,166 | INFO | treinamento | OTIMIZADO RF -> acc=0.885 recall=0.865 f1=0.837
+2026-01-17 16:27:49,364 | INFO | treinamento | Modelos salvos com sucesso!
+2026-01-17 16:27:49,364 | INFO | treinamento | ===== FIM DA EXECUCAO =====
