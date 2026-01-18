@@ -89,15 +89,21 @@ for nome, modelo in modelos.items():
     pred = modelo.predict(paciente_scaled)
     proba = modelo.predict_proba(paciente_scaled)
 
-print(f"\n {nome}")
-print("------------------------------")
+    print(f"\n {nome}")
+    print("------------------------------")
 
+    pred_texto = "Positivo para risco de diabetes" if pred[0] == 1 else "Negativo para risco de diabetes"
+    print("Predição:", pred_texto)
+
+    classes = ['Não Diabetes', 'Diabetes']
+    for i, p in enumerate(proba[0]):
+        print(f"{classes[i]}: {p*100:.2f}%")
+
+# Usar o último modelo (Random Forest) para LLM
+pred = rf.predict(paciente_scaled)
+proba = rf.predict_proba(paciente_scaled)
 pred_texto = "Positivo para risco de diabetes" if pred[0] == 1 else "Negativo para risco de diabetes"
-print("Predição:", pred_texto)
-
 classes = ['Não Diabetes', 'Diabetes']
-for i, p in enumerate(proba[0]):
-    print(f"{classes[i]}: {p*100:.2f}%")
 
 # -------- LLM EXPLICA RESULTADO --------
 try:
