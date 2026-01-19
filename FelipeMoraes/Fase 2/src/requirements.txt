@@ -1,5 +1,5 @@
 openai
-dotenv
+python-dotenv
 pandas
 numpy
 matplotlib
@@ -7,5 +7,9 @@ seaborn
 imbalanced-learn
 joblib
 scikit-learn
-logging
+fastapi
+uvicorn
+pydantic
 azure-storage-blob
+flask
+python-multipart

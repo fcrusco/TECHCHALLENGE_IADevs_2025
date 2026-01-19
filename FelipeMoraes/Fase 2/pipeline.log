@@ -170,3 +170,193 @@
 2026-01-17 16:27:49,166 | INFO | treinamento | OTIMIZADO RF -> acc=0.885 recall=0.865 f1=0.837
 2026-01-17 16:27:49,364 | INFO | treinamento | Modelos salvos com sucesso!
 2026-01-17 16:27:49,364 | INFO | treinamento | ===== FIM DA EXECUCAO =====
+2026-01-18 18:51:35,280 | INFO | treinamento | ===== INICIO DA EXECUCAO =====
+2026-01-18 18:51:35,281 | INFO | treinamento | Carregando dataset...
+2026-01-18 18:51:35,299 | INFO | treinamento | Dataset carregado com 768 linhas e 9 colunas.
+2026-01-18 18:51:35,335 | INFO | treinamento | Iniciando processamento em lotes...
+2026-01-18 18:51:35,336 | INFO | treinamento | Processando lote 1 -> linhas 0 a 150
+2026-01-18 18:51:35,337 | INFO | treinamento | Carga alta detectada — aumentando lote para 200
+2026-01-18 18:51:35,338 | INFO | treinamento | Processando lote 1 -> linhas 150 a 350
+2026-01-18 18:51:35,338 | INFO | treinamento | Carga alta detectada — aumentando lote para 250
+2026-01-18 18:51:35,339 | INFO | treinamento | Processando lote 2 -> linhas 300 a 550
+2026-01-18 18:51:35,340 | INFO | treinamento | Carga alta detectada — aumentando lote para 300
+2026-01-18 18:51:35,341 | INFO | treinamento | Processando lote 2 -> linhas 450 a 750
+2026-01-18 18:51:35,342 | INFO | treinamento | Carga alta detectada — aumentando lote para 350
+2026-01-18 18:51:35,342 | INFO | treinamento | Processando lote 2 -> linhas 600 a 768
+2026-01-18 18:51:35,343 | INFO | treinamento | Carga alta detectada — aumentando lote para 400
+2026-01-18 18:51:35,344 | INFO | treinamento | Processando lote 2 -> linhas 750 a 768
+2026-01-18 18:51:35,345 | INFO | treinamento | Carga baixa — reduzindo lote para 380
+2026-01-18 18:51:35,346 | INFO | treinamento | Processamento em lotes finalizado.
+2026-01-18 18:51:35,350 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.01s
+2026-01-18 18:51:35,354 | INFO | treinamento | Normalizando variáveis...
+2026-01-18 18:51:35,358 | INFO | treinamento | Separando treino e teste...
+2026-01-18 18:51:35,364 | INFO | treinamento | Aplicando SMOTE (balanceamento)...
+2026-01-18 18:51:35,383 | INFO | treinamento | Dados preparados com sucesso.
+2026-01-18 18:51:35,384 | INFO | treinamento | Treinando modelos base...
+2026-01-18 18:51:35,817 | INFO | treinamento | BASE LR -> acc=0.729 recall=0.730 f1=0.647
+2026-01-18 18:51:35,835 | INFO | treinamento | BASE RF -> acc=0.904 recall=0.865 f1=0.859
+2026-01-18 18:51:35,836 | INFO | treinamento | {'evento': 'metricas_finais', 'modelo': 'RandomForest_Otimizado', 'accuracy': <function accuracy_score at 0x00000155A2DD6160>, 'recall': <function recall_score at 0x00000155A2DD7240>, 'f1': <function f1_score at 0x00000155A2DD6A20>}
+2026-01-18 18:51:35,837 | INFO | treinamento | Iniciando otimizacao genetica...
+2026-01-18 18:51:35,838 | INFO | treinamento | --- Geracao 1/3 ---
+2026-01-18 18:51:35,839 | INFO | treinamento | Avaliando individuo: {'n_estimators': 157, 'max_depth': None, 'min_samples_split': 9}
+2026-01-18 18:51:37,492 | INFO | treinamento | Fitness calculado: 0.8485
+2026-01-18 18:51:37,493 | INFO | treinamento | Avaliando individuo: {'n_estimators': 185, 'max_depth': 4, 'min_samples_split': 5}
+2026-01-18 18:51:38,572 | INFO | treinamento | Fitness calculado: 0.8192
+2026-01-18 18:51:38,573 | INFO | treinamento | Avaliando individuo: {'n_estimators': 98, 'max_depth': 4, 'min_samples_split': 8}
+2026-01-18 18:51:39,033 | INFO | treinamento | Fitness calculado: 0.8242
+2026-01-18 18:51:39,033 | INFO | treinamento | Avaliando individuo: {'n_estimators': 170, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:39,831 | INFO | treinamento | Fitness calculado: 0.8298
+2026-01-18 18:51:39,832 | INFO | treinamento | Avaliando individuo: {'n_estimators': 66, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:40,165 | INFO | treinamento | Fitness calculado: 0.8404
+2026-01-18 18:51:40,165 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8485393145477963), {'n_estimators': 157, 'max_depth': None, 'min_samples_split': 9})
+2026-01-18 18:51:40,165 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 66, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:40,166 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-18 18:51:40,166 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 66, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:40,166 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 170, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:40,167 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-18 18:51:40,167 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 170, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:40,167 | INFO | treinamento | --- Geracao 2/3 ---
+2026-01-18 18:51:40,167 | INFO | treinamento | Avaliando individuo: {'n_estimators': 157, 'max_depth': None, 'min_samples_split': 9}
+2026-01-18 18:51:40,994 | INFO | treinamento | Fitness calculado: 0.8485
+2026-01-18 18:51:40,994 | INFO | treinamento | Avaliando individuo: {'n_estimators': 66, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:41,339 | INFO | treinamento | Fitness calculado: 0.8404
+2026-01-18 18:51:41,339 | INFO | treinamento | Avaliando individuo: {'n_estimators': 170, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:42,200 | INFO | treinamento | Fitness calculado: 0.8298
+2026-01-18 18:51:42,200 | INFO | treinamento | Avaliando individuo: {'n_estimators': 198, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:43,163 | INFO | treinamento | Fitness calculado: 0.8311
+2026-01-18 18:51:43,163 | INFO | treinamento | Avaliando individuo: {'n_estimators': 68, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:43,680 | INFO | treinamento | Fitness calculado: 0.8357
+2026-01-18 18:51:43,680 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8485393145477963), {'n_estimators': 157, 'max_depth': None, 'min_samples_split': 9})
+2026-01-18 18:51:43,681 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 68, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:43,681 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-18 18:51:43,682 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 68, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:43,682 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 66, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:43,683 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-18 18:51:43,683 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 66, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:43,683 | INFO | treinamento | --- Geracao 3/3 ---
+2026-01-18 18:51:43,683 | INFO | treinamento | Avaliando individuo: {'n_estimators': 157, 'max_depth': None, 'min_samples_split': 9}
+2026-01-18 18:51:44,886 | INFO | treinamento | Fitness calculado: 0.8485
+2026-01-18 18:51:44,886 | INFO | treinamento | Avaliando individuo: {'n_estimators': 66, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:46,002 | INFO | treinamento | Fitness calculado: 0.8404
+2026-01-18 18:51:46,004 | INFO | treinamento | Avaliando individuo: {'n_estimators': 68, 'max_depth': 6, 'min_samples_split': 4}
+2026-01-18 18:51:47,110 | INFO | treinamento | Fitness calculado: 0.8357
+2026-01-18 18:51:47,111 | INFO | treinamento | Avaliando individuo: {'n_estimators': 68, 'max_depth': 6, 'min_samples_split': 5}
+2026-01-18 18:51:48,160 | INFO | treinamento | Fitness calculado: 0.8327
+2026-01-18 18:51:48,161 | INFO | treinamento | Avaliando individuo: {'n_estimators': 141, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:49,927 | INFO | treinamento | Fitness calculado: 0.8313
+2026-01-18 18:51:49,928 | INFO | treinamento | Melhor indivíduo da geracao: (np.float64(0.8485393145477963), {'n_estimators': 157, 'max_depth': None, 'min_samples_split': 9})
+2026-01-18 18:51:49,929 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 157, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:49,930 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-18 18:51:49,930 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 157, 'max_depth': 6, 'min_samples_split': 9}
+2026-01-18 18:51:49,931 | INFO | treinamento | Crossover gerou filho: {'n_estimators': 68, 'max_depth': None, 'min_samples_split': 9}
+2026-01-18 18:51:49,932 | INFO | root | ETAPA=treinamento_random_forest | TEMPO=0.00s
+2026-01-18 18:51:49,933 | INFO | treinamento | Mutacao aplicada no individuo: {'n_estimators': 68, 'max_depth': None, 'min_samples_split': 9}
+2026-01-18 18:51:49,933 | INFO | treinamento | Tempo total de execucao do GA: 14.10 segundos
+2026-01-18 18:51:49,934 | INFO | treinamento | Melhores parametros encontrados: {'n_estimators': 157, 'max_depth': None, 'min_samples_split': 9}
+2026-01-18 18:51:50,751 | INFO | treinamento | OTIMIZADO RF -> acc=0.862 recall=0.838 f1=0.805
+2026-01-18 18:51:51,069 | INFO | treinamento | Modelos salvos com sucesso!
+2026-01-18 18:51:51,069 | INFO | treinamento | ===== FIM DA EXECUCAO =====
+2026-01-18 18:51:51,071 | INFO | azure.core.pipeline.policies.http_logging_policy | Request URL: 'https://techchallfase201.blob.core.windows.net/modelos/lr_model.pkl'
+Request method: 'PUT'
+Request headers:
+    'Content-Length': '927'
+    'x-ms-blob-type': 'REDACTED'
+    'x-ms-version': 'REDACTED'
+    'Content-Type': 'application/octet-stream'
+    'Accept': 'application/xml'
+    'User-Agent': 'azsdk-python-storage-blob/12.28.0 Python/3.13.6 (Windows-11-10.0.26100-SP0)'
+    'x-ms-date': 'REDACTED'
+    'x-ms-client-request-id': 'e53dda79-f4b7-11f0-ab97-5ccd5b28154e'
+    'Authorization': 'REDACTED'
+A body is sent with the request
+2026-01-18 18:51:51,124 | INFO | azure.core.pipeline.policies.http_logging_policy | Response status: 201
+Response headers:
+    'Content-Length': '0'
+    'Content-MD5': 'REDACTED'
+    'Last-Modified': 'Sun, 18 Jan 2026 21:51:51 GMT'
+    'ETag': '"0x8DE56DBC96D58E4"'
+    'Server': 'Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0'
+    'x-ms-request-id': 'af4b823a-601e-000e-37c4-88b0a6000000'
+    'x-ms-client-request-id': 'e53dda79-f4b7-11f0-ab97-5ccd5b28154e'
+    'x-ms-version': 'REDACTED'
+    'x-ms-content-crc64': 'REDACTED'
+    'x-ms-request-server-encrypted': 'REDACTED'
+    'Date': 'Sun, 18 Jan 2026 21:51:50 GMT'
+2026-01-18 18:51:51,133 | INFO | azure.core.pipeline.policies.http_logging_policy | Request URL: 'https://techchallfase201.blob.core.windows.net/modelos/rf_model.pkl'
+Request method: 'PUT'
+Request headers:
+    'Content-Length': '2368473'
+    'x-ms-blob-type': 'REDACTED'
+    'x-ms-version': 'REDACTED'
+    'Content-Type': 'application/octet-stream'
+    'Accept': 'application/xml'
+    'User-Agent': 'azsdk-python-storage-blob/12.28.0 Python/3.13.6 (Windows-11-10.0.26100-SP0)'
+    'x-ms-date': 'REDACTED'
+    'x-ms-client-request-id': 'e5474a9e-f4b7-11f0-b14d-5ccd5b28154e'
+    'Authorization': 'REDACTED'
+A body is sent with the request
+2026-01-18 18:51:51,450 | INFO | azure.core.pipeline.policies.http_logging_policy | Response status: 201
+Response headers:
+    'Content-Length': '0'
+    'Content-MD5': 'REDACTED'
+    'Last-Modified': 'Sun, 18 Jan 2026 21:51:51 GMT'
+    'ETag': '"0x8DE56DBC9A25DFE"'
+    'Server': 'Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0'
+    'x-ms-request-id': 'af4b8271-601e-000e-67c4-88b0a6000000'
+    'x-ms-client-request-id': 'e5474a9e-f4b7-11f0-b14d-5ccd5b28154e'
+    'x-ms-version': 'REDACTED'
+    'x-ms-content-crc64': 'REDACTED'
+    'x-ms-request-server-encrypted': 'REDACTED'
+    'Date': 'Sun, 18 Jan 2026 21:51:50 GMT'
+2026-01-18 18:51:51,463 | INFO | azure.core.pipeline.policies.http_logging_policy | Request URL: 'https://techchallfase201.blob.core.windows.net/modelos/rf_optimized.pkl'
+Request method: 'PUT'
+Request headers:
+    'Content-Length': '2412041'
+    'x-ms-blob-type': 'REDACTED'
+    'x-ms-version': 'REDACTED'
+    'Content-Type': 'application/octet-stream'
+    'Accept': 'application/xml'
+    'User-Agent': 'azsdk-python-storage-blob/12.28.0 Python/3.13.6 (Windows-11-10.0.26100-SP0)'
+    'x-ms-date': 'REDACTED'
+    'x-ms-client-request-id': 'e5799923-f4b7-11f0-ba86-5ccd5b28154e'
+    'Authorization': 'REDACTED'
+A body is sent with the request
+2026-01-18 18:51:51,718 | INFO | azure.core.pipeline.policies.http_logging_policy | Response status: 201
+Response headers:
+    'Content-Length': '0'
+    'Content-MD5': 'REDACTED'
+    'Last-Modified': 'Sun, 18 Jan 2026 21:51:51 GMT'
+    'ETag': '"0x8DE56DBC9CAEE05"'
+    'Server': 'Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0'
+    'x-ms-request-id': 'af4b8380-601e-000e-58c4-88b0a6000000'
+    'x-ms-client-request-id': 'e5799923-f4b7-11f0-ba86-5ccd5b28154e'
+    'x-ms-version': 'REDACTED'
+    'x-ms-content-crc64': 'REDACTED'
+    'x-ms-request-server-encrypted': 'REDACTED'
+    'Date': 'Sun, 18 Jan 2026 21:51:50 GMT'
+2026-01-18 18:51:51,733 | INFO | azure.core.pipeline.policies.http_logging_policy | Request URL: 'https://techchallfase201.blob.core.windows.net/modelos/scaler.pkl'
+Request method: 'PUT'
+Request headers:
+    'Content-Length': '1127'
+    'x-ms-blob-type': 'REDACTED'
+    'x-ms-version': 'REDACTED'
+    'Content-Type': 'application/octet-stream'
+    'Accept': 'application/xml'
+    'User-Agent': 'azsdk-python-storage-blob/12.28.0 Python/3.13.6 (Windows-11-10.0.26100-SP0)'
+    'x-ms-date': 'REDACTED'
+    'x-ms-client-request-id': 'e5a2ac5a-f4b7-11f0-a9c9-5ccd5b28154e'
+    'Authorization': 'REDACTED'
+A body is sent with the request
+2026-01-18 18:51:51,788 | INFO | azure.core.pipeline.policies.http_logging_policy | Response status: 201
+Response headers:
+    'Content-Length': '0'
+    'Content-MD5': 'REDACTED'
+    'Last-Modified': 'Sun, 18 Jan 2026 21:51:51 GMT'
+    'ETag': '"0x8DE56DBC9D2D45C"'
+    'Server': 'Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0'
+    'x-ms-request-id': 'af4b8474-601e-000e-40c4-88b0a6000000'
+    'x-ms-client-request-id': 'e5a2ac5a-f4b7-11f0-a9c9-5ccd5b28154e'
+    'x-ms-version': 'REDACTED'
+    'x-ms-content-crc64': 'REDACTED'
+    'x-ms-request-server-encrypted': 'REDACTED'
+    'Date': 'Sun, 18 Jan 2026 21:51:50 GMT'
