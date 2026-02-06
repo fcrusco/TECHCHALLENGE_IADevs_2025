@@ -1,0 +1,33 @@
+para subir os arquivos para azure, precisa ter o azure cli e o terraform instalados e cadastrados nas variaveis de ambiente e precisa ter o usuario do azure
+
+precisa ter uma chave da API do openIA, e ela não pode subir para o github, se subir, ela imediatamente é apagada da openIA e nao vai funcionar mais.
+com essa chave, preencher no "main.tf" na chave "OPENAI_API_KEY" e no .env na mesma chave.
+
+
+no powershell seguir com os seguintes comandos:
+
+# para fazer login, vai abrir uma janela para escolher o usuario
+az login
+
+# entrar na pasta infra e inicializar
+terraform init
+
+# gerar o plano
+terraform plan
+
+# aplicar
+terraform apply
+
+# subir o front, entrar na pasta front
+az webapp up --resource-group tech_challenge_fiap_2 --name fiap-techchallengefiap-fase2-front --os-type Linux --runtime "PYTHON:3.10"
+
+# subir a api, entrar na pasta api
+az webapp up --resource-group tech_challenge_fiap_2 --name fiap-techchallengefiap-fase2 --os-type Linux --runtime "PYTHON:3.10"
+
+
+
+# se atualizar algum codigo, é só executar novamente os comandos para subir acima e depois, reiniciar a aplicação para garantir com os comando abaixo
+
+az webapp restart --name fiap-techchallengefiap-fase2 --resource-group tech_challenge_fiap_2
+
+az webapp restart --name fiap-techchallengefiap-fase2-front --resource-group tech_challenge_fiap_2
