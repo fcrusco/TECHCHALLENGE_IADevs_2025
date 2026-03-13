@@ -1,0 +1,31 @@
+image_path,pred_idx,pred_class,pred_confidence,pred_cancer
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\1303.jpg,4,Melanoma,0.62796724,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\1366.jpg,4,Melanoma,0.694017,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0129.jpg,4,Melanoma,0.6170272,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0148.jpg,5,Nevo melanocítico,0.83600616,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0602.jpg,4,Melanoma,0.9063991,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\1350.jpg,5,Nevo melanocítico,0.9938928,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\1465.jpg,5,Nevo melanocítico,0.99608433,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\0239.jpg,5,Nevo melanocítico,0.95771056,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\0203.jpg,5,Nevo melanocítico,0.6620387,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\1387.jpg,5,Nevo melanocítico,0.5054147,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\1333.jpg,4,Melanoma,0.70663816,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\0945.jpg,5,Nevo melanocítico,0.9989633,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0216.jpg,5,Nevo melanocítico,0.5036272,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\0857.jpg,5,Nevo melanocítico,0.5433942,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\0921.jpg,5,Nevo melanocítico,0.9423771,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0481.jpg,5,Nevo melanocítico,0.9766421,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\0332.jpg,5,Nevo melanocítico,0.7875071,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\1113.jpg,5,Nevo melanocítico,0.78381574,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\1054.jpg,2,Lesão benigna tipo queratose,0.4841885,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0611.jpg,4,Melanoma,0.95825267,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0607.jpg,5,Nevo melanocítico,0.8022492,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0212.jpg,4,Melanoma,0.66370267,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0975.jpg,5,Nevo melanocítico,0.5424623,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0891.jpg,5,Nevo melanocítico,0.53065455,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\1788.jpg,5,Nevo melanocítico,0.6874986,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\0134.jpg,5,Nevo melanocítico,0.99775404,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\1180.jpg,4,Melanoma,0.9036091,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\malignant\0040.jpg,0,Carcinoma basocelular,0.63543475,1
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\1135.jpg,5,Nevo melanocítico,0.99916613,0
+C:\Users\flmli\.cache\kagglehub\datasets\rm1000\skin-cancer-isic-images\versions\1\benign\0052.jpg,5,Nevo melanocítico,0.96620184,0
