@@ -1,0 +1,40 @@
+# ─── LangChain Pipeline ────────────────────────────────────────
+pipeline:
+  temperature: 0.1             # Baixa para respostas mais determinísticas
+  max_new_tokens: 512
+  top_p: 0.9
+  repetition_penalty: 1.1
+
+# ─── RAG / Retriever ──────────────────────────────────────────
+retriever:
+  embedding_model: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+  vector_store: "faiss"
+  vector_store_path: "./data/vectorstore"
+  top_k: 5
+  score_threshold: 0.7
+
+# ─── Memória ──────────────────────────────────────────────────
+memory:
+  type: "ConversationBufferWindowMemory"
+  k: 10                        # Últimas 10 trocas
+  memory_key: "chat_history"
+  return_messages: true
+
+# ─── Guardrails ───────────────────────────────────────────────
+guardrails:
+  blocked_actions:
+    - "prescrever medicamento"
+    - "alterar prontuário"
+    - "diagnóstico definitivo"
+  require_human_validation:
+    - "dosagem"
+    - "cirurgia"
+    - "internação"
+  max_confidence_without_source: 0.6
+
+# ─── Logging ──────────────────────────────────────────────────
+logging:
+  log_dir: "./logs"
+  audit_log_file: "audit.jsonl"
+  level: "INFO"
+  include_full_prompt: false   # false em produção por LGPD

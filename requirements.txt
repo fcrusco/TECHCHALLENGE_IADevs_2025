@@ -1,0 +1,36 @@
+# LLM & Fine-tuning
+torch>=2.1.0
+transformers>=4.40.0
+peft>=0.10.0           # LoRA / QLoRA
+bitsandbytes>=0.43.0   # Quantização 4/8bit
+accelerate>=0.29.0
+datasets>=2.18.0
+trl>=0.8.6             # SFTTrainer
+
+# LangChain
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-core>=0.2.0
+faiss-cpu>=1.7.4       # Vector store para RAG
+sentence-transformers>=2.7.0
+
+# Banco de dados
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9  # PostgreSQL (prontuários)
+
+# Anonimização (LGPD)
+presidio-analyzer>=2.2.354
+presidio-anonymizer>=2.2.354
+spacy>=3.7.0
+
+# Segurança e logging
+python-dotenv>=1.0.1
+pydantic>=2.7.0
+structlog>=24.1.0
+
+# Utilitários
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+PyYAML>=6.0.1
+tqdm>=4.66.0

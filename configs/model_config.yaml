@@ -1,0 +1,44 @@
+# ─── Modelo Base ───────────────────────────────────────────────
+model:
+  base_name: "meta-llama/Meta-Llama-3-8B-Instruct"
+  output_dir: "./outputs/llama-medical"
+  max_seq_length: 2048
+  load_in_4bit: true            # QLoRA
+  bnb_4bit_compute_dtype: "float16"
+  bnb_4bit_quant_type: "nf4"
+  use_nested_quant: false
+
+# ─── LoRA ──────────────────────────────────────────────────────
+lora:
+  r: 16
+  lora_alpha: 32
+  target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+# ─── Treinamento ───────────────────────────────────────────────
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-4
+  warmup_ratio: 0.03
+  lr_scheduler_type: "cosine"
+  logging_steps: 10
+  save_steps: 200
+  eval_steps: 200
+  fp16: true
+  optim: "paged_adamw_32bit"
+  report_to: "none"
+
+# ─── Dataset ───────────────────────────────────────────────────
+dataset:
+  train_file: "./data/processed/train.jsonl"
+  val_file: "./data/processed/val.jsonl"
+  test_file: "./data/processed/test.jsonl"
+  val_split: 0.1
+  test_split: 0.1
+  instruction_field: "instruction"
+  input_field: "input"
+  output_field: "output"
