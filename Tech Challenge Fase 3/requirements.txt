@@ -42,4 +42,5 @@ requests>=2.31.0
 jupyter>=1.0.0
 ipykernel>=6.29.0
 
-graphviz>=0.20.1
+# LangGraph
+langgraph>=0.1.0
