@@ -1,0 +1,13 @@
+# ── Ollama ────────────────────────────────────────────────────
+ollama:
+  base_url: "http://localhost:11434"
+  model: "llama3.2:3b"
+
+# ── Dataset ───────────────────────────────────────────────────
+dataset:
+  medquad_dir:  "./data/raw/medquad"
+  train_file:   "./data/processed/train.jsonl"
+  val_file:     "./data/processed/val.jsonl"
+  test_file:    "./data/processed/test.jsonl"
+  val_split:    0.1
+  test_split:   0.1
