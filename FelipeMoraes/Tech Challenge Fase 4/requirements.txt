@@ -4,3 +4,4 @@ kagglehub
 tqdm
 requests
 pandas
+scikit-learn
