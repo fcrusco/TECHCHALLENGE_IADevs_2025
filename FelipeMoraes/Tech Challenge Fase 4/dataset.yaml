@@ -1,0 +1,10 @@
+path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/Videos/dataset
+
+train: train/images
+val: val/images
+
+names:
+  0: scalpel
+  1: forceps
+  2: scissors
+  3: retractor
