@@ -4,33 +4,23 @@ import importlib.util
 from ultralytics import YOLO
 import cv2
 
-# Get the absolute path to the project root
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+history = []
+WINDOW = 10
 
-
-# =========================
-# Dynamic import helper
-# =========================
 def import_from_file(module_name, file_path):
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
-
-# =========================
-# Imports dinâmicos
-# =========================
 utils_module = import_from_file("utils", os.path.join(PROJECT_ROOT, "src", "utils.py"))
 extract_frames = utils_module.extract_frames
 
 report_module = import_from_file("report", os.path.join(PROJECT_ROOT, "src", "report.py"))
 generate_report = report_module.generate_report
 
-
-# =========================
-# Dataset
-# =========================
+# Download do Dataset
 def download_dataset():
     download_module = import_from_file(
         "download_dataset",
@@ -38,20 +28,17 @@ def download_dataset():
     )
     download_module.main()
 
-
-# =========================
-# Train
-# =========================
+# Treinamento do Modelo
 def train_model():
     dataset_yaml = os.path.join(PROJECT_ROOT, "dataset.yaml")
 
     if not os.path.exists(dataset_yaml):
-        print(f"❌ dataset.yaml não encontrado")
+        print(f"O arquivo dataset.yaml não foi encontrado")
         return
 
     try:
-        print("🚀 Treinando modelo...")
-        model = YOLO("yolov8n.pt")
+        print("Treinando modelo YOLO...")
+        model = YOLO("yolov8s.pt")
 
         model.train(
             data=dataset_yaml,
@@ -59,30 +46,48 @@ def train_model():
             imgsz=640,
             batch=8,
             name="instrument_detector",
-            patience=10
+            patience=20,
+            device=0,
+            exist_ok=True,
+            project=PROJECT_ROOT
         )
 
-        print("✅ Treinamento concluído!")
+        print("Treinamento YOLO concluído!")
 
     except Exception as e:
-        print(f"❌ Erro: {e}")
+        print(f"Erro encontrado: {e}")
 
-
-# =========================
-# Detect
-# =========================
+# Detecção
 def detect_video(
         video_path,
-        model_path="runs/detect/instrument_detector/weights/best.pt",
+        model_path=None,
         headless=False,
         save_output=True
 ):
+    global history
+
     if not os.path.exists(video_path):
-        print("❌ Vídeo não encontrado")
+        print("Vídeo não encontrado")
         return
 
+    if model_path is None:
+        runs_dir = os.path.join(PROJECT_ROOT, "runs", "detect")
+        if os.path.exists(runs_dir):
+            subdirs = [d for d in os.listdir(runs_dir) if os.path.isdir(os.path.join(runs_dir, d)) and d.startswith("instrument_detector")]
+            if subdirs:
+                subdirs.sort(reverse=True)
+                latest = subdirs[0]
+                model_path = os.path.join(runs_dir, latest, "weights", "best.pt")
+                print(f"Usando modelo: {model_path}")
+            else:
+                print("Nenhum modelo treinado encontrado. Usando yolov8n.pt")
+                model_path = "yolov8n.pt"
+        else:
+            print("Diretório runs/detect não encontrado. Usando yolov8n.pt")
+            model_path = "yolov8n.pt"
+
     if not os.path.exists(model_path):
-        print("❌ Modelo não encontrado")
+        print("Modelo não encontrado")
         return
 
     try:
@@ -90,7 +95,7 @@ def detect_video(
         cap = cv2.VideoCapture(video_path)
 
         if not cap.isOpened():
-            print("❌ Não abriu o vídeo")
+            print("Não foi possível abrir o vídeo...")
             return
 
         width = int(cap.get(3))
@@ -110,33 +115,45 @@ def detect_video(
         detections_count = 0
         anomalies = []
 
-        # 🔥 lógica temporal
         no_instrument_streak = 0
 
-        print("▶️ Iniciando análise...")
+        print("Iniciando análise inteligente...")
 
         while True:
             ret, frame = cap.read()
+
             if not ret:
                 break
 
+            if frame is None or frame.size == 0:
+                continue
+
             frame_count += 1
-            results = model(frame)
+            results = model(frame, conf=0.5, iou=0.5)
 
             num_instruments = 0
 
             if results and len(results) > 0:
                 boxes = results[0].boxes
+
                 if boxes is not None:
-                    num_instruments = len(boxes)
+                    confs = boxes.conf.cpu().numpy()
+                    num_instruments = sum(c > 0.6 for c in confs)
                     detections_count += num_instruments
 
-            # =========================
-            # ANOMALIA
-            # =========================
+            # Histórico
+            history.append(num_instruments)
+
+            if len(history) > WINDOW:
+                history.pop(0)
+
+            avg_recent = sum(history) / len(history)
+
+            # Anomalia
             alert_text = ""
             alert_color = (0, 255, 0)
 
+            # Ausência Prolongada
             if num_instruments == 0:
                 no_instrument_streak += 1
             else:
@@ -147,14 +164,20 @@ def detect_video(
                 alert_color = (0, 0, 255)
                 anomalies.append(f"Frame {frame_count}: ausência prolongada")
 
+            # Excesso
             elif num_instruments > 5:
                 alert_text = f"ALERTA: EXCESSO ({num_instruments})"
                 alert_color = (0, 165, 255)
                 anomalies.append(f"Frame {frame_count}: excesso")
 
-            # =========================
+            # Variação Brusca
+            elif len(history) >= WINDOW:
+                if abs(num_instruments - avg_recent) > 3:
+                    alert_text = "ANOMALIA: VARIAÇÃO BRUSCA"
+                    alert_color = (255, 0, 255)
+                    anomalies.append(f"Frame {frame_count}: variação brusca")
+
             # Overlay
-            # =========================
             annotated_frame = frame.copy()
 
             if results and len(results) > 0:
@@ -180,6 +203,17 @@ def detect_video(
                 2
             )
 
+            # Média Recente
+            cv2.putText(
+                annotated_frame,
+                f"Avg: {avg_recent:.2f}",
+                (10, 110),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (200, 200, 200),
+                2
+            )
+
             if alert_text:
                 cv2.putText(
                     annotated_frame,
@@ -197,7 +231,7 @@ def detect_video(
 
             # mostrar
             if not headless:
-                cv2.imshow("Detecção", annotated_frame)
+                cv2.imshow("Detecção Inteligente", annotated_frame)
                 if cv2.waitKey(1) & 0xFF == 27:
                     break
 
@@ -209,9 +243,10 @@ def detect_video(
         if not headless:
             cv2.destroyAllWindows()
 
-        # =========================
-        # RELATÓRIO
-        # =========================
+        # Relatório Otimizado
+        avg = detections_count / frame_count if frame_count > 0 else 0
+        anomaly_rate = (len(anomalies) / frame_count) * 100 if frame_count > 0 else 0
+
         generate_report(
             "report.txt",
             frame_count,
@@ -219,29 +254,32 @@ def detect_video(
             anomalies
         )
 
-        print("📁 output_detected.mp4 gerado")
+        print("\nRESULTADO FINAL")
+        print(f"Frames: {frame_count}")
+        print(f"Detecções: {detections_count}")
+        print(f"Média/frame: {avg:.2f}")
+        print(f"Anomalias: {len(anomalies)}")
+        print(f"Taxa de anomalia: {anomaly_rate:.2f}%")
+
+        print("output_detected.mp4 gerado")
+        print("report.txt gerado")
 
     except Exception as e:
-        print(f"❌ Erro: {e}")
+        print(f"Erro: {e}")
 
 
-# =========================
-# Extract
-# =========================
+# Extração
 def extract_frames_from_video(video_path, output_dir):
     extract_frames(video_path, output_dir)
 
-
-# =========================
 # CLI
-# =========================
 def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("action", choices=["download", "train", "detect", "extract"])
     parser.add_argument("--video")
     parser.add_argument("--output")
-    parser.add_argument("--model", default="runs/detect/instrument_detector/weights/best.pt")
+    parser.add_argument("--model", default=None)
     parser.add_argument("--headless", action="store_true")
 
     args = parser.parse_args()
