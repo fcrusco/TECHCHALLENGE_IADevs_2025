@@ -1,0 +1,18 @@
+path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset/dataset_automutilacao
+
+train: train/images
+val: val/images
+
+nc: 2
+
+# Fonte (Kaggle via kagglehub):
+#   iqmansingh/guns-knives-object-detection
+#   Imagens de facas e armas de fogo com labels YOLO
+#
+# Classes:
+#   0 = Faca_Lamina  (faca, navalha, lâmina — objeto cortante)
+#   1 = Arma_Fogo    (pistola, revólver — arma de fogo)
+
+names:
+  0: Faca_Lamina
+  1: Arma_Fogo

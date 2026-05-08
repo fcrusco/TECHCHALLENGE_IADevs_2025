@@ -1,4 +1,4 @@
-path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset
+path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset/dataset_instrumentos
 
 train: train/images
 val: val/images
@@ -10,8 +10,8 @@ nc: 4
 # Classes from README.txt:
 #   0 = Scalpel n4 (bisturi)
 #   1 = Straight Dissection Clamp (pinca)
-#   2 = Straight Mayo Scissor (tesourareta)
-#   3 = Curved Mayo Scissor (tesouracurva)
+#   2 = Straight Mayo Scissor (tesoura reta)
+#   3 = Curved Mayo Scissor (tesoura curva)
 # Total: 1834 train / 786 val — balanced ~910 instances per class
 
 names:

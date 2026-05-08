@@ -1,2 +1,11 @@
 dataset/
-
+model/
+runs/
+__pycache__/
+*.pyc
+.venv/
+output_*.mp4
+report_*.txt
+report_*.html
+report_*.json
+*.pt
