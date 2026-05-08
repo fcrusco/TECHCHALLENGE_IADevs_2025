@@ -1,0 +1,18 @@
+path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset/dataset_areas_criticas
+
+train: train/images
+val: val/images
+
+nc: 2
+
+# Fonte (Kaggle via kagglehub):
+#   Mama  → aryashah2k/breast-ultrasound-images-dataset (~780 imgs com máscaras de segmentação)
+#   Ovário → anaghachoudhari/pcos-detection-using-ultrasound-images (~1.932 imgs, capped 1000)
+#
+# Classes:
+#   0 = Ovario (ultrassom ovariano — labels bootstrap de imagem inteira)
+#   1 = Mama   (ultrassom mamário — labels derivados de máscaras de segmentação)
+
+names:
+  0: Ovario
+  1: Mama
