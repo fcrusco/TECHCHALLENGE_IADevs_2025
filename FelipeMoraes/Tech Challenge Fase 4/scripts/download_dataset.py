@@ -30,7 +30,7 @@ if BASE_PATH is None:
 print(f"📁 Dataset encontrado em: {BASE_PATH}")
 
 IMAGES = os.path.join(BASE_PATH, "Images", "All", "images")
-LABELS = os.path.join(BASE_PATH, "Labels", "label top-bottom")
+LABELS = os.path.join(BASE_PATH, "Labels", "label object names")
 SPLIT = os.path.join(BASE_PATH, "Test-Train Groups")
 
 OUTPUT = "dataset"

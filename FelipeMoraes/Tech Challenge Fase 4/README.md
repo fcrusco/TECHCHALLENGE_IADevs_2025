@@ -1,121 +1,175 @@
-# Surgical Instrument Detection App
+# Tech Challenge Fase 4 — Análise de Vídeo para Saúde da Mulher
 
-Aplicação para detecção de instrumentos cirúrgicos em vídeos usando YOLOv8.
+Sistema de detecção de instrumentos cirúrgicos ginecológicos em vídeos, com geração de relatórios especializados de anomalias. Desenvolvido com YOLOv8 customizado para o contexto de cirurgias ginecológicas.
+
+## Visão Geral
+
+Este módulo implementa o requisito de **Análise de Vídeo Especializada para Saúde da Mulher** do Tech Challenge Fase 4 (POSTECH IADT). O sistema:
+
+- Detecta instrumentos cirúrgicos ginecológicos frame a frame usando YOLOv8
+- Identifica anomalias durante procedimentos (ausências prolongadas, excesso de instrumentos, variações bruscas)
+- Gera relatórios automáticos em TXT, HTML e JSON com classificação de risco clínico
+
+## Classes de Instrumentos Detectadas
+
+| ID | Classe | Contexto Clínico |
+|----|--------|-----------------|
+| 0  | Scalpel (Bisturi) | Principal instrumento de incisão |
+| 1  | Straight Dissection Clamp (Pinça reta) | Dissecção e hemostasia |
+| 2  | Straight Mayo Scissor (Tesoura Mayo reta) | Corte de tecidos |
+| 3  | Curved Mayo Scissor (Tesoura Mayo curva) | Corte em áreas de difícil acesso |
+
+**Dataset:** [dilavado/labeled-surgical-tools](https://www.kaggle.com/datasets/dilavado/labeled-surgical-tools) — 3.009 imagens rotuladas
+
+## Tipos de Anomalias Detectadas
+
+| Tipo | Severidade | Trigger | Significado Clínico |
+|------|-----------|---------|---------------------|
+| AUSÊNCIA | ALTO | 10+ frames sem instrumentos | Possível troca não registrada ou queda de instrumento |
+| AUSÊNCIA | CRÍTICO | 30+ frames sem instrumentos | Falha de controle cirúrgico — intervenção necessária |
+| EXCESSO | MÉDIO | >5 instrumentos simultâneos | Falta de controle do campo operatório |
+| VARIAÇÃO | MÉDIO | Delta > 3 da média recente | Possível manobra não planejada |
 
 ## Estrutura do Projeto
 
 ```
-Videos/
-├── app.py                 # Aplicação principal (CLI)
-├── requirements.txt       # Dependências do projeto
-├── README.md              # Este arquivo
-├── dataset/              # Dataset (imagens e rótulos)
-│   ├── dataset.yaml      # Configuração do dataset
-│   ├── train/            # Dados de treino
-│   ├── val/              # Dados de validação
-│   └── raw/              # Dados brutos (KIT dataset)
-├── dist/                 # Executável compilado
-│   └── app.exe          # Executable standalone
-├── scripts/             # Scripts auxiliares
-│   └── download_dataset.py  # Download e organização do dataset
-├── src/                 # Código-fonte reutilizável
-│   └── utils.py         # Funções utilitárias
-└── runs/               # Resultados de treinamento (criado automaticamente)
-    └── detect/instrument_detector/
-        └── weights/
-            └── best.pt  # Melhor modelo treinado
+Tech Challenge Fase 4/
+├── app.py                    # Aplicação principal (CLI)
+├── dataset.yaml              # Configuração do dataset YOLO
+├── requirements.txt          # Dependências
+├── README.md
+├── dataset/
+│   ├── train/
+│   │   ├── images/           # 2.170 imagens de treino
+│   │   └── labels/           # Labels YOLO correspondentes
+│   └── val/
+│       ├── images/           # 851 imagens de validação
+│       └── labels/
+├── scripts/
+│   └── download_dataset.py   # Download automático do Kaggle
+├── src/
+│   ├── utils.py              # Extração de frames
+│   └── report.py             # Geração de relatórios (TXT/HTML/JSON)
+├── instrument_detector/      # Criado após treino
+│   └── weights/
+│       └── best.pt           # Melhor modelo treinado
+└── yolov8s.pt                # Modelo base pré-treinado
 ```
 
 ## Instalação
-
-### 1. Instalar Dependências
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Baixar e Organizar Dataset
+## Uso
+
+### 1. Baixar e Organizar Dataset
+
+Requer credenciais Kaggle configuradas (`~/.kaggle/kaggle.json`):
 
 ```bash
 python app.py download
 ```
 
-## Uso
-
-### Treinar o Modelo
+### 2. Treinar o Modelo
 
 ```bash
 python app.py train
 ```
 
-**Parâmetros configuráveis em `app.py`:**
-- `epochs`: Número de épocas (padrão: 50)
-- `imgsz`: Tamanho da imagem (padrão: 640)
-- `batch`: Tamanho do batch (padrão: 8)
+Configurações padrão:
+- Modelo base: YOLOv8 Small (`yolov8s.pt`)
+- Épocas: 50 (com early stopping patience=20)
+- Tamanho de imagem: 640×640
+- Batch size: 8
+- Saída: `instrument_detector/weights/best.pt`
 
-### Detectar Instrumentos em Vídeo
+### 3. Analisar Vídeo
 
 ```bash
 python app.py detect --video path/to/video.mp4
 ```
 
-**Opções:**
-- `--video`: Caminho para o vídeo (obrigatório)
-- `--model`: Caminho para o modelo treinado (padrão: `runs/detect/instrument_detector/weights/best.pt`)
-
-### Extrair Frames de Vídeo
-
+**Com modelo customizado:**
 ```bash
-python app.py extract --video path/to/video.mp4 --output output_folder/
+python app.py detect --video path/to/video.mp4 --model instrument_detector/weights/best.pt
 ```
 
-**Opções:**
-- `--video`: Caminho para o vídeo (obrigatório)
-- `--output`: Pasta de saída (obrigatório)
-
-## Usando o Executável
-
-O arquivo `dist/app.exe` é uma versão compilada standalone:
-
+**Sem janela de visualização (servidor/CI):**
 ```bash
-dist\app.exe download
-dist\app.exe train
-dist\app.exe detect --video path/to/video.mp4
-dist\app.exe extract --video path/to/video.mp4 --output output_folder/
+python app.py detect --video path/to/video.mp4 --headless
 ```
 
-## Classes de Instrumentos
+### 4. Extrair Frames de Vídeo
 
-- `grasper` - Pinça
-- `scissors` - Tesoura
-- `forceps` - Fórceps
-- `needle_holder` - Porta-agulha
+```bash
+python app.py extract --video path/to/video.mp4 --output output_frames/
+```
+
+## Saídas da Análise
+
+Após `python app.py detect`, são gerados na raiz do projeto:
+
+| Arquivo | Formato | Conteúdo |
+|---------|---------|---------|
+| `output_detected.mp4` | Vídeo | Vídeo anotado com bounding boxes e alertas |
+| `report.txt` | Texto | Relatório simplificado com lista de anomalias |
+| `report.html` | HTML | Relatório visual com tabela de anomalias e avaliação de risco |
+| `report.json` | JSON | Dados estruturados para integração com outros sistemas |
+
+### Exemplo de Relatório JSON
+
+```json
+{
+  "metadata": {
+    "video_file": "cirurgia.mp4",
+    "analysis_date": "2026-05-07T14:30:00",
+    "fps": 25.0,
+    "system": "YOLOv8 - Ginecological Surgical Instrument Detector"
+  },
+  "summary": {
+    "total_frames": 1500,
+    "total_detections": 3200,
+    "avg_detections_per_frame": 2.13,
+    "anomaly_count": 12,
+    "anomaly_rate_pct": 0.8,
+    "risk_level": "BAIXO",
+    "by_type": {
+      "AUSÊNCIA": 3,
+      "EXCESSO": 2,
+      "VARIAÇÃO": 7
+    }
+  },
+  "anomalies": [
+    {
+      "frame": 145,
+      "timestamp": "00:05",
+      "severity": "ALTO",
+      "type": "AUSÊNCIA",
+      "description": "Ausência prolongada de instrumentos (10 frames consecutivos)"
+    }
+  ]
+}
+```
 
 ## Requisitos do Sistema
 
 - Python 3.8+
-- CUDA (opcional, para GPU)
+- PyTorch 2.x com CUDA (recomendado para treinamento)
 - OpenCV
-- PyTorch
 - Ultralytics YOLOv8
 
-## Estrutura de Arquivos Removidos
+## Relação com o Tech Challenge
 
-Os seguintes arquivos foram consolidados no `app.py`:
-- ❌ `detect_video.py` → Integrado em `app.py`
-- ❌ `train.py` → Integrado em `app.py`
-- ❌ `main.py` → Arquivo vazio, removido
-- ❌ `download_kaggle.py` → Integrado em `download_dataset.py`
-- ❌ `download_yolo_dataset.py` → Integrado em `download_dataset.py`
-- ❌ `setup-dataset.py` → Integrado em `download_dataset.py`
-- ❌ `prepare_dataset.py` → Integrado em `download_dataset.py`
-- ❌ `convert_to_yolo.py` → Funcionalidade deprecada
-- ❌ `process.py` → Arquivo de teste, removido
+Este módulo atende os requisitos de:
 
-## Próximas Melhorias
+**Análise de Vídeo Especializada:**
+- ✅ Cirurgias: detecção de instrumentos e anomalias cirúrgicas
+- ✅ YOLOv8 customizado para instrumentos cirúrgicos ginecológicos
 
-- [ ] Adicionar interface gráfica (GUI)
-- [ ] Suporte para múltiplos formatos de vídeo
-- [ ] Dashboard de métricas de treinamento
-- [ ] Exportar detecções para JSON/CSV
-
+**Relatórios automáticos especializados:**
+- ✅ Desvios em procedimentos cirúrgicos (ausências e variações)
+- ✅ Sinais de complicações em cirurgias ginecológicas (excesso de instrumentos)
+- ✅ Classificação de risco clínico (BAIXO / MÉDIO / ALTO / CRÍTICO)
+- ✅ Exportação JSON para integração com sistemas hospitalares
