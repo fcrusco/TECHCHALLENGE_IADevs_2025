@@ -3,12 +3,19 @@ path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/d
 train: train/images
 val: val/images
 
+nc: 4
+
 # Dataset: dilavado/labeled-surgical-tools
-# Total: 3009 images with surgical instrument labels
-# Each tool is classified as being on top (not occluded) or at bottom (occluded)
+# Labels from: Labels/label object names  (NOT label top-bottom)
+# Classes from README.txt:
+#   0 = Scalpel n4 (bisturi)
+#   1 = Straight Dissection Clamp (pinca)
+#   2 = Straight Mayo Scissor (tesourareta)
+#   3 = Curved Mayo Scissor (tesouracurva)
+# Total: 1834 train / 786 val — balanced ~910 instances per class
 
 names:
-  0: Scalpel
-  1: Straight Dissection Clamp
-  2: Straight Mayo Scissor
-  3: Curved Mayo Scissor
+  0: Bisturi
+  1: Pinça de Dissecção
+  2: Tesoura Mayo Reta
+  3: Tesoura Mayo Curva
