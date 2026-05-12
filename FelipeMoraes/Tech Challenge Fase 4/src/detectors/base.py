@@ -12,7 +12,7 @@ _SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-import report as _report_module
+import relatorio as _relatorio_module
 
 try:
     from dotenv import load_dotenv
@@ -260,9 +260,12 @@ class BaseDetector:
             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             fps = cap.get(cv2.CAP_PROP_FPS) or 20
 
+            saida_dir = os.path.join(PROJECT_ROOT, "saida", self.MODEL_FOLDER)
+            os.makedirs(saida_dir, exist_ok=True)
+
             out = None
             if save_output:
-                output_video = os.path.join(PROJECT_ROOT, f"output_{self.MODEL_NAME}.mp4")
+                output_video = os.path.join(saida_dir, "output.mp4")
                 out = cv2.VideoWriter(
                     output_video,
                     cv2.VideoWriter_fourcc(*"mp4v"),
@@ -274,6 +277,7 @@ class BaseDetector:
             detections_count = 0
             anomalies = []
             no_streak = 0
+            class_frames = {}
 
             print(f"Iniciando análise [{self.MODEL_NAME}] ...")
             print(f"Vídeo: {os.path.basename(video_path)} | {width}x{height} @ {fps:.1f}fps")
@@ -301,6 +305,9 @@ class BaseDetector:
                     if boxes is not None and len(boxes):
                         num_detections = len(boxes)
                         detections_count += num_detections
+                        for cls_id in boxes.cls.cpu().numpy().astype(int).tolist():
+                            cls_name = self.NAMES_PTBR.get(cls_id, str(cls_id))
+                            class_frames.setdefault(cls_name, []).append(frame_count)
 
                 self._history.append(num_detections)
                 if len(self._history) > self.WINDOW:
@@ -339,10 +346,19 @@ class BaseDetector:
             avg = detections_count / frame_count if frame_count > 0 else 0
             anomaly_rate = (len(anomalies) / frame_count) * 100 if frame_count > 0 else 0
 
-            report_path = os.path.join(PROJECT_ROOT, f"report_{self.MODEL_NAME}.txt")
-            _report_module.generate_report(
+            class_summary = {}
+            for name, frames in class_frames.items():
+                class_summary[name] = {
+                    "count": len(frames),
+                    "first_frame": frames[0],
+                    "last_frame": frames[-1],
+                    "frames_pct": round(len(frames) / frame_count * 100, 1) if frame_count else 0,
+                }
+
+            report_path = os.path.join(saida_dir, "relatorio.txt")
+            _relatorio_module.generate_report(
                 report_path, frame_count, detections_count, anomalies,
-                fps=fps, video_path=video_path
+                fps=fps, video_path=video_path, class_summary=class_summary
             )
 
             print(f"\n=== RESULTADO FINAL [{self.MODEL_NAME}] ===")
@@ -351,9 +367,17 @@ class BaseDetector:
             print(f"Média por frame:   {avg:.2f}")
             print(f"Anomalias:         {len(anomalies)}")
             print(f"Taxa de anomalia:  {anomaly_rate:.2f}%")
-            print(f"\nArquivos gerados:")
-            print(f"  Vídeo anotado: output_{self.MODEL_NAME}.mp4")
-            print(f"  Relatório: report_{self.MODEL_NAME}.txt/.html/.json")
+            print(f"\nArquivos gerados em: saida/{self.MODEL_FOLDER}/")
+            print(f"  Vídeo anotado: output.mp4")
+            print(f"  Relatório:     relatorio.txt/.html/.json")
+
+            return {
+                "frame_count": frame_count,
+                "detections_count": detections_count,
+                "anomalies": anomalies,
+                "fps": fps,
+                "class_summary": class_summary,
+            }
 
         except Exception as e:
             print(f"Erro na detecção: {e}")

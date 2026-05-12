@@ -1,11 +1,13 @@
 dataset/
 model/
 runs/
+saida/
 __pycache__/
 *.pyc
 .venv/
-output_*.mp4
+.idea/
+*.mp4
+*.pt
 report_*.txt
 report_*.html
 report_*.json
-*.pt
