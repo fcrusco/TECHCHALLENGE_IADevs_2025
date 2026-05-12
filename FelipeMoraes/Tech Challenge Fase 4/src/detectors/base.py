@@ -52,27 +52,20 @@ class BaseDetector:
     EXCESS_THRESHOLD        = _ei("ANOMALY_EXCESS", 5)
     VARIATION_THRESHOLD     = _ei("ANOMALY_VARIATION", 3)
 
-    MIN_BOX_AREA_RATIO  = _ef("FILTER_MIN_BOX_AREA", 0.002)
-    MAX_BOX_AREA_RATIO  = _ef("FILTER_MAX_BOX_AREA", 0.50)
-    MIN_ASPECT_RATIO    = _ef("FILTER_MIN_ASPECT", 1.5)
-    EDGE_MARGIN_RATIO   = _ef("FILTER_EDGE_MARGIN", 0.008)
-    OVERLAY_ZONE_TOP    = _ef("FILTER_OVERLAY_TOP", 0.22)
-    OVERLAY_ZONE_BOTTOM = _ef("FILTER_OVERLAY_BOTTOM", 0.80)
+    MIN_BOX_AREA_RATIO    = _ef("FILTER_MIN_BOX_AREA", 0.002)
+    MAX_BOX_AREA_RATIO    = _ef("FILTER_MAX_BOX_AREA", 0.50)
+    MIN_ASPECT_RATIO      = _ef("FILTER_MIN_ASPECT", 1.5)
+    EDGE_MARGIN_RATIO     = _ef("FILTER_EDGE_MARGIN", 0.04)
+    OVERLAY_ZONE_TOP      = _ef("FILTER_OVERLAY_TOP", 0.22)
+    OVERLAY_ZONE_BOTTOM   = _ef("FILTER_OVERLAY_BOTTOM", 0.80)
+    # Filtro anti-banner de texto: rejeita caixas muito largas e rasas
+    MAX_BANNER_WH_RATIO   = _ef("FILTER_BANNER_WH", 4.0)
+    MAX_BANNER_H_RATIO    = _ef("FILTER_BANNER_H", 0.08)
 
     EPOCHS   = _ei("TRAIN_EPOCHS", 80)
     IMGSZ    = _ei("TRAIN_IMGSZ", 640)
     BATCH    = _ei("TRAIN_BATCH", 16)
     PATIENCE = _ei("TRAIN_PATIENCE", 20)
-
-    AUG_MOSAIC    = _ef("AUGMENT_MOSAIC", 1.0)
-    AUG_FLIPUD    = _ef("AUGMENT_FLIPUD", 0.3)
-    AUG_FLIPLR    = _ef("AUGMENT_FLIPLR", 0.5)
-    AUG_DEGREES   = _ef("AUGMENT_DEGREES", 10.0)
-    AUG_TRANSLATE = _ef("AUGMENT_TRANSLATE", 0.1)
-    AUG_SCALE     = _ef("AUGMENT_SCALE", 0.5)
-    AUG_HSV_H     = _ef("AUGMENT_HSV_H", 0.015)
-    AUG_HSV_S     = _ef("AUGMENT_HSV_S", 0.7)
-    AUG_HSV_V     = _ef("AUGMENT_HSV_V", 0.4)
 
     def __init__(self):
         self._history = []
@@ -107,20 +100,11 @@ class BaseDetector:
                 epochs=self.EPOCHS,
                 imgsz=self.IMGSZ,
                 batch=self.BATCH,
-                name=self.MODEL_FOLDER,
                 patience=self.PATIENCE,
                 device=_es("TRAIN_DEVICE", "0"),
-                exist_ok=True,
+                name=self.MODEL_FOLDER,
                 project=model_dir,
-                mosaic=self.AUG_MOSAIC,
-                flipud=self.AUG_FLIPUD,
-                fliplr=self.AUG_FLIPLR,
-                degrees=self.AUG_DEGREES,
-                translate=self.AUG_TRANSLATE,
-                scale=self.AUG_SCALE,
-                hsv_h=self.AUG_HSV_H,
-                hsv_s=self.AUG_HSV_S,
-                hsv_v=self.AUG_HSV_V,
+                exist_ok=True,
             )
             print(f"Treinamento concluído!")
             print(f"Modelo: {os.path.join(output_dir, 'weights', 'best.pt')}")
@@ -135,7 +119,8 @@ class BaseDetector:
             return results
 
         frame_area = frame_w * frame_h
-        edge_px = max(frame_w, frame_h) * self.EDGE_MARGIN_RATIO
+        edge_x = frame_w * self.EDGE_MARGIN_RATIO
+        edge_y = frame_h * self.EDGE_MARGIN_RATIO
         xyxy = boxes.xyxy.cpu().numpy()
 
         keep = []
@@ -152,11 +137,18 @@ class BaseDetector:
                 continue
             if aspect < self.MIN_ASPECT_RATIO:
                 continue
-            if x1 < edge_px or y1 < edge_px or x2 > frame_w - edge_px or y2 > frame_h - edge_px:
+            # Borda do frame (margem assimétrica X/Y para capturar logos de canto)
+            if x1 < edge_x or x2 > frame_w - edge_x:
                 continue
-            is_landscape = w > h
+            if y1 < edge_y or y2 > frame_h - edge_y:
+                continue
+            # Zona de overlay (HUD/título): qualquer orientação
             in_overlay = cy < frame_h * self.OVERLAY_ZONE_TOP or cy > frame_h * self.OVERLAY_ZONE_BOTTOM
-            if is_landscape and in_overlay:
+            if in_overlay:
+                continue
+            # Banner de texto: caixa muito larga e rasa (legenda, título, watermark)
+            wh_ratio = w / max(h, 1.0)
+            if wh_ratio > self.MAX_BANNER_WH_RATIO and h / frame_h < self.MAX_BANNER_H_RATIO:
                 continue
             keep.append(i)
 
@@ -333,9 +325,12 @@ class BaseDetector:
                     out.write(annotated_frame)
 
                 if not headless:
-                    cv2.imshow(f"Análise — {self.MODEL_NAME}", annotated_frame)
-                    if cv2.waitKey(1) & 0xFF == 27:
-                        break
+                    try:
+                        cv2.imshow(f"Análise — {self.MODEL_NAME}", annotated_frame)
+                        if cv2.waitKey(1) & 0xFF == 27:
+                            break
+                    except cv2.error:
+                        headless = True  # GUI indisponível — continua sem janela
 
             cap.release()
             if out:

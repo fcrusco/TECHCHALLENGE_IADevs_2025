@@ -44,7 +44,7 @@ _MODEL_FOLDER = {
 }
 
 
-def _detect_all(video_path, model_path, headless):
+def _detect_all(video_path, model_path):
     import relatorio as _relatorio_module
 
     model_results = []
@@ -55,7 +55,7 @@ def _detect_all(video_path, model_path, headless):
         print(f"  [{i}/{total}] Processando modelo: {mode}")
         print(f"{'='*60}")
         detector = _get_detector(mode)
-        result = detector.detect_video(video_path, model_path, headless)
+        result = detector.detect_video(video_path, model_path, headless=True)
         if result is None:
             print(f"  AVISO: {mode} não retornou resultados (modelo ausente?).")
             continue
@@ -130,7 +130,13 @@ def main():
             _load(name, rel).main()
 
     elif args.action == "train":
-        _get_detector(args.mode).train()
+        modes = _ALL_MODES if args.mode == "todos" else [args.mode]
+        for i, mode in enumerate(modes, 1):
+            if args.mode == "todos":
+                print(f"\n{'='*60}")
+                print(f"  [{i}/{len(modes)}] Treinando modelo: {mode}")
+                print(f"{'='*60}")
+            _get_detector(mode).train()
 
     elif args.action == "detect":
         if not args.video:
@@ -139,7 +145,7 @@ def main():
             return
 
         if args.mode == "todos":
-            _detect_all(args.video, args.model, args.headless)
+            _detect_all(args.video, args.model)
         else:
             _get_detector(args.mode).detect_video(args.video, args.model, args.headless)
 

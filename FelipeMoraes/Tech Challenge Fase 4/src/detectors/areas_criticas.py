@@ -5,7 +5,7 @@ _SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from detectors.base import BaseDetector, _ef, _ei
+from detectors.base import BaseDetector, _ei, _ef, _es
 
 
 class AreasCriticasDetector(BaseDetector):
@@ -20,6 +20,12 @@ class AreasCriticasDetector(BaseDetector):
     }
     DATASET_YAML = "download_dataset/dataset_areas_criticas.yaml"
 
+    EPOCHS     = _ei("AREAS_TRAIN_EPOCHS",     _ei("TRAIN_EPOCHS", 100))
+    IMGSZ      = _ei("AREAS_TRAIN_IMGSZ",      _ei("TRAIN_IMGSZ", 640))
+    BATCH      = _ei("AREAS_TRAIN_BATCH",      _ei("TRAIN_BATCH", 8))
+    PATIENCE   = _ei("AREAS_TRAIN_PATIENCE",   _ei("TRAIN_PATIENCE", 20))
+    BASE_MODEL = _es("AREAS_TRAIN_BASE_MODEL", _es("TRAIN_BASE_MODEL", "yolov8m.pt"))
+
     CONFIDENCE_THRESHOLD = _ef("AREAS_CONFIDENCE", 0.50)
     MIN_ASPECT_RATIO     = _ef("AREAS_MIN_ASPECT", 1.0)
     MAX_BOX_AREA_RATIO   = _ef("AREAS_MAX_BOX_AREA", 0.65)
@@ -33,16 +39,16 @@ class AreasCriticasDetector(BaseDetector):
         if no_streak == self.ABSENCE_CRITICAL_FRAMES:
             anomaly = self._make_anomaly(
                 frame_count, "AUSÊNCIA", "CRÍTICO",
-                f"Estruturas anatômicas ausentes ({no_streak} frames) — "
-                "possível perda de campo visual ou complicação grave"
+                f"Estruturas ginecológicas não identificadas ({no_streak} frames) — "
+                "possível desvio de procedimento obstétrico ou complicação grave"
             )
             alert_text = "ALERTA CRITICO: ESTRUTURA NAO VISIVEL"
             alert_color = (0, 0, 200)
         elif no_streak == self.ABSENCE_WARN_FRAMES:
             anomaly = self._make_anomaly(
                 frame_count, "AUSÊNCIA", "ALTO",
-                f"Estruturas anatômicas não identificadas ({no_streak} frames) — "
-                "verificar posicionamento da câmera"
+                f"Estruturas ginecológicas ausentes ({no_streak} frames) — "
+                "verificar campo cirúrgico e protocolo obstétrico"
             )
             alert_text = "ALERTA: ESTRUTURA AUSENTE"
             alert_color = (0, 0, 255)
@@ -50,7 +56,7 @@ class AreasCriticasDetector(BaseDetector):
             anomaly = self._make_anomaly(
                 frame_count, "EXCESSO", "MÉDIO",
                 f"Múltiplas estruturas detectadas ({num_detections}) — "
-                "verificar campo cirúrgico e possível confusão de estruturas"
+                "revisar campo obstétrico e possível confusão anatômica"
             )
             alert_text = f"ALERTA: MULTIPLAS ESTRUTURAS ({num_detections})"
             alert_color = (0, 165, 255)
@@ -59,8 +65,8 @@ class AreasCriticasDetector(BaseDetector):
             if delta > self.VARIATION_THRESHOLD:
                 anomaly = self._make_anomaly(
                     frame_count, "VARIAÇÃO", "MÉDIO",
-                    f"Variação na visibilidade de estruturas (delta={delta:.1f}, média={avg_recent:.1f}) — "
-                    "possível mudança de campo ou movimento brusco"
+                    f"Variação inesperada de estruturas (delta={delta:.1f}, média={avg_recent:.1f}) — "
+                    "possível complicação em procedimento ginecológico"
                 )
                 alert_text = "ANOMALIA: VARIACAO DE CAMPO"
                 alert_color = (255, 0, 255)

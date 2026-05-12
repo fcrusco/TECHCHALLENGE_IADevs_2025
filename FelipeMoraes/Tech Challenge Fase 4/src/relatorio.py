@@ -2,6 +2,76 @@ import json
 import os
 from datetime import datetime
 
+# ---------------------------------------------------------------------------
+# Critérios especializados — mapeamento modelo → critério clínico
+# ---------------------------------------------------------------------------
+
+_SPECIALTY_CRITERIA = [
+    {
+        "title": "Desvios em Procedimentos Obstétricos",
+        "description": "Alterações em estruturas anatômicas e sangramento anômalo durante procedimentos obstétricos.",
+        "recommendation": "Acionar equipe obstétrica para avaliação imediata.",
+        "detectors": {"areas_criticas", "sangramento"},
+    },
+    {
+        "title": "Sinais de Complicações em Cirurgias Ginecológicas",
+        "description": "Sangramento intraoperatório, ausência de estruturas esperadas ou variação brusca de instrumentos.",
+        "recommendation": "Revisar protocolo cirúrgico e avaliar status clínico da paciente.",
+        "detectors": {"instrumentos", "sangramento", "areas_criticas"},
+    },
+    {
+        "title": "Indicadores Visuais de Desconforto Psicológico",
+        "description": "Detecção de objetos cortantes associados a comportamento autolesivo e sofrimento psicológico.",
+        "recommendation": "Acionar suporte psicológico e equipe de saúde mental.",
+        "detectors": {"automutilacao"},
+        "anomaly_types": {"OBJETO_SUSPEITO"},
+    },
+    {
+        "title": "Alertas para Possíveis Casos de Violência Doméstica",
+        "description": "Identificação de armas de fogo ou objetos cortantes em contexto de risco e violência.",
+        "recommendation": "Acionar protocolo de segurança e autoridades competentes.",
+        "detectors": {"automutilacao"},
+        "anomaly_types": {"ARMA_DETECTADA", "OBJETO_SUSPEITO"},
+    },
+]
+
+
+def _evaluate_criteria(model_results):
+    """Retorna lista de (criterio, triggered, findings) para cada critério especializado."""
+    results_by_folder = {r["model_folder"]: r for r in model_results}
+    evaluated = []
+
+    for criterion in _SPECIALTY_CRITERIA:
+        findings = []
+        filter_types = criterion.get("anomaly_types")
+
+        for folder in criterion["detectors"]:
+            r = results_by_folder.get(folder)
+            if not r:
+                continue
+            anomalies = r["anomalies"]
+            if filter_types:
+                anomalies = [a for a in anomalies if isinstance(a, dict) and a.get("type") in filter_types]
+            if anomalies:
+                critico = _count_by_severity(anomalies, "CRÍTICO")
+                alto    = _count_by_severity(anomalies, "ALTO")
+                medio   = _count_by_severity(anomalies, "MÉDIO")
+                findings.append({
+                    "folder": folder,
+                    "count": len(anomalies),
+                    "critico": critico,
+                    "alto": alto,
+                    "medio": medio,
+                })
+
+        evaluated.append({
+            "criterion": criterion,
+            "triggered": len(findings) > 0,
+            "findings": findings,
+        })
+
+    return evaluated
+
 
 def generate_report(output_path, total_frames, total_detections, anomalies,
                     fps=20, video_path=None, class_summary=None):
@@ -440,6 +510,20 @@ def _combined_text(path, model_results, video_name, now, total_frames, total_ano
         f.write(f"  Taxa geral:         {overall_rate:.2f}%\n")
         f.write(f"  Nível de risco:     {risk_label}\n\n")
 
+        f.write("--- CRITÉRIOS ESPECIALIZADOS ---\n")
+        for ev in _evaluate_criteria(model_results):
+            c = ev["criterion"]
+            status = "ACIONADO" if ev["triggered"] else "SEM OCORRÊNCIAS"
+            f.write(f"  [{status}] {c['title']}\n")
+            if ev["triggered"]:
+                for fd in ev["findings"]:
+                    f.write(
+                        f"    → {fd['folder']}: {fd['count']} ocorrência(s) "
+                        f"[CRÍTICO:{fd['critico']} ALTO:{fd['alto']} MÉDIO:{fd['medio']}]\n"
+                    )
+                f.write(f"    Recomendação: {c['recommendation']}\n")
+            f.write("\n")
+
         for r in model_results:
             anomaly_rate = (len(r["anomalies"]) / r["frame_count"]) * 100 if r["frame_count"] else 0
             mlabel, _ = _get_risk_level(anomaly_rate)
@@ -548,6 +632,42 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
     </table>"""
     )
 
+    # Critérios especializados
+    criteria_cards = ""
+    for ev in _evaluate_criteria(model_results):
+        c = ev["criterion"]
+        if ev["triggered"]:
+            border = "#dc3545"
+            bg = "#fff5f5"
+            badge_bg = "#dc3545"
+            badge_txt = "ACIONADO"
+            findings_html = "".join(
+                f"<li><strong>{fd['folder']}</strong>: {fd['count']} ocorrência(s) — "
+                f"<span style='color:#dc3545'>CRÍTICO:{fd['critico']}</span> "
+                f"<span style='color:#fd7e14'>ALTO:{fd['alto']}</span> "
+                f"<span style='color:#ffc107'>MÉDIO:{fd['medio']}</span></li>"
+                for fd in ev["findings"]
+            )
+            rec_html = f"<p style='margin:8px 0 0;font-size:0.85em;color:#555'><strong>Recomendação:</strong> {c['recommendation']}</p>"
+        else:
+            border = "#28a745"
+            bg = "#f0fff4"
+            badge_bg = "#28a745"
+            badge_txt = "SEM OCORRÊNCIAS"
+            findings_html = ""
+            rec_html = ""
+
+        criteria_cards += f"""
+    <div style="border-left:4px solid {border};background:{bg};padding:14px 18px;border-radius:4px;margin:10px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <strong style="font-size:0.97em">{c['title']}</strong>
+        <span style="background:{badge_bg};color:white;padding:2px 10px;border-radius:10px;font-size:0.78em;font-weight:bold">{badge_txt}</span>
+      </div>
+      <p style="margin:0;font-size:0.84em;color:#555">{c['description']}</p>
+      {"<ul style='margin:8px 0 0;padding-left:18px;font-size:0.85em'>" + findings_html + "</ul>" if findings_html else ""}
+      {rec_html}
+    </div>"""
+
     combined_css = _BASE_CSS + """
   .badge { display: inline-block; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.82em; font-weight: bold; }
   .model-section { border: 1px solid #e0e0e0; border-radius: 6px; margin: 15px 0; overflow: hidden; }
@@ -580,6 +700,9 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
     <div class="stat-card"><div class="value">{total_anomalies}</div><div class="label">Anomalias Totais</div></div>
     <div class="stat-card"><div class="value"><span class="risk-badge" style="background:{risk_color}">{risk_label}</span></div><div class="label">Risco Geral</div></div>
   </div>
+
+  <h2>Critérios Especializados</h2>
+  {criteria_cards}
 
   <h2>Resultados por Modelo</h2>
   {model_sections}
@@ -639,6 +762,24 @@ def _combined_json(path, model_results, video_name, now, total_frames, total_ano
             "anomalies": anomaly_list,
         })
 
+    criteria_data = []
+    for ev in _evaluate_criteria(model_results):
+        c = ev["criterion"]
+        criteria_data.append({
+            "title": c["title"],
+            "description": c["description"],
+            "triggered": ev["triggered"],
+            "recommendation": c["recommendation"] if ev["triggered"] else None,
+            "findings": [
+                {
+                    "model": fd["folder"],
+                    "occurrences": fd["count"],
+                    "by_severity": {"CRÍTICO": fd["critico"], "ALTO": fd["alto"], "MÉDIO": fd["medio"]},
+                }
+                for fd in ev["findings"]
+            ],
+        })
+
     report_data = {
         "metadata": {
             "video_file": video_name,
@@ -654,6 +795,7 @@ def _combined_json(path, model_results, video_name, now, total_frames, total_ano
             "overall_risk_level": risk_label,
             "models_count": len(model_results),
         },
+        "specialty_criteria": criteria_data,
         "models": models_data,
     }
 

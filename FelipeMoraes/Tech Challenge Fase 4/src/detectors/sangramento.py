@@ -5,7 +5,7 @@ _SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from detectors.base import BaseDetector, _ef, _ei
+from detectors.base import BaseDetector, _ei, _ef, _es
 
 
 class SangramentoDetector(BaseDetector):
@@ -17,9 +17,19 @@ class SangramentoDetector(BaseDetector):
     NAMES_PTBR = {0: "Sangramento"}
     DATASET_YAML = "download_dataset/dataset_sangramento.yaml"
 
+    EPOCHS     = _ei("BLEED_TRAIN_EPOCHS",     _ei("TRAIN_EPOCHS", 100))
+    IMGSZ      = _ei("BLEED_TRAIN_IMGSZ",      _ei("TRAIN_IMGSZ", 640))
+    BATCH      = _ei("BLEED_TRAIN_BATCH",      _ei("TRAIN_BATCH", 8))
+    PATIENCE   = _ei("BLEED_TRAIN_PATIENCE",   _ei("TRAIN_PATIENCE", 20))
+    BASE_MODEL = _es("BLEED_TRAIN_BASE_MODEL", _es("TRAIN_BASE_MODEL", "yolov8m.pt"))
+
     CONFIDENCE_THRESHOLD = _ef("BLEED_CONFIDENCE", 0.45)
     MIN_ASPECT_RATIO     = _ef("BLEED_MIN_ASPECT", 1.0)
     MAX_BOX_AREA_RATIO   = _ef("BLEED_MAX_BOX_AREA", 0.80)
+
+    # Sangramento pode ocorrer em qualquer zona do frame — desativa filtro de overlay
+    OVERLAY_ZONE_TOP    = 0.0
+    OVERLAY_ZONE_BOTTOM = 1.0
 
     BLEEDING_WARN_FRAMES     = _ei("BLEED_WARN_FRAMES", 5)
     BLEEDING_CRITICAL_FRAMES = _ei("BLEED_CRITICAL_FRAMES", 15)
@@ -47,7 +57,7 @@ class SangramentoDetector(BaseDetector):
                 anomaly = self._make_anomaly(
                     frame_count, "SANGRAMENTO", "CRÍTICO",
                     f"Sangramento persistente ({streak} frames consecutivos) — "
-                    "intervenção imediata necessária"
+                    "risco de complicação obstétrica/cirúrgica grave; intervenção imediata"
                 )
             alert_text = f"ALERTA CRITICO: SANGRAMENTO ({streak}q)"
             alert_color = (0, 0, 200)
@@ -57,7 +67,7 @@ class SangramentoDetector(BaseDetector):
                 anomaly = self._make_anomaly(
                     frame_count, "SANGRAMENTO", "ALTO",
                     f"Sangramento contínuo detectado ({streak} frames consecutivos) — "
-                    "monitorar e avaliar intervenção"
+                    "monitorar evolução; possível complicação em procedimento ginecológico/obstétrico"
                 )
             alert_text = f"ALERTA: SANGRAMENTO CONTINUO ({streak}q)"
             alert_color = (0, 0, 255)
@@ -65,7 +75,7 @@ class SangramentoDetector(BaseDetector):
         elif num_detections > 0 and streak == 1:
             anomaly = self._make_anomaly(
                 frame_count, "SANGRAMENTO", "MÉDIO",
-                "Sangramento detectado no campo cirúrgico — aguardando confirmação"
+                "Sangramento detectado no campo — aguardando confirmação de desvio em procedimento cirúrgico/obstétrico"
             )
             alert_text = "ATENCAO: SANGRAMENTO DETECTADO"
             alert_color = (0, 165, 255)

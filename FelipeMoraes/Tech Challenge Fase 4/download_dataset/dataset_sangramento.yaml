@@ -1,4 +1,4 @@
-path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset/dataset_sangramentos
+path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset/dataset_sangramento
 
 train: train/images
 val: val/images

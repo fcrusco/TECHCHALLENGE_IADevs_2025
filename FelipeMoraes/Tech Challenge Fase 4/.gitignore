@@ -6,7 +6,6 @@ __pycache__/
 *.pyc
 .venv/
 .idea/
-*.mp4
 *.pt
 report_*.txt
 report_*.html

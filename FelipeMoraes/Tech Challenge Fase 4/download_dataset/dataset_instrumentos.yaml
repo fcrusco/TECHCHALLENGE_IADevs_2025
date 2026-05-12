@@ -5,17 +5,16 @@ val: val/images
 
 nc: 4
 
-# Dataset: dilavado/labeled-surgical-tools
-# Labels from: Labels/label object names  (NOT label top-bottom)
-# Classes from README.txt:
-#   0 = Scalpel n4 (bisturi)
-#   1 = Straight Dissection Clamp (pinca)
-#   2 = Straight Mayo Scissor (tesoura reta)
-#   3 = Curved Mayo Scissor (tesoura curva)
-# Total: 1834 train / 786 val — balanced ~910 instances per class
+# Dataset: andrewmvd/surgical-instrument-segmentation
+# Frames reais de cirurgia laparoscópica (sem fotos de catálogo).
+# Classes:
+#   0 = Grasper    — pinça grasper laparoscópica
+#   1 = Hook       — gancho eletrocirúrgico / cautério
+#   2 = Tesoura    — tesoura laparoscópica
+#   3 = Clipador   — clipador vascular
 
 names:
-  0: Bisturi
-  1: Pinça de Dissecção
-  2: Tesoura Mayo Reta
-  3: Tesoura Mayo Curva
+  0: Pinca Grasper
+  1: Gancho
+  2: Tesoura
+  3: Clipador

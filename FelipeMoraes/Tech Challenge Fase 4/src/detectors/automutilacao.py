@@ -5,7 +5,7 @@ _SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from detectors.base import BaseDetector, _ef, _ei
+from detectors.base import BaseDetector, _ei, _ef, _es
 
 
 class AutomutilacaoDetector(BaseDetector):
@@ -19,6 +19,12 @@ class AutomutilacaoDetector(BaseDetector):
         1: "Arma_Fogo",
     }
     DATASET_YAML = "download_dataset/dataset_automutilacao.yaml"
+
+    EPOCHS     = _ei("HARM_TRAIN_EPOCHS",     _ei("TRAIN_EPOCHS", 100))
+    IMGSZ      = _ei("HARM_TRAIN_IMGSZ",      _ei("TRAIN_IMGSZ", 640))
+    BATCH      = _ei("HARM_TRAIN_BATCH",      _ei("TRAIN_BATCH", 8))
+    PATIENCE   = _ei("HARM_TRAIN_PATIENCE",   _ei("TRAIN_PATIENCE", 20))
+    BASE_MODEL = _es("HARM_TRAIN_BASE_MODEL", _es("TRAIN_BASE_MODEL", "yolov8m.pt"))
 
     CONFIDENCE_THRESHOLD = _ef("HARM_CONFIDENCE", 0.40)
     MIN_ASPECT_RATIO     = _ef("HARM_MIN_ASPECT", 1.0)
@@ -56,7 +62,8 @@ class AutomutilacaoDetector(BaseDetector):
         if hasattr(self, "_current_results") and self._has_gun(self._current_results):
             anomaly = self._make_anomaly(
                 frame_count, "ARMA_DETECTADA", "CRÍTICO",
-                "Arma de fogo detectada no campo — protocolo de segurança imediato"
+                "Arma de fogo detectada — protocolo de segurança imediato; "
+                "possível situação de violência doméstica ou ameaça à integridade"
             )
             alert_text = "ALERTA CRITICO: ARMA DETECTADA"
             alert_color = (0, 0, 180)
@@ -68,7 +75,8 @@ class AutomutilacaoDetector(BaseDetector):
             if streak == self.OBJECT_CRITICAL_FRAMES:
                 anomaly = self._make_anomaly(
                     frame_count, "OBJETO_SUSPEITO", "CRÍTICO",
-                    f"Objeto cortante persistente ({streak} frames consecutivos) — acionar segurança"
+                    f"Objeto cortante persistente ({streak} frames consecutivos) — "
+                    "indicador de risco de autolesão ou violência doméstica; acionar segurança"
                 )
             alert_text = f"ALERTA CRITICO: OBJETO SUSPEITO ({streak}q)"
             alert_color = (0, 0, 200)
@@ -77,7 +85,8 @@ class AutomutilacaoDetector(BaseDetector):
             if streak == self.OBJECT_WARN_FRAMES:
                 anomaly = self._make_anomaly(
                     frame_count, "OBJETO_SUSPEITO", "ALTO",
-                    f"Objeto suspeito detectado por {streak} frames consecutivos — verificar paciente"
+                    f"Objeto suspeito por {streak} frames consecutivos — "
+                    "possível indicador de desconforto psicológico ou situação de risco"
                 )
             alert_text = f"ALERTA: OBJETO SUSPEITO ({streak}q)"
             alert_color = (0, 0, 255)
@@ -85,7 +94,8 @@ class AutomutilacaoDetector(BaseDetector):
         elif num_detections > 0 and streak == 1:
             anomaly = self._make_anomaly(
                 frame_count, "OBJETO_SUSPEITO", "MÉDIO",
-                "Objeto cortante detectado no campo cirúrgico — aguardando confirmação"
+                "Objeto cortante detectado — aguardando confirmação; "
+                "monitorar sinais de sofrimento psicológico ou violência"
             )
             alert_text = "ATENCAO: OBJETO SUSPEITO DETECTADO"
             alert_color = (0, 165, 255)
