@@ -5,7 +5,6 @@ import sys
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-# Make src/ importable so detectors can use absolute imports
 _SRC_DIR = os.path.join(PROJECT_ROOT, "src")
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
@@ -21,23 +20,73 @@ def _load(name, rel_path):
 
 def _get_detector(mode):
     if mode == "instrumentos":
-        m = _load("instruments", os.path.join("src", "detectors", "instruments.py"))
-        return m.InstrumentDetector()
+        m = _load("instrumentos", os.path.join("src", "detectors", "instrumentos.py"))
+        return m.InstrumentosDetector()
     elif mode == "areas-criticas":
-        m = _load("critical_areas", os.path.join("src", "detectors", "critical_areas.py"))
-        return m.CriticalAreasDetector()
+        m = _load("areas_criticas", os.path.join("src", "detectors", "areas_criticas.py"))
+        return m.AreasCriticasDetector()
     elif mode == "sangramento":
-        m = _load("bleeding", os.path.join("src", "detectors", "bleeding.py"))
-        return m.BleedingDetector()
+        m = _load("sangramento", os.path.join("src", "detectors", "sangramento.py"))
+        return m.SangramentoDetector()
     elif mode == "automutilacao":
-        m = _load("selfharm", os.path.join("src", "detectors", "selfharm.py"))
-        return m.SelfHarmDetector()
-    raise ValueError(f"Modo desconhecido: {mode}")
+        m = _load("automutilacao", os.path.join("src", "detectors", "automutilacao.py"))
+        return m.AutomutilacaoDetector()
+    raise ValueError(f"Modo informado não é conhecido pela aplicação: {mode}")
+
+
+_ALL_MODES = ["instrumentos", "areas-criticas", "sangramento", "automutilacao"]
+
+_MODEL_FOLDER = {
+    "instrumentos":   "instrumentos",
+    "areas-criticas": "areas_criticas",
+    "sangramento":    "sangramento",
+    "automutilacao":  "automutilacao",
+}
+
+
+def _detect_all(video_path, model_path, headless):
+    import relatorio as _relatorio_module
+
+    model_results = []
+    total = len(_ALL_MODES)
+
+    for i, mode in enumerate(_ALL_MODES, 1):
+        print(f"\n{'='*60}")
+        print(f"  [{i}/{total}] Processando modelo: {mode}")
+        print(f"{'='*60}")
+        detector = _get_detector(mode)
+        result = detector.detect_video(video_path, model_path, headless)
+        if result is None:
+            print(f"  AVISO: {mode} não retornou resultados (modelo ausente?).")
+            continue
+        model_results.append({
+            "model_folder": _MODEL_FOLDER[mode],
+            "frame_count": result["frame_count"],
+            "detections": result["detections_count"],
+            "anomalies": result["anomalies"],
+            "fps": result["fps"],
+            "class_summary": result.get("class_summary", {}),
+        })
+
+    if not model_results:
+        print("\nNão houve resultado de nenhum modelo para gerar o relatório geral. Relatório consolidade não será gerado.")
+        return
+
+    saida_dir = os.path.join(PROJECT_ROOT, "saida")
+    os.makedirs(saida_dir, exist_ok=True)
+    report_path = os.path.join(saida_dir, "relatorio_geral.txt")
+    _relatorio_module.generate_combined_report(report_path, model_results, video_path)
+
+    print(f"\n{'='*60}")
+    print(f"  ANÁLISE COMPLETA CONCLUÍDA")
+    print(f"  Modelos processados: {len(model_results)}/{total}")
+    print(f"  Relatório geral - Output: saida/relatorio_geral.txt/.html/.json")
+    print(f"{'='*60}")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Sistema de Análise de Vídeo Cirúrgico — Tech Challenge Fase 4 (YOLOv8)"
+        description="Sistema de Análise de Vídeo Cirúrgico"
     )
     parser.add_argument(
         "action",
@@ -48,14 +97,14 @@ def main():
         "--mode",
         choices=["instrumentos", "areas-criticas", "sangramento", "automutilacao", "todos"],
         default="instrumentos",
-        help="Modo de detecção: instrumentos (default) | areas-criticas | sangramento | automutilacao | todos (download only)",
+        help="Modo de detecção: instrumentos (default) | areas-criticas | sangramento | automutilacao | todos",
     )
-    parser.add_argument("--video", help="Caminho para o vídeo a analisar")
+    parser.add_argument("--video", help="Caminho para o vídeo a ser analisado")
     parser.add_argument("--output", help="Pasta de saída para extração de frames")
     parser.add_argument("--model", default=None, help="Caminho para o modelo (.pt)")
     parser.add_argument(
         "--headless", action="store_true",
-        help="Executar sem janela de visualização (para servidores/CI)",
+        help="Executar sem janela de visualização do vídeo",
     )
 
     args = parser.parse_args()
@@ -88,7 +137,11 @@ def main():
             print("Erro: --video é obrigatório para a ação 'detect'")
             parser.print_help()
             return
-        _get_detector(args.mode).detect_video(args.video, args.model, args.headless)
+
+        if args.mode == "todos":
+            _detect_all(args.video, args.model, args.headless)
+        else:
+            _get_detector(args.mode).detect_video(args.video, args.model, args.headless)
 
     elif args.action == "extract":
         if not args.video or not args.output:

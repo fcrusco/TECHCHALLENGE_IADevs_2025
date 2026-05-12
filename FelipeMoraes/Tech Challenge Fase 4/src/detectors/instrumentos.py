@@ -8,8 +8,8 @@ if _SRC_DIR not in sys.path:
 from detectors.base import BaseDetector, _ef
 
 
-class InstrumentDetector(BaseDetector):
-    """Detects gynecological surgical instruments (scalpel, clamp, scissors)."""
+class InstrumentosDetector(BaseDetector):
+    """Detecta instrumentos cirúrgicos ginecológicos (bisturi, pinça, tesoura)."""
 
     MODEL_NAME = "instrument_detector"
     MODEL_FOLDER = "instrumentos"

@@ -8,8 +8,8 @@ if _SRC_DIR not in sys.path:
 from detectors.base import BaseDetector, _ef, _ei
 
 
-class SelfHarmDetector(BaseDetector):
-    """Detects suspicious sharp objects or weapons that may indicate self-harm risk."""
+class AutomutilacaoDetector(BaseDetector):
+    """Detecta objetos suspeitos que possam indicar risco de automutilação."""
 
     MODEL_NAME = "selfharm_detector"
     MODEL_FOLDER = "automutilacao"
@@ -19,7 +19,6 @@ class SelfHarmDetector(BaseDetector):
         1: "Arma_Fogo",
     }
     DATASET_YAML = "download_dataset/dataset_automutilacao.yaml"
-    BASE_MODEL = "yolov8s.pt"
 
     CONFIDENCE_THRESHOLD = _ef("HARM_CONFIDENCE", 0.40)
     MIN_ASPECT_RATIO     = _ef("HARM_MIN_ASPECT", 1.0)
@@ -47,15 +46,13 @@ class SelfHarmDetector(BaseDetector):
         boxes = results[0].boxes
         if boxes is None or len(boxes) == 0:
             return False
-        cls_ids = boxes.cls.cpu().numpy().astype(int).tolist()
-        return 1 in cls_ids
+        return 1 in boxes.cls.cpu().numpy().astype(int).tolist()
 
     def _check_anomalies(self, frame_count, num_detections, avg_recent, no_streak):
         anomaly = None
         alert_text = ""
         alert_color = (0, 255, 0)
 
-        # Gun detected = immediate CRITICAL regardless of streak
         if hasattr(self, "_current_results") and self._has_gun(self._current_results):
             anomaly = self._make_anomaly(
                 frame_count, "ARMA_DETECTADA", "CRÍTICO",
@@ -71,8 +68,7 @@ class SelfHarmDetector(BaseDetector):
             if streak == self.OBJECT_CRITICAL_FRAMES:
                 anomaly = self._make_anomaly(
                     frame_count, "OBJETO_SUSPEITO", "CRÍTICO",
-                    f"Objeto cortante persistente ({streak} frames consecutivos) — "
-                    "acionar segurança imediatamente"
+                    f"Objeto cortante persistente ({streak} frames consecutivos) — acionar segurança"
                 )
             alert_text = f"ALERTA CRITICO: OBJETO SUSPEITO ({streak}q)"
             alert_color = (0, 0, 200)
@@ -98,7 +94,7 @@ class SelfHarmDetector(BaseDetector):
 
     def detect_video(self, video_path, model_path=None, headless=False, save_output=True):
         self._current_results = None
-        super().detect_video(video_path, model_path, headless, save_output)
+        return super().detect_video(video_path, model_path, headless, save_output)
 
     def _draw_hud(self, frame, frame_count, num_detections, avg_recent, alert_text, alert_color, height):
         import cv2
@@ -108,8 +104,7 @@ class SelfHarmDetector(BaseDetector):
 
         streak = self._object_streak()
         det_color = (0, 0, 255) if num_detections > 0 else (0, 200, 0)
-        status = f"Obj. Suspeito: {'SIM' if num_detections > 0 else 'NAO'}"
-        cv2.putText(frame, status, (10, 30),
+        cv2.putText(frame, f"Obj. Suspeito: {'SIM' if num_detections > 0 else 'NAO'}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, det_color, 2)
         cv2.putText(frame, f"Consecutivos: {streak}q", (10, 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2)
@@ -117,7 +112,6 @@ class SelfHarmDetector(BaseDetector):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.65, (160, 160, 160), 2)
 
         if alert_text:
-            bar_h = 50
-            cv2.rectangle(frame, (0, height - bar_h), (frame.shape[1], height), (0, 0, 0), -1)
+            cv2.rectangle(frame, (0, height - 50), (frame.shape[1], height), (0, 0, 0), -1)
             cv2.putText(frame, alert_text, (10, height - 14),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, alert_color, 3)

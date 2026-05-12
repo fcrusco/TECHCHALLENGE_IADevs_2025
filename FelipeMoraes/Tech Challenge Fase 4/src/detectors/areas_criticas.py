@@ -8,8 +8,8 @@ if _SRC_DIR not in sys.path:
 from detectors.base import BaseDetector, _ef, _ei
 
 
-class CriticalAreasDetector(BaseDetector):
-    """Detects critical anatomical areas in gynecological surgery (uterus, ovary, breast)."""
+class AreasCriticasDetector(BaseDetector):
+    """Detecta áreas anatômicas críticas em cirurgias ginecológicas (ovário, mama)."""
 
     MODEL_NAME = "critical_areas_detector"
     MODEL_FOLDER = "areas_criticas"
