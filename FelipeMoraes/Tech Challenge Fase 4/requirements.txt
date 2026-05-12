@@ -2,3 +2,4 @@ ultralytics==8.4.41
 opencv-python==4.13.0.92
 python-dotenv==1.2.2
 kagglehub==1.0.0
+roboflow

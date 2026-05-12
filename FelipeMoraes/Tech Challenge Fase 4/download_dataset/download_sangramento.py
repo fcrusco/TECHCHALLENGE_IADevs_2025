@@ -19,7 +19,7 @@ import kagglehub
 from sklearn.model_selection import train_test_split
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUTPUT = os.path.join(PROJECT_ROOT, "dataset", "dataset_sangramentos")
+OUTPUT = os.path.join(PROJECT_ROOT, "dataset", "dataset_sangramento")
 
 random.seed(42)
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp"}
