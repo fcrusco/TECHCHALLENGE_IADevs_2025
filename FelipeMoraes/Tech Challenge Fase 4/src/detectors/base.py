@@ -3,8 +3,31 @@ import os
 import shutil
 import sys
 
+import gc
 import cv2
+import numpy as np
+import torch
 from ultralytics import YOLO
+
+# NumPy 2.0 removeu np.trapz — restaura alias para compatibilidade com Ultralytics
+if not hasattr(np, "trapz"):
+    np.trapz = np.trapezoid
+
+# PyTorch 2.6+ mudou o padrão de torch.load para weights_only=True,
+# quebrando arquivos .pt do Ultralytics. Restaura o comportamento anterior
+# apenas quando weights_only não é passado explicitamente.
+try:
+    import functools as _functools
+    _orig_load = torch.load
+
+    @_functools.wraps(_orig_load)
+    def _patched_load(*args, **kwargs):
+        kwargs.setdefault("weights_only", False)
+        return _orig_load(*args, **kwargs)
+
+    torch.load = _patched_load
+except Exception:
+    pass
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -92,6 +115,7 @@ class BaseDetector:
             print(f"Limpando treino anterior: {output_dir}")
             shutil.rmtree(output_dir)
 
+        model = None
         try:
             print(f"Iniciando treinamento [{self.MODEL_FOLDER}] ...")
             model = YOLO(self.BASE_MODEL)
@@ -110,6 +134,12 @@ class BaseDetector:
             print(f"Modelo: {os.path.join(output_dir, 'weights', 'best.pt')}")
         except Exception as e:
             print(f"Erro no treinamento: {e}")
+        finally:
+            del model
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
 
     def _filter_boxes(self, results, frame_w, frame_h):
         if not results or len(results) == 0:
