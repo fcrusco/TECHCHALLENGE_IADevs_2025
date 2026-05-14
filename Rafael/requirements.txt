@@ -1,0 +1,6 @@
+openai
+gradio
+librosa
+numpy
+python-dotenv
+soundfile
