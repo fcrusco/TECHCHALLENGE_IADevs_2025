@@ -13,10 +13,11 @@ class AreasCriticasDetector(BaseDetector):
 
     MODEL_NAME = "critical_areas_detector"
     MODEL_FOLDER = "areas_criticas"
-    CLASSES = [0, 1]
+    CLASSES = [0, 1, 2]
     NAMES_PTBR = {
-        0: "Ovario",
-        1: "Mama",
+        0: "Utero",
+        1: "Tuba Uterina",
+        2: "Ovario",
     }
     DATASET_YAML = "download_dataset/dataset_areas_criticas.yaml"
 

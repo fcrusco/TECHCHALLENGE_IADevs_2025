@@ -3,16 +3,19 @@ path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/d
 train: train/images
 val: val/images
 
-nc: 2
+nc: 3
 
-# Fonte (Kaggle via kagglehub):
-#   Mama  → aryashah2k/breast-ultrasound-images-dataset (~780 imgs com máscaras de segmentação)
-#   Ovário → anaghachoudhari/pcos-detection-using-ultrasound-images (~1.932 imgs, capped 1000)
+# Dataset: GynSurge — Anatomy Segmentation
+# Fonte: https://ftp.itec.aau.at/datasets/GynSurge/GynSurg_Anatomy_Dataset.zip
+# 5 vídeos de histerectomia laparoscópica, 1.010 frames anotados, 750×480px
+# Licença: CC BY-NC-ND 4.0
 #
-# Classes:
-#   0 = Ovario (ultrassom ovariano — labels bootstrap de imagem inteira)
-#   1 = Mama   (ultrassom mamário — labels derivados de máscaras de segmentação)
+# Mapeamento de pixel na máscara → classe:
+#    85 → 0: Utero
+#   170 → 1: Tuba_Uterina
+#   255 → 2: Ovario
 
 names:
-  0: Ovario
-  1: Mama
+  0: Utero
+  1: Tuba_Uterina
+  2: Ovario

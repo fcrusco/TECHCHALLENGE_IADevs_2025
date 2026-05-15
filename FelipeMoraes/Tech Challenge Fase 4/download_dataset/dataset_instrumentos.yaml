@@ -5,16 +5,19 @@ val: val/images
 
 nc: 4
 
-# Dataset: andrewmvd/surgical-instrument-segmentation
-# Frames reais de cirurgia laparoscópica (sem fotos de catálogo).
-# Classes:
-#   0 = Grasper    — pinça grasper laparoscópica
-#   1 = Hook       — gancho eletrocirúrgico / cautério
-#   2 = Tesoura    — tesoura laparoscópica
-#   3 = Clipador   — clipador vascular
+# Dataset: GynSurge — Instrument Segmentation
+# Fonte: https://ftp.itec.aau.at/datasets/GynSurge/GynSurg_Instrument_Dataset.zip
+# 10 vídeos de cirurgia laparoscópica ginecológica, 11.352 frames anotados, 750×480px
+# Licença: CC BY-NC-ND 4.0
+#
+# Mapeamento de pixel na máscara → classe:
+#    36 → 0: Pinca_Grasper
+#    73 → 1: Tesoura
+#   146 → 2: Pinca_Bipolar
+#   219 → 3: Gancho
 
 names:
-  0: Pinca Grasper
-  1: Gancho
-  2: Tesoura
-  3: Clipador
+  0: Pinca_Grasper
+  1: Tesoura
+  2: Pinca_Bipolar
+  3: Gancho

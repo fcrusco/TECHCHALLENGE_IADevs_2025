@@ -1,0 +1,23 @@
+path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset/dataset_instrumentos
+
+train: train/images
+val: val/images
+
+nc: 4
+
+# Dataset: GynSurge — Instrument Segmentation
+# Fonte: https://ftp.itec.aau.at/datasets/GynSurge/GynSurg_Instrument_Dataset.zip
+# 10 vídeos de cirurgia laparoscópica ginecológica, 11.352 frames anotados, 750×480px
+# Licença: CC BY-NC-ND 4.0
+#
+# Mapeamento de pixel na máscara → classe:
+#    36 → 0: Pinca_Grasper
+#    73 → 1: Tesoura
+#   146 → 2: Pinca_Bipolar
+#   219 → 3: Gancho
+
+names:
+  0: Pinca_Grasper
+  1: Tesoura
+  2: Pinca_Bipolar
+  3: Gancho

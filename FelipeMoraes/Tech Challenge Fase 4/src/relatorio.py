@@ -8,30 +8,26 @@ from datetime import datetime
 
 _SPECIALTY_CRITERIA = [
     {
-        "title": "Desvios em Procedimentos Obstétricos",
-        "description": "Alterações em estruturas anatômicas e sangramento anômalo durante procedimentos obstétricos.",
-        "recommendation": "Acionar equipe obstétrica para avaliação imediata.",
+        "title": "Riscos em Saúde Materna e Ginecológica",
+        "objective": "Detectar precocemente riscos em saúde materna e ginecológica",
+        "description": "Monitoramento de estruturas ginecológicas (útero, tuba uterina, ovário) e sangramento anômalo durante procedimentos obstétricos e cirúrgicos.",
+        "recommendation": "Acionar equipe obstétrica e ginecológica para avaliação imediata das anomalias detectadas.",
         "detectors": {"areas_criticas", "sangramento"},
     },
     {
-        "title": "Sinais de Complicações em Cirurgias Ginecológicas",
-        "description": "Sangramento intraoperatório, ausência de estruturas esperadas ou variação brusca de instrumentos.",
-        "recommendation": "Revisar protocolo cirúrgico e avaliar status clínico da paciente.",
-        "detectors": {"instrumentos", "sangramento", "areas_criticas"},
+        "title": "Bem-Estar Psicológico Feminino",
+        "objective": "Monitorar bem-estar psicológico feminino",
+        "description": "Monitoramento de eventos hemorrágicos e complicações cirúrgicas que podem impactar negativamente o bem-estar e a recuperação psicológica pós-operatória da paciente.",
+        "recommendation": "Acionar equipe de suporte psicológico e protocolo de acompanhamento pós-operatório especializado.",
+        "detectors": {"sangramento"},
+        "anomaly_types": {"SANGRAMENTO"},
     },
     {
-        "title": "Indicadores Visuais de Desconforto Psicológico",
-        "description": "Detecção de objetos cortantes associados a comportamento autolesivo e sofrimento psicológico.",
-        "recommendation": "Acionar suporte psicológico e equipe de saúde mental.",
-        "detectors": {"automutilacao"},
-        "anomaly_types": {"OBJETO_SUSPEITO"},
-    },
-    {
-        "title": "Alertas para Possíveis Casos de Violência Doméstica",
-        "description": "Identificação de armas de fogo ou objetos cortantes em contexto de risco e violência.",
-        "recommendation": "Acionar protocolo de segurança e autoridades competentes.",
-        "detectors": {"automutilacao"},
-        "anomaly_types": {"ARMA_DETECTADA", "OBJETO_SUSPEITO"},
+        "title": "Detecção de Anomalias em Tempo Real",
+        "objective": "Aplicar técnicas de detecção de anomalias em tempo real para monitoramento preventivo específico",
+        "description": "Monitoramento contínuo frame a frame com classificação automática de severidade (MÉDIO / ALTO / CRÍTICO): ausências de estruturas anatômicas, sangramentos persistentes e variações bruscas de campo cirúrgico.",
+        "recommendation": "Revisar os segmentos sinalizados e acionar protocolo de monitoramento preventivo.",
+        "detectors": {"areas_criticas", "sangramento"},
     },
 ]
 
@@ -87,11 +83,6 @@ def generate_report(output_path, total_frames, total_detections, anomalies,
     _generate_html_report(html_path, total_frames, total_detections, anomalies,
                           fps, video_path, avg, anomaly_rate, duration, class_summary)
     print(f"Relatório HTML salvo em: {html_path}")
-
-    json_path = output_path.replace(".txt", ".json")
-    _generate_json_report(json_path, total_frames, total_detections, anomalies,
-                          fps, video_path, avg, anomaly_rate, duration, class_summary)
-    print(f"Relatório JSON salvo em: {json_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -224,8 +215,9 @@ def _generate_text_report(output_path, total_frames, total_detections, anomalies
 _SEV_COLORS = {"CRÍTICO": "#dc3545", "ALTO": "#fd7e14", "MÉDIO": "#ffc107", "BAIXO": "#28a745"}
 
 _BASE_CSS = """
-  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; color: #333; }
-  .container { max-width: 1000px; margin: auto; background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+  html, body { color-scheme: light !important; }
+  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5 !important; color: #1e1a1d !important; }
+  .container { max-width: 1000px; margin: auto; background: #ffffff !important; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); color: #1e1a1d !important; }
   h1 { color: #1a3a5c; border-bottom: 3px solid #1a3a5c; padding-bottom: 10px; margin-top: 0; }
   h2 { color: #1a3a5c; margin-top: 30px; border-left: 4px solid #1a3a5c; padding-left: 10px; }
   .meta { color: #666; font-size: 0.9em; margin-bottom: 25px; background: #f8f9fa; padding: 10px 15px; border-radius: 4px; }
@@ -341,6 +333,7 @@ def _generate_html_report(path, total_frames, total_detections, anomalies,
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="color-scheme" content="light">
 <title>Relatório de Análise Cirúrgica</title>
 <style>{_BASE_CSS}</style>
 </head>
@@ -485,20 +478,16 @@ def generate_combined_report(output_path, model_results, video_path=None):
     _combined_html(html_path, model_results, video_name, now, total_frames, total_anomalies, fps, duration)
     print(f"Relatório consolidado HTML: {html_path}")
 
-    json_path = output_path.replace(".txt", ".json")
-    _combined_json(json_path, model_results, video_name, now, total_frames, total_anomalies, fps, duration)
-    print(f"Relatório consolidado JSON: {json_path}")
-
 
 def _combined_text(path, model_results, video_name, now, total_frames, total_anomalies, fps, duration):
     overall_rate = (total_anomalies / total_frames) * 100 if total_frames else 0
     risk_label, _ = _get_risk_level(overall_rate)
 
     with open(path, "w", encoding="utf-8") as f:
-        f.write("=" * 60 + "\n")
-        f.write("  RELATÓRIO CONSOLIDADO — ANÁLISE COMPLETA\n")
-        f.write("  Saúde da Mulher - Tech Challenge Fase 4\n")
-        f.write("=" * 60 + "\n\n")
+        f.write("=" * 70 + "\n")
+        f.write("  RELATÓRIO CONSOLIDADO — TECH CHALLENGE FASE 4\n")
+        f.write("  Análise de Vídeo Especializada para Saúde da Mulher\n")
+        f.write("=" * 70 + "\n\n")
         f.write(f"Data/Hora:  {now}\n")
         f.write(f"Vídeo:      {video_name}\n")
         f.write(f"Duração:    {duration}\n")
@@ -510,11 +499,26 @@ def _combined_text(path, model_results, video_name, now, total_frames, total_ano
         f.write(f"  Taxa geral:         {overall_rate:.2f}%\n")
         f.write(f"  Nível de risco:     {risk_label}\n\n")
 
-        f.write("--- CRITÉRIOS ESPECIALIZADOS ---\n")
-        for ev in _evaluate_criteria(model_results):
+        for r in model_results:
+            if r["model_folder"] == "instrumentos" and r.get("instrument_timeline"):
+                f.write("--- INSTRUMENTOS CIRÚRGICOS UTILIZADOS ---\n")
+                for name, info in sorted(r["instrument_timeline"].items(), key=lambda x: -x[1]["count"]):
+                    if info["count"] > 0:
+                        segs     = len(info["segments"])
+                        first_ts = _frame_to_time(info["first_frame"], fps)
+                        last_ts  = _frame_to_time(info["last_frame"],  fps)
+                        f.write(f"  {name:<25} {info['count']:>5}x | {info['frames_pct']:.1f}% | {segs} seg(s) | {first_ts} → {last_ts}\n")
+                    else:
+                        f.write(f"  {name:<25}  não detectado\n")
+                f.write("\n")
+                break
+
+        f.write("--- OBJETIVOS DO TECH CHALLENGE ---\n")
+        for i, ev in enumerate(_evaluate_criteria(model_results), 1):
             c = ev["criterion"]
             status = "ACIONADO" if ev["triggered"] else "SEM OCORRÊNCIAS"
-            f.write(f"  [{status}] {c['title']}\n")
+            f.write(f"  [OBJ.{i}] [{status}] {c['title']}\n")
+            f.write(f"  Objetivo: {c.get('objective', c['title'])}\n")
             if ev["triggered"]:
                 for fd in ev["findings"]:
                     f.write(
@@ -529,16 +533,19 @@ def _combined_text(path, model_results, video_name, now, total_frames, total_ano
             mlabel, _ = _get_risk_level(anomaly_rate)
             f.write(f"--- {r['model_folder'].upper()} ---\n")
             f.write(f"  Detecções totais: {r['detections']}\n")
-            f.write(f"  Anomalias:        {len(r['anomalies'])}\n")
-            f.write(f"  Taxa de anomalia: {anomaly_rate:.2f}%\n")
-            f.write(f"  Nível de risco:   {mlabel}\n")
+            if r["model_folder"] == "instrumentos":
+                f.write("  Modo: rastreamento (sem detecção de anomalias)\n")
+            else:
+                f.write(f"  Anomalias:        {len(r['anomalies'])}\n")
+                f.write(f"  Taxa de anomalia: {anomaly_rate:.2f}%\n")
+                f.write(f"  Nível de risco:   {mlabel}\n")
 
             cs = r.get("class_summary", {})
             if cs:
                 f.write("  Objetos detectados:\n")
                 for name, info in sorted(cs.items(), key=lambda x: -x[1]["count"]):
                     first_ts = _frame_to_time(info["first_frame"], fps)
-                    last_ts  = _frame_to_time(info["last_frame"], fps)
+                    last_ts  = _frame_to_time(info["last_frame"],  fps)
                     f.write(
                         f"    {name:<25} {info['count']:>5}x"
                         f" | {first_ts} → {last_ts}"
@@ -569,13 +576,13 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
         anomaly_rate = (len(r["anomalies"]) / r["frame_count"]) * 100 if r["frame_count"] else 0
         mlabel, mcolor = _get_risk_level(anomaly_rate)
         avg = r["detections"] / r["frame_count"] if r["frame_count"] else 0
-        cs = r.get("class_summary", {})
+        cs  = r.get("class_summary", {})
 
         cls_rows = ""
         if cs:
             for name, info in sorted(cs.items(), key=lambda x: -x[1]["count"]):
                 first_ts = _frame_to_time(info["first_frame"], fps)
-                last_ts  = _frame_to_time(info["last_frame"], fps)
+                last_ts  = _frame_to_time(info["last_frame"],  fps)
                 pct      = info["frames_pct"]
                 bar_w    = min(int(pct) * 2, 200)
                 cls_rows += (
@@ -598,7 +605,7 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
             if isinstance(a, dict):
                 frame    = a.get("frame", "-")
                 severity = a.get("severity", "-")
-                atype    = a.get("type", "-")
+                atype    = a.get("type",     "-")
                 desc     = a.get("description", "")
                 ts       = _frame_to_time(frame, fps)
                 sc       = _SEV_COLORS.get(severity, "#6c757d")
@@ -608,16 +615,24 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
                     f"<td>{atype}</td><td>{desc}</td></tr>\n"
                 )
 
+        anomaly_badge = (
+            "<span class='badge' style='background:#6c757d'>rastreamento</span>"
+            if r["model_folder"] == "instrumentos" else
+            f"<span class='badge' style='background:{mcolor}'>{mlabel}</span>"
+        )
+        anomaly_stat = "—" if r["model_folder"] == "instrumentos" else str(len(r["anomalies"]))
+        rate_stat    = "—" if r["model_folder"] == "instrumentos" else f"{anomaly_rate:.1f}%"
+
         model_sections += f"""
     <div class="model-section">
       <div class="model-header">
         <span class="model-title">{r['model_folder'].replace('_', ' ').title()}</span>
-        <span class="badge" style="background:{mcolor}">{mlabel}</span>
+        {anomaly_badge}
       </div>
       <div class="model-stats">
         <span>Detecções: <strong>{r['detections']}</strong></span>
-        <span>Anomalias: <strong>{len(r['anomalies'])}</strong></span>
-        <span>Taxa: <strong>{anomaly_rate:.1f}%</strong></span>
+        <span>Anomalias: <strong>{anomaly_stat}</strong></span>
+        <span>Taxa: <strong>{rate_stat}</strong></span>
         <span>Média/frame: <strong>{avg:.2f}</strong></span>
       </div>
       {cls_table}
@@ -632,15 +647,12 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
     </table>"""
     )
 
-    # Critérios especializados
+    # Objectives cards (numbered, with objective subtitle)
     criteria_cards = ""
-    for ev in _evaluate_criteria(model_results):
+    for i, ev in enumerate(_evaluate_criteria(model_results), 1):
         c = ev["criterion"]
         if ev["triggered"]:
-            border = "#dc3545"
-            bg = "#fff5f5"
-            badge_bg = "#dc3545"
-            badge_txt = "ACIONADO"
+            border, bg, badge_bg, badge_txt = "#dc3545", "#fff5f5", "#dc3545", "ACIONADO"
             findings_html = "".join(
                 f"<li><strong>{fd['folder']}</strong>: {fd['count']} ocorrência(s) — "
                 f"<span style='color:#dc3545'>CRÍTICO:{fd['critico']}</span> "
@@ -650,23 +662,57 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
             )
             rec_html = f"<p style='margin:8px 0 0;font-size:0.85em;color:#555'><strong>Recomendação:</strong> {c['recommendation']}</p>"
         else:
-            border = "#28a745"
-            bg = "#f0fff4"
-            badge_bg = "#28a745"
-            badge_txt = "SEM OCORRÊNCIAS"
-            findings_html = ""
-            rec_html = ""
+            border, bg, badge_bg, badge_txt = "#28a745", "#f0fff4", "#28a745", "SEM OCORRÊNCIAS"
+            findings_html = rec_html = ""
+
+        obj_sub = (
+            f"<p style='margin:3px 0 0;font-size:0.78em;color:#777;font-style:italic'>{c['objective']}</p>"
+            if c.get("objective") else ""
+        )
 
         criteria_cards += f"""
     <div style="border-left:4px solid {border};background:{bg};padding:14px 18px;border-radius:4px;margin:10px 0">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <strong style="font-size:0.97em">{c['title']}</strong>
-        <span style="background:{badge_bg};color:white;padding:2px 10px;border-radius:10px;font-size:0.78em;font-weight:bold">{badge_txt}</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div>
+          <span style="font-size:0.74em;font-weight:bold;color:#888;text-transform:uppercase;letter-spacing:0.08em">Objetivo {i}</span><br>
+          <strong style="font-size:0.97em">{c['title']}</strong>
+          {obj_sub}
+        </div>
+        <span style="background:{badge_bg};color:white;padding:2px 10px;border-radius:10px;font-size:0.78em;font-weight:bold;white-space:nowrap;margin-left:15px;flex-shrink:0">{badge_txt}</span>
       </div>
-      <p style="margin:0;font-size:0.84em;color:#555">{c['description']}</p>
+      <p style="margin:8px 0 0;font-size:0.84em;color:#555">{c['description']}</p>
       {"<ul style='margin:8px 0 0;padding-left:18px;font-size:0.85em'>" + findings_html + "</ul>" if findings_html else ""}
       {rec_html}
     </div>"""
+
+    # Instrument timeline section
+    instruments_html = ""
+    for r in model_results:
+        if r["model_folder"] == "instrumentos" and r.get("instrument_timeline"):
+            rows_inst = ""
+            for name, info in sorted(r["instrument_timeline"].items(), key=lambda x: -x[1]["count"]):
+                first_ts  = _frame_to_time(info["first_frame"], fps) if info["count"] else "—"
+                last_ts   = _frame_to_time(info["last_frame"],  fps) if info["count"] else "—"
+                n_seg     = len(info["segments"]) if info["count"] else 0
+                pct       = info["frames_pct"]
+                bar_w     = min(int(pct) * 2, 200)
+                count_str = str(info["count"]) if info["count"] else "—"
+                seg_str   = str(n_seg) if n_seg else "—"
+                rows_inst += (
+                    f"<tr><td><strong>{name}</strong></td><td>{count_str}</td>"
+                    f"<td>{first_ts}</td><td>{last_ts}</td><td>{seg_str}</td>"
+                    f"<td><div class='bar-wrap'>"
+                    f"<div class='bar' style='width:{bar_w}px'></div>"
+                    f"<span>{pct:.1f}%</span></div></td></tr>\n"
+                )
+            instruments_html = f"""
+  <h2>Instrumentos Cirúrgicos Utilizados</h2>
+  <p style="color:#555;font-size:0.88em;margin-top:-8px">Modo rastreamento — identifica quais instrumentos foram utilizados e quando, sem classificação de anomalias.</p>
+  <table>
+    <thead><tr><th>Instrumento</th><th>Detecções</th><th>Primeiro Uso</th><th>Último Uso</th><th>Segmentos</th><th>Frequência</th></tr></thead>
+    <tbody>{rows_inst}</tbody>
+  </table>"""
+            break
 
     combined_css = _BASE_CSS + """
   .badge { display: inline-block; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.82em; font-weight: bold; }
@@ -680,13 +726,14 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Relatório Consolidado — Análise Cirúrgica</title>
+<meta name="color-scheme" content="light">
+<title>Relatório Consolidado — Tech Challenge Fase 4</title>
 <style>{combined_css}</style>
 </head>
 <body>
 <div class="container" style="max-width:1100px">
-  <h1>Relatório Consolidado — Análise Cirúrgica Completa</h1>
-  <p style="color:#555;margin-top:-10px">Saúde da Mulher — Tech Challenge Fase 4 (YOLOv8 · 4 modelos)</p>
+  <h1>Relatório Consolidado — Tech Challenge Fase 4</h1>
+  <p style="color:#555;margin-top:-10px">Análise de Vídeo Especializada para Saúde da Mulher — YOLOv8 · 4 Modelos</p>
   <div class="meta">
     <strong>Vídeo:</strong> {video_name} &nbsp;|&nbsp;
     <strong>Duração:</strong> {duration} &nbsp;|&nbsp;
@@ -697,12 +744,16 @@ def _combined_html(path, model_results, video_name, now, total_frames, total_ano
   <h2>Visão Geral</h2>
   <div class="grid-3">
     <div class="stat-card"><div class="value">{total_frames}</div><div class="label">Frames Analisados</div></div>
+    <div class="stat-card"><div class="value">{len(model_results)}</div><div class="label">Modelos Executados</div></div>
     <div class="stat-card"><div class="value">{total_anomalies}</div><div class="label">Anomalias Totais</div></div>
-    <div class="stat-card"><div class="value"><span class="risk-badge" style="background:{risk_color}">{risk_label}</span></div><div class="label">Risco Geral</div></div>
+    <div class="stat-card"><div class="value">{overall_rate:.1f}%</div><div class="label">Taxa Geral</div></div>
+    <div class="stat-card" style="grid-column:span 2"><div class="value"><span class="risk-badge" style="background:{risk_color}">{risk_label}</span></div><div class="label">Risco Geral Consolidado</div></div>
   </div>
 
-  <h2>Critérios Especializados</h2>
+  <h2>Objetivos do Tech Challenge</h2>
   {criteria_cards}
+
+  {instruments_html}
 
   <h2>Resultados por Modelo</h2>
   {model_sections}
@@ -752,21 +803,40 @@ def _combined_json(path, model_results, video_name, now, total_frames, total_ano
                 "frames_pct": info["frames_pct"],
             }
 
-        models_data.append({
+        timeline_data = {}
+        for name, info in r.get("instrument_timeline", {}).items():
+            timeline_data[name] = {
+                "count": info["count"],
+                "frames_pct": info["frames_pct"],
+                "first_frame": info.get("first_frame"),
+                "first_seen": _frame_to_time(info["first_frame"], fps) if info.get("first_frame") else None,
+                "last_frame": info.get("last_frame"),
+                "last_seen": _frame_to_time(info["last_frame"], fps) if info.get("last_frame") else None,
+                "segments": info.get("segments", []),
+            }
+
+        entry = {
             "model": r["model_folder"],
             "total_detections": r["detections"],
-            "anomaly_count": len(r["anomalies"]),
-            "anomaly_rate_pct": round(anomaly_rate, 2),
-            "risk_level": mlabel,
             "class_detections": class_data,
             "anomalies": anomaly_list,
-        })
+        }
+        if r["model_folder"] == "instrumentos":
+            entry["tracking_mode"] = True
+            entry["instrument_timeline"] = timeline_data
+        else:
+            entry["anomaly_count"] = len(r["anomalies"])
+            entry["anomaly_rate_pct"] = round(anomaly_rate, 2)
+            entry["risk_level"] = mlabel
+        models_data.append(entry)
 
-    criteria_data = []
-    for ev in _evaluate_criteria(model_results):
+    objectives_data = []
+    for i, ev in enumerate(_evaluate_criteria(model_results), 1):
         c = ev["criterion"]
-        criteria_data.append({
+        objectives_data.append({
+            "number": i,
             "title": c["title"],
+            "objective": c.get("objective", c["title"]),
             "description": c["description"],
             "triggered": ev["triggered"],
             "recommendation": c["recommendation"] if ev["triggered"] else None,
@@ -786,7 +856,7 @@ def _combined_json(path, model_results, video_name, now, total_frames, total_ano
             "analysis_date": datetime.now().isoformat(),
             "duration": duration,
             "fps": fps,
-            "system": "YOLOv8 — Sistema de Análise Cirúrgica · Tech Challenge Fase 4 (4 modelos)",
+            "system": "YOLOv8 — Análise de Vídeo para Saúde da Mulher · Tech Challenge Fase 4",
         },
         "summary": {
             "total_frames": total_frames,
@@ -795,7 +865,7 @@ def _combined_json(path, model_results, video_name, now, total_frames, total_ano
             "overall_risk_level": risk_label,
             "models_count": len(model_results),
         },
-        "specialty_criteria": criteria_data,
+        "tech_challenge_objectives": objectives_data,
         "models": models_data,
     }
 

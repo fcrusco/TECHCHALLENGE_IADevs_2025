@@ -1,328 +1,250 @@
-# Tech Challenge Fase 4 — Análise de Vídeo Cirúrgico
+# Tech Challenge Fase 4 — Análise de Áudio e Vídeo para a Saúde da Mulher
 
-Sistema modular de detecção e análise de vídeos cirúrgicos com YOLOv8, desenvolvido para o Tech Challenge Fase 4 (POSTECH IADT). Cobre quatro requisitos clínicos independentes, cada um com modelo próprio treinado, lógica de anomalia específica e relatórios automáticos em TXT, HTML e JSON.
+Implementação de modelos de detecção em vídeo e áudio voltados para consultas, cirurgias e temas relacionados à saúde da mulher, conforme solicitado pelo trabalho da Fase 4 (POSTECH IADT).
 
 ---
 
-## Modelos Gerados
+## Datasets utilizados
 
-| Modo CLI | Modelo | Classes Detectadas | Arquivo gerado |
+| Dataset | Uso | Tamanho | Fonte |
 |---|---|---|---|
-| `instrumentos` | YOLOv8s fine-tuned | Pinca Grasper, Gancho, Tesoura, Clipador | `model/instrumentos/weights/best.pt` |
-| `areas-criticas` | YOLOv8s fine-tuned | Ovario, Mama | `model/areas_criticas/weights/best.pt` |
-| `sangramento` | YOLOv8s fine-tuned | Sangramento | `model/sangramento/weights/best.pt` |
-| `automutilacao` | YOLOv8s fine-tuned | Faca_Lamina, Arma_Fogo | `model/automutilacao/weights/best.pt` |
+| GynSurge — Instrument Segmentation | Modelo `instrumentos` | ~2,5 GB | [ITEC / Univ. Klagenfurt](https://ftp.itec.aau.at/datasets/GynSurge/) |
+| GynSurge — Anatomy Segmentation | Modelo `areas-criticas` | ~350 MB | [ITEC / Univ. Klagenfurt](https://ftp.itec.aau.at/datasets/GynSurge/) |
+| WCEBleedGen | Modelo `sangramento` | ~1 GB | [Kaggle](https://www.kaggle.com/datasets/darksoul007fedsdfds/wcebleedgen) |
+| Áudios sintéticos (OpenAI TTS) | Pipeline de áudio | ~10 MB | Gerado via `python app.py download --mode audio` |
 
 ---
 
-## Datasets Utilizados
+## Vídeos de teste
 
-| Modelo | Dataset | Fonte | Endereço |
-|---|---|---|---|
-| `instrumentos` | Laparoscopic Instruments (Roboflow) | Roboflow Universe | https://universe.roboflow.com/laparoscopic-yolo/laparoscopy |
-| `areas-criticas` | Breast Ultrasound Images | Kaggle | https://www.kaggle.com/datasets/aryashah2k/breast-ultrasound-images-dataset |
-| `areas-criticas` | PCOS Detection (Ovário) | Kaggle | https://www.kaggle.com/datasets/anaghachoudhari/pcos-detection-using-ultrasound-images |
-| `sangramento` | WCEBleedGen (Cápsula Endoscópica) | Kaggle | https://www.kaggle.com/datasets/darksoul007fedsdfds/wcebleedgen |
-| `automutilacao` | Guns & Knives Detection | Kaggle | https://www.kaggle.com/datasets/iqmansingh/guns-knives-object-detection |
+Os vídeos de cirurgia laparoscópica usados nos testes estão disponíveis publicamente em:
+**https://www.laparoscopyhospital.com/Free_laparoscopic_gynecological_videos.htm**
 
-> **Roboflow:** requer chave de API gratuita em https://roboflow.com
+Execute `python download_videos_teste.py` para baixá-los automaticamente na pasta `videos/`.
 
----
-
-## Requisitos do Sistema
-
-- Python 3.10+
-- PyTorch 2.x com suporte CUDA (recomendado para treinamento)
-- GPU com mínimo 8 GB VRAM para `TRAIN_BATCH=8`
-- ffmpeg instalado (necessário para re-encoding dos vídeos no notebook)
+| Arquivo | Descrição |
+|---|---|
+| `video_01.mp4` | Salpingectomia bilateral laparoscópica |
+| `video_02.mp4` | Cisto ovariano — laparoscopia |
+| `video_03.mp4` | Cistectomia de cisto dermoide |
+| `video_04.mp4` | Histerectomia laparoscópica total (TLH) com Enseal |
+| `video_05.mp4` | Procedimento laparoscópico ginecológico |
+| `video_06.wmv` | Procedimento laparoscópico ginecológico |
+| `video_07.wmv` | Cistectomia ovariana laparoscópica |
 
 ---
 
-## Instalação
+## Modelos implementados
 
-### 1. Criar ambiente virtual
+### Vídeo — YOLOv8 (3 modelos)
+
+| Modelo | O que detecta |
+|---|---|
+| `instrumentos` | Pinça Grasper, Tesoura, Pinça Bipolar, Gancho |
+| `areas-criticas` | Útero, Tuba Uterina, Ovário |
+| `sangramento` | Regiões de sangramento ativo |
+
+### Áudio
+
+Pipeline de análise clínica para consultas médicas em saúde da mulher:
+extração de features acústicas (`librosa`) → transcrição (`OpenAI Whisper`) → classificação de risco e recomendações (`GPT-4o`).
+
+---
+
+## Antes de começar
+
+### 1. Instalar dependências
 
 ```bash
-python -m venv .venv
-```
-
-**Windows:**
-```powershell
-.\.venv\Scripts\activate
-```
-
-**Linux / macOS:**
-```bash
-source .venv/bin/activate
-```
-
-### 2. Instalar dependências
-
-```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 pip install -r requirements.txt
 ```
 
-### 3. Configurar credenciais
+### 2. Configurar `.env`
 
-**Kaggle** — crie o arquivo `~/.kaggle/kaggle.json`:
-```json
-{"username": "seu_usuario", "key": "sua_chave_api"}
+Crie ou edite o arquivo `.env` na raiz do projeto (veja a seção [Parâmetros `.env`](#parâmetros-env) abaixo).
+O campo obrigatório para áudio e parecer médico é:
+
+```env
+OPENAI_API_KEY=sk-...
 ```
 
-**Roboflow** — adicione a chave no arquivo `.env`:
-```env
-ROBOFLOW_API_KEY=sua_chave_aqui
+### 3. Gerar dataset de áudio (sintético via OpenAI TTS)
+
+```bash
+python app.py download --mode audio
+```
+
+Gera 12 áudios MP3 em `dataset/dataset_audio/` simulando consultas médicas com diferentes perfis de risco.
+
+### 4. Baixar vídeos de exemplo
+
+```bash
+python download_videos_teste.py
+```
+
+Baixa vídeos cirúrgicos de domínio público e salva em `videos/` como `video_01.mp4` … `video_07.mp4` (+ `video_06.wmv`, `video_07.wmv`).
+
+---
+
+## Demonstração completa — Notebook
+
+A implementação completa está demonstrada no notebook **`analise_cirurgica.ipynb`**.
+
+Ele executa os 3 modelos de vídeo, a análise clínica de áudio e gera o relatório consolidado em um único fluxo interativo.
+
+**Configuração na célula inicial do notebook:**
+
+```python
+VIDEO_LOCAL   = "videos/video_01.mp4"   # caminho para o vídeo
+TIPO_CONSULTA = "ginecologica"           # ginecologica | pre_natal | pos_parto | violencia
+```
+
+Execute **Run All** e todos os resultados serão gerados automaticamente na pasta `saida/`.
+
+---
+
+## Interfaces Gradio (frontends)
+
+```bash
+# Análise de áudio — http://localhost:7860
+python app.py audio --frontend
+
+# Análise de vídeo — http://localhost:7861
+python app.py video
+```
+
+Ambas as interfaces permitem enviar o arquivo, escolher o modelo/tipo de consulta e baixar os relatórios gerados ao final. O **parecer médico via GPT-4o** é exibido diretamente na tela após a análise.
+
+---
+
+## CLI — Download de datasets
+
+> Os modelos já foram treinados em máquina local. Os comandos abaixo são para reprodução completa do pipeline.
+
+```bash
+python app.py download --mode instrumentos     # GynSurge Instrument Segmentation (~2.5 GB)
+python app.py download --mode areas-criticas   # GynSurge Anatomy Segmentation (~350 MB)
+python app.py download --mode sangramento      # Kaggle WCEBleedGen (requer kaggle.json)
+python app.py download --mode audio            # OpenAI TTS — 12 áudios sintéticos
+```
+
+Para `sangramento`, configure `~/.kaggle/kaggle.json` com suas credenciais Kaggle.
+
+---
+
+## CLI — Treinamento dos modelos
+
+```bash
+python app.py train --mode instrumentos
+python app.py train --mode areas-criticas
+python app.py train --mode sangramento
+```
+
+Os pesos treinados são salvos em `model/{modelo}/weights/best.pt`.
+
+---
+
+## CLI — Detecção em vídeo
+
+```bash
+# Modelo individual
+python app.py detect --mode instrumentos   --video videos/video_01.mp4
+python app.py detect --mode areas-criticas --video videos/video_01.mp4
+python app.py detect --mode sangramento    --video videos/video_01.mp4
+
+# Todos os modelos em sequência + relatório consolidado
+python app.py detect --mode todos --video videos/video_01.mp4
 ```
 
 ---
 
-## Configuração (`.env`)
-
-O arquivo `.env` na raiz do projeto controla todos os parâmetros de treino e inferência. Os parâmetros por modelo sobrescrevem os globais.
+## Parâmetros `.env`
 
 ```env
-# Parâmetros globais de treinamento (fallback)
+# ── API ────────────────────────────────────────────────────────────────────────
+OPENAI_API_KEY=sk-...          # Whisper + GPT-4o + TTS (dataset de áudio)
+
+# ── Treinamento — parâmetros globais ──────────────────────────────────────────
 TRAIN_EPOCHS=150
 TRAIN_IMGSZ=640
 TRAIN_BATCH=8
 TRAIN_PATIENCE=20
-TRAIN_DEVICE=0            # 0 = primeira GPU | cpu = CPU
-TRAIN_BASE_MODEL=yolov8s.pt
+TRAIN_DEVICE=0                 # 0 = GPU | cpu = CPU
+TRAIN_BASE_MODEL=yolov8m.pt
+TRAIN_WORKERS=0                # 0 obrigatório no Windows (evita WinError 1455)
 
-# Parâmetros individuais por modelo (exemplo: instrumentos)
-INST_TRAIN_EPOCHS=150
-INST_TRAIN_IMGSZ=800
-INST_TRAIN_BATCH=8
-INST_TRAIN_BASE_MODEL=yolov8s.pt
+# ── Treinamento — por modelo ──────────────────────────────────────────────────
+INST_TRAIN_EPOCHS=150          INST_TRAIN_IMGSZ=800    INST_TRAIN_BASE_MODEL=yolov8s.pt
+AREAS_TRAIN_EPOCHS=150         AREAS_TRAIN_IMGSZ=640   AREAS_TRAIN_BASE_MODEL=yolov8s.pt
+BLEED_TRAIN_EPOCHS=100         BLEED_TRAIN_IMGSZ=640   BLEED_TRAIN_BASE_MODEL=yolov8s.pt
 
-# Confiança de detecção por modelo
+# ── Detecção ──────────────────────────────────────────────────────────────────
+DETECT_CONFIDENCE=0.55
+DETECT_IOU=0.45
+
+# Confiança por modelo
 INST_CONFIDENCE=0.55
 AREAS_CONFIDENCE=0.50
 BLEED_CONFIDENCE=0.45
-HARM_CONFIDENCE=0.40
+
+# ── Filtros geométricos (pós-processamento de bounding boxes) ─────────────────
+FILTER_MIN_BOX_AREA=0.002      # descarta boxes < 0.2% do frame
+FILTER_MAX_BOX_AREA=0.50       # descarta boxes > 50% do frame
+FILTER_EDGE_MARGIN=0.008       # margem de borda (remove watermarks de extremidade)
+FILTER_OVERLAY_TOP=0.22        # remove HUD/legenda superior
+FILTER_OVERLAY_BOTTOM=0.80     # remove HUD/legenda inferior
+
+# ── Limiares de anomalia ──────────────────────────────────────────────────────
+ANOMALY_ABSENCE_WARN=10        # frames sem estrutura → severidade ALTO
+ANOMALY_ABSENCE_CRITICAL=30    # frames sem estrutura → severidade CRÍTICO
+BLEED_WARN_FRAMES=5            # frames consecutivos com sangramento → ALTO
+BLEED_CRITICAL_FRAMES=15       # frames consecutivos com sangramento → CRÍTICO
 ```
 
 ---
 
-## Execução via CLI (`app.py`)
+## Relatórios e saídas geradas
 
-### Download dos datasets
-
-```bash
-# Um modelo específico
-python app.py download --mode instrumentos
-python app.py download --mode areas-criticas
-python app.py download --mode sangramento
-python app.py download --mode automutilacao
-
-# Todos de uma vez
-python app.py download --mode todos
-```
-
-### Treinamento
-
-```bash
-# Um modelo específico
-python app.py train --mode instrumentos
-python app.py train --mode areas-criticas
-python app.py train --mode sangramento
-python app.py train --mode automutilacao
-
-# Todos em sequência
-python app.py train --mode todos
-```
-
-O modelo treinado é salvo em `model/{modo}/weights/best.pt`.
-
-### Detecção em vídeo
-
-```bash
-# Detecção básica (abre janela de visualização)
-python app.py detect --mode instrumentos   --video video.mp4
-python app.py detect --mode areas-criticas --video video.mp4
-python app.py detect --mode sangramento    --video video.mp4
-python app.py detect --mode automutilacao  --video video.mp4
-
-# Sem janela (modo headless — servidores, CI)
-python app.py detect --mode sangramento --video video.mp4 --headless
-
-# Com modelo alternativo
-python app.py detect --mode instrumentos --video video.mp4 --model caminho/modelo.pt
-
-# Todos os modelos em sequência sobre o mesmo vídeo
-python app.py detect --mode todos --video video.mp4
-```
-
-### Saídas geradas por cada `detect`
+Todos os arquivos são gerados na pasta `saida/`:
 
 ```
-saida/{modo}/
-├── output.mp4        # Vídeo anotado com bounding boxes e barra de alerta
-├── relatorio.txt     # Relatório completo em texto
-├── relatorio.html    # Relatório visual com tabelas e nível de risco
-└── relatorio.json    # Dados estruturados (integração com sistemas externos)
+saida/
+├── instrumentos/
+│   ├── relatorio.txt          # Relatório completo em texto
+│   ├── relatorio.html         # Relatório visual com tabelas e nível de risco
+│   ├── resultado.mp4          # Vídeo anotado com bounding boxes (H.264)
+│   └── parecer_medico.txt     # Parecer médico gerado por GPT-4o
+├── areas_criticas/            # Mesma estrutura acima
+├── sangramento/               # Mesma estrutura acima
+├── audio/
+│   └── relatorio_audio.txt    # Transcrição, nível de risco, sinais, recomendações
+├── relatorio_geral.txt        # Relatório consolidado (todos os modelos)
+└── relatorio_geral.html       # Versão visual do relatório consolidado
 ```
 
 ---
 
-## Execução via Notebook (`analise_cirurgica.ipynb`)
+## Parecer médico via IA (GPT-4o)
 
-O notebook integra download de vídeo, detecção e relatório em um único fluxo interativo.
+Ao final de cada análise (frontend ou notebook), o sistema envia automaticamente os resultados de detecção para o GPT-4o e gera um **parecer médico estruturado** em português.
 
-### Pré-requisitos
+**O que é enviado para a IA:**
 
-- Jupyter instalado: `pip install jupyter` ou use a extensão Jupyter do VS Code
-- Modelos já treinados em `model/{modo}/weights/best.pt`
-- ffmpeg disponível no PATH (para exibição do vídeo no notebook)
+- Duração do vídeo, total de frames e FPS
+- Por modelo: total de detecções, classes identificadas com frequência e janela temporal
+- Linha do tempo de anomalias (até 25 eventos) com severidade e descrição
+- Para instrumentos: timeline de uso de cada instrumento (primeiro uso, último uso, segmentos)
 
-### Passo a passo
+**Estrutura do parecer gerado:**
 
-**1.** Abra o notebook `analise_cirurgica.ipynb` no VS Code ou Jupyter Lab.
+1. Resumo Executivo
+2. Análise dos Achados por Modelo de Detecção
+3. Avaliação de Risco Clínico
+4. Eventos e Anomalias Relevantes
+5. Recomendações
+6. Considerações Finais
 
-**2.** Na célula de **CONFIGURAÇÕES**, preencha:
+O parecer é salvo em `saida/{modelo}/parecer_medico.txt` e exibido na interface e no notebook.
 
-```python
-# Opção A — baixar do YouTube automaticamente:
-YOUTUBE_URL = "https://www.youtube.com/watch?v=SEU_VIDEO"
-VIDEO_LOCAL  = ""
-
-# Opção B — usar vídeo local:
-YOUTUBE_URL = ""
-VIDEO_LOCAL  = "video_test.mp4"           # relativo à raiz do projeto
-# VIDEO_LOCAL = r"C:\Videos\cirurgia.mp4" # ou caminho absoluto
-
-# Modelo a executar:
-MODO = "instrumentos"
-# Opções: "todos" | "instrumentos" | "areas-criticas" | "sangramento" | "automutilacao"
-```
-
-**3.** Execute todas as células em sequência (**Run All**) ou célula a célula.
-
-### O notebook executa automaticamente
-
-| Célula | O que faz |
-|---|---|
-| Imports | Configura `sys.path` e importa módulos |
-| Configurações | Lê `YOUTUBE_URL`, `VIDEO_LOCAL` e `MODO` |
-| Configuração | Carrega `.env`, valida o modo, monta `_DETECTORS_CONFIG` |
-| Fonte do Vídeo | Baixa do YouTube via `yt-dlp` **ou** usa arquivo local |
-| Verificação dos Modelos | Confirma se `best.pt` existe para cada modo selecionado |
-| Execução dos Detectores | Roda `detect_video()` em modo headless, coleta resultados |
-| Geração do Relatório | Exibe tabelas markdown inline com métricas e anomalias |
-| Exibição do Vídeo | Re-encoda para H.264 e exibe o vídeo anotado inline |
-
----
-
-## Estrutura do Projeto
-
-```
-Tech Challenge Fase 4/
-├── app.py                          # CLI principal (download / train / detect)
-├── .env                            # Parâmetros de treino e detecção
-├── requirements.txt
-├── analise_cirurgica.ipynb         # Notebook interativo
-│
-├── download_dataset/               # Scripts de download e YAMLs
-│   ├── download_instrumentos.py    # Roboflow: laparoscopic-yolo/laparoscopy
-│   ├── download_areas_criticas.py  # Kaggle: breast-ultrasound + pcos-detection
-│   ├── download_sangramento.py     # Kaggle: wcebleedgen
-│   ├── download_automutilacao.py   # Kaggle: guns-knives-object-detection
-│   ├── dataset_instrumentos.yaml
-│   ├── dataset_areas_criticas.yaml
-│   ├── dataset_sangramento.yaml
-│   └── dataset_automutilacao.yaml
-│
-├── dataset/                        # Datasets de treino (gerados pelo download)
-│   ├── dataset_instrumentos/
-│   ├── dataset_areas_criticas/
-│   ├── dataset_sangramento/
-│   └── dataset_automutilacao/
-│
-├── model/                          # Modelos treinados
-│   ├── instrumentos/weights/best.pt
-│   ├── areas_criticas/weights/best.pt
-│   ├── sangramento/weights/best.pt
-│   └── automutilacao/weights/best.pt
-│
-├── saida/                          # Resultados das detecções
-│   ├── instrumentos/
-│   ├── areas_criticas/
-│   ├── sangramento/
-│   └── automutilacao/
-│
-└── src/
-    ├── relatorio.py                # Geração de relatórios TXT / HTML / JSON
-    └── detectors/
-        ├── base.py                 # BaseDetector — lógica compartilhada e filtros
-        ├── instrumentos.py         # InstrumentosDetector
-        ├── areas_criticas.py       # AreasCriticasDetector
-        ├── sangramento.py          # SangramentoDetector
-        └── automutilacao.py        # AutomutilacaoDetector
-```
-
----
-
-## Lógica de Anomalias
-
-### Instrumentos Cirúrgicos
-
-| Tipo | Severidade | Gatilho |
-|---|---|---|
-| AUSÊNCIA | ALTO | 10 frames consecutivos sem instrumentos |
-| AUSÊNCIA | CRÍTICO | 30 frames consecutivos sem instrumentos |
-| EXCESSO | MÉDIO | Mais de 5 instrumentos simultâneos |
-| VARIAÇÃO | MÉDIO | Delta > 3 em relação à média dos últimos 10 frames |
-
-### Áreas Críticas (Ovário / Mama)
-
-| Tipo | Severidade | Gatilho |
-|---|---|---|
-| AUSÊNCIA | ALTO | 10 frames sem estrutura anatômica visível |
-| AUSÊNCIA | CRÍTICO | 30 frames sem estrutura anatômica visível |
-| EXCESSO | MÉDIO | Mais de 2 estruturas detectadas simultaneamente |
-| VARIAÇÃO | MÉDIO | Delta > 3 em relação à média recente |
-
-### Sangramento
-
-| Tipo | Severidade | Gatilho |
-|---|---|---|
-| SANGRAMENTO | MÉDIO | Primeiro frame com sangramento detectado |
-| SANGRAMENTO | ALTO | 5 frames consecutivos com sangramento |
-| SANGRAMENTO | CRÍTICO | 15 frames consecutivos com sangramento |
-
-### Automutilação / Objetos Suspeitos
-
-| Tipo | Severidade | Gatilho |
-|---|---|---|
-| OBJETO_SUSPEITO | MÉDIO | Primeiro frame com objeto cortante |
-| OBJETO_SUSPEITO | ALTO | 3 frames consecutivos com objeto cortante |
-| OBJETO_SUSPEITO | CRÍTICO | 8 frames consecutivos com objeto cortante |
-| ARMA_DETECTADA | CRÍTICO | Qualquer frame com arma de fogo (imediato) |
-
----
-
-## Critérios Clínicos Avaliados
-
-Os relatórios consolidados (`--mode todos`) avaliam automaticamente quatro critérios clínicos:
-
-| Critério | Modelos Envolvidos |
-|---|---|
-| Desvios em Procedimentos Obstétricos | `areas-criticas` + `sangramento` |
-| Sinais de Complicações em Cirurgias Ginecológicas | `instrumentos` + `sangramento` + `areas-criticas` |
-| Indicadores Visuais de Desconforto Psicológico | `automutilacao` (objetos cortantes) |
-| Alertas para Possíveis Casos de Violência Doméstica | `automutilacao` (arma + objetos cortantes) |
-
----
-
-## Relação com o Tech Challenge
-
-| Requisito | Implementação |
-|---|---|
-| Detecção de instrumentos cirúrgicos | `--mode instrumentos` |
-| Identificação de áreas críticas (ovário, mama) | `--mode areas-criticas` |
-| Detecção de sangramento anômalo | `--mode sangramento` |
-| Detecção de objetos suspeitos (automutilação/violência) | `--mode automutilacao` |
-| Relatórios automáticos TXT / HTML / JSON | Todos os modos |
-| Classificação de risco clínico (MÉDIO / ALTO / CRÍTICO) | Todos os modos |
-| Notebook interativo com YouTube e vídeo local | `analise_cirurgica.ipynb` |
-| Avaliação de critérios clínicos especializados | Relatório consolidado (`todos`) |
+> O parecer é gerado por sistema de apoio à decisão baseado em IA. A validação clínica é de responsabilidade exclusiva do médico responsável pelo caso.

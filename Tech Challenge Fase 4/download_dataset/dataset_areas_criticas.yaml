@@ -1,0 +1,21 @@
+path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset/dataset_areas_criticas
+
+train: train/images
+val: val/images
+
+nc: 3
+
+# Dataset: GynSurge — Anatomy Segmentation
+# Fonte: https://ftp.itec.aau.at/datasets/GynSurge/GynSurg_Anatomy_Dataset.zip
+# 5 vídeos de histerectomia laparoscópica, 1.010 frames anotados, 750×480px
+# Licença: CC BY-NC-ND 4.0
+#
+# Mapeamento de pixel na máscara → classe:
+#    85 → 0: Utero
+#   170 → 1: Tuba_Uterina
+#   255 → 2: Ovario
+
+names:
+  0: Utero
+  1: Tuba_Uterina
+  2: Ovario
