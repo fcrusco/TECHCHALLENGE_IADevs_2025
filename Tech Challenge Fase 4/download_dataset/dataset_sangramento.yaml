@@ -1,0 +1,16 @@
+path: F:/Projetos/TECHCHALLENGE_IADevs_2025/FelipeMoraes/Tech Challenge Fase 4/dataset/dataset_sangramento
+
+train: train/images
+val: val/images
+
+nc: 1
+
+# Fonte (Kaggle via kagglehub):
+#   darksoul007fedsdfds/wcebleedgen
+#   2.618 frames de cápsula endoscópica (WCE) com labels YOLO de sangramento
+#
+# Classe:
+#   0 = Sangramento (região com sangue visível no campo endoscópico/cirúrgico)
+
+names:
+  0: Sangramento

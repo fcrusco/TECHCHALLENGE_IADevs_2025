@@ -84,11 +84,15 @@ class BaseDetector:
     # Filtro anti-banner de texto: rejeita caixas muito largas e rasas
     MAX_BANNER_WH_RATIO   = _ef("FILTER_BANNER_WH", 4.0)
     MAX_BANNER_H_RATIO    = _ef("FILTER_BANNER_H", 0.08)
+    # Análise de componentes conectados para rejeitar regiões com texto
+    FILTER_TEXT_REGIONS   = _es("FILTER_TEXT_REGIONS", "true").lower() not in ("0", "false", "no", "off")
 
     EPOCHS   = _ei("TRAIN_EPOCHS", 80)
     IMGSZ    = _ei("TRAIN_IMGSZ", 640)
     BATCH    = _ei("TRAIN_BATCH", 16)
     PATIENCE = _ei("TRAIN_PATIENCE", 20)
+    # Windows: workers spawnam processo filho sem herdar o venv, causando WinError 1455 / ImportError
+    WORKERS  = _ei("TRAIN_WORKERS", 0 if os.name == "nt" else 8)
 
     def __init__(self):
         self._history = []
@@ -125,6 +129,7 @@ class BaseDetector:
                 imgsz=self.IMGSZ,
                 batch=self.BATCH,
                 patience=self.PATIENCE,
+                workers=self.WORKERS,
                 device=_es("TRAIN_DEVICE", "0"),
                 name=self.MODEL_FOLDER,
                 project=model_dir,
@@ -141,7 +146,7 @@ class BaseDetector:
                 torch.cuda.empty_cache()
                 torch.cuda.synchronize()
 
-    def _filter_boxes(self, results, frame_w, frame_h):
+    def _filter_boxes(self, results, frame_w, frame_h, frame=None):
         if not results or len(results) == 0:
             return results
         boxes = results[0].boxes
@@ -180,10 +185,61 @@ class BaseDetector:
             wh_ratio = w / max(h, 1.0)
             if wh_ratio > self.MAX_BANNER_WH_RATIO and h / frame_h < self.MAX_BANNER_H_RATIO:
                 continue
+            # Análise de componentes conectados: rejeita regiões com texto/watermark
+            if frame is not None and self.FILTER_TEXT_REGIONS:
+                x1i, y1i, x2i, y2i = int(x1), int(y1), int(x2), int(y2)
+                roi = frame[y1i:y2i, x1i:x2i]
+                if self._is_text_region(roi):
+                    continue
             keep.append(i)
 
         results[0].boxes = results[0].boxes[keep]
         return results
+
+    @staticmethod
+    def _is_text_region(roi_bgr):
+        """Retorna True se o ROI parece conter texto (watermark, legenda, título).
+
+        Usa análise de componentes conectados: texto produz múltiplos pequenos
+        componentes com alturas similares (baixo coeficiente de variação).
+        Não requer dependências externas além do OpenCV já importado.
+        """
+        if roi_bgr is None or roi_bgr.size == 0:
+            return False
+        h, w = roi_bgr.shape[:2]
+        if h < 8 or w < 20:
+            return False
+
+        gray = cv2.cvtColor(roi_bgr, cv2.COLOR_BGR2GRAY)
+        # Blur leve para unir pixels adjacentes do mesmo caractere
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
+        # Binarização por Otsu — funciona com texto claro ou escuro
+        _, bw = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+        num_labels, _, stats, _ = cv2.connectedComponentsWithStats(bw, connectivity=8)
+        char_heights = []
+        for i in range(1, num_labels):  # 0 é o fundo
+            cw = int(stats[i, cv2.CC_STAT_WIDTH])
+            ch = int(stats[i, cv2.CC_STAT_HEIGHT])
+            ca = int(stats[i, cv2.CC_STAT_AREA])
+            # Filtra por tamanho plausível de caractere
+            if ca < 10 or ca > h * w * 0.25:
+                continue
+            if ch < 4 or cw < 2:
+                continue
+            if ch > h * 0.85:  # componente que ocupa quase toda a altura → não é letra
+                continue
+            char_heights.append(ch)
+
+        if len(char_heights) < 3:
+            return False
+
+        mean_h = float(np.mean(char_heights))
+        if mean_h < 1.0:
+            return False
+        # Texto real tem caracteres de altura parecida → coeficiente de variação baixo
+        cv_h = float(np.std(char_heights)) / mean_h
+        return cv_h < 0.55
 
     def _make_anomaly(self, frame, atype, severity, description):
         return {"frame": frame, "type": atype, "severity": severity, "description": description}
@@ -287,7 +343,7 @@ class BaseDetector:
 
             out = None
             if save_output:
-                output_video = os.path.join(saida_dir, "output.mp4")
+                output_video = os.path.join(saida_dir, "resultado.mp4")
                 out = cv2.VideoWriter(
                     output_video,
                     cv2.VideoWriter_fourcc(*"mp4v"),
@@ -319,7 +375,7 @@ class BaseDetector:
                     classes=self.CLASSES,
                     verbose=False,
                 )
-                results = self._filter_boxes(results, width, height)
+                results = self._filter_boxes(results, width, height, frame=frame)
 
                 num_detections = 0
                 if results and len(results) > 0:

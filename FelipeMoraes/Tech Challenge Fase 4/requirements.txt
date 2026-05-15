@@ -1,5 +1,12 @@
-ultralytics==8.4.41
-opencv-python==4.13.0.92
-python-dotenv==1.2.2
-kagglehub==1.0.0
-roboflow
+ultralytics>=8.4
+opencv-python>=4.8
+numpy>=1.24
+kagglehub>=0.3
+openai>=1.30
+librosa>=0.10
+soundfile>=0.12
+gradio>=4.0
+yt-dlp>=2024.1
+ipython>=8.0
+python-dotenv>=1.0
+requests>=2.28
