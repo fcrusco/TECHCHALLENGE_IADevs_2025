@@ -53,14 +53,47 @@ extração de features acústicas (`librosa`) → transcrição (`OpenAI Whisper
 
 ## Antes de começar
 
-### 1. Instalar dependências
+### 1. Instalar o FFmpeg
+
+O FFmpeg é obrigatório para a extração de áudio dos vídeos cirúrgicos (usado em `app.py` e `video_analisador/start_video.py`). Sem ele, a análise de áudio é ignorada silenciosamente.
+
+**Windows — via winget (recomendado):**
+```bash
+winget install --id Gyan.FFmpeg --source winget --accept-source-agreements --accept-package-agreements
+```
+> Após a instalação, **reinicie o terminal** para que o `ffmpeg` seja reconhecido no PATH.
+
+**Windows — via Chocolatey:**
+```bash
+choco install ffmpeg
+```
+
+**macOS — via Homebrew:**
+```bash
+brew install ffmpeg
+```
+
+**Linux (Debian/Ubuntu):**
+```bash
+sudo apt update && sudo apt install ffmpeg
+```
+
+**Verificar instalação:**
+```bash
+ffmpeg -version
+```
+A saída deve começar com `ffmpeg version ...`. Se o comando não for encontrado, verifique se o diretório de instalação está no PATH do sistema.
+
+---
+
+### 2. Instalar dependências Python
 
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 pip install -r requirements.txt
 ```
 
-### 2. Configurar `.env`
+### 3. Configurar `.env`
 
 Crie ou edite o arquivo `.env` na raiz do projeto (veja a seção [Parâmetros `.env`](#parâmetros-env) abaixo).
 O campo obrigatório para áudio e parecer médico é:
@@ -69,7 +102,7 @@ O campo obrigatório para áudio e parecer médico é:
 OPENAI_API_KEY=sk-...
 ```
 
-### 3. Gerar dataset de áudio (sintético via OpenAI TTS)
+### 4. Gerar dataset de áudio (sintético via OpenAI TTS)
 
 ```bash
 python app.py download --mode audio
@@ -77,7 +110,7 @@ python app.py download --mode audio
 
 Gera 12 áudios MP3 em `dataset/dataset_audio/` simulando consultas médicas com diferentes perfis de risco.
 
-### 4. Baixar vídeos de exemplo
+### 5. Baixar vídeos de exemplo
 
 ```bash
 python download_videos_teste.py
