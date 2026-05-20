@@ -1,5 +1,4 @@
 dataset/
-model/
 runs/
 saida/
 __pycache__/
@@ -7,7 +6,7 @@ __pycache__/
 .venv/
 .idea/
 *.mp4
-*.pt
+*.mp3
 report_*.txt
 report_*.html
 report_*.json
