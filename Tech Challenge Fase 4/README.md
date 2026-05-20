@@ -63,27 +63,6 @@ winget install --id Gyan.FFmpeg --source winget --accept-source-agreements --acc
 ```
 > Após a instalação, **reinicie o terminal** para que o `ffmpeg` seja reconhecido no PATH.
 
-**Windows — via Chocolatey:**
-```bash
-choco install ffmpeg
-```
-
-**macOS — via Homebrew:**
-```bash
-brew install ffmpeg
-```
-
-**Linux (Debian/Ubuntu):**
-```bash
-sudo apt update && sudo apt install ffmpeg
-```
-
-**Verificar instalação:**
-```bash
-ffmpeg -version
-```
-A saída deve começar com `ffmpeg version ...`. Se o comando não for encontrado, verifique se o diretório de instalação está no PATH do sistema.
-
 ---
 
 ### 2. Instalar dependências Python
