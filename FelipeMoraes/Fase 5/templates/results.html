@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+  <a href="/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Nova Análise</a>
+  <h1 class="fs-4 fw-bold mb-0">🛡️ Resultado da Análise STRIDE</h1>
+</div>
+
+{# ── Metric cards ── #}
+{% set total_threats = namespace(v=0) %}
+{% for ct in threats.values() %}{% set total_threats.v = total_threats.v + ct|length %}{% endfor %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="card text-center p-3">
+      <div class="metric-value">{{ components|length }}</div>
+      <div class="text-muted small mt-1">Componentes</div>
+    </div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="card text-center p-3">
+      <div class="metric-value text-danger">{{ sev_stats.Critical }}</div>
+      <div class="text-muted small mt-1">🔴 Crítico</div>
+    </div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="card text-center p-3">
+      <div class="metric-value" style="color:#e3b341">{{ sev_stats.High }}</div>
+      <div class="text-muted small mt-1">🟠 Alto</div>
+    </div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="card text-center p-3">
+      <div class="metric-value" style="color:#d29922">{{ sev_stats.Medium }}</div>
+      <div class="text-muted small mt-1">🟡 Médio</div>
+    </div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="card text-center p-3">
+      <div class="metric-value" style="color:#3fb950">{{ sev_stats.Low }}</div>
+      <div class="text-muted small mt-1">🟢 Baixo</div>
+    </div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="card text-center p-3">
+      <div class="metric-value text-primary">{{ total_threats.v }}</div>
+      <div class="text-muted small mt-1">Total Ameaças</div>
+    </div>
+  </div>
+</div>
+
+{# ── Tabs ── #}
+<ul class="nav nav-tabs mb-3" id="tabs" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button">📊 Visão Geral</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-threats" type="button">⚔️ Ameaças</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-report" type="button">📋 Relatório</button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-export" type="button">💾 Exportar</button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+  {# ── Tab 1: Overview ── #}
+  <div class="tab-pane fade show active" id="tab-overview">
+    <div class="row g-4 mb-4">
+
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header fw-semibold">Distribuição STRIDE</div>
+          <div class="card-body">
+            {% set stride_labels = {'S':'Spoofing','T':'Tampering','R':'Repudiation','I':'Info Disclosure','D':'Denial of Service','E':'Elevation of Privilege'} %}
+            {% set total_stride = stride_stats.values()|sum %}
+            {% for letter, count in stride_stats.items() %}
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-1 small">
+                <span><strong>{{ letter }}</strong> — {{ stride_labels.get(letter, letter) }}</span>
+                <span class="badge bg-secondary">{{ count }}</span>
+              </div>
+              <div class="progress" style="height:7px">
+                {% if total_stride > 0 %}
+                <div class="progress-bar bg-primary" style="width:{{ (count * 100 / total_stride)|int }}%"></div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header fw-semibold">Trust Boundaries</div>
+          <div class="card-body">
+            {% if trust_boundaries %}
+              {% for tb in trust_boundaries %}
+              <span class="badge bg-secondary me-1 mb-2 p-2">🔒 {{ tb }}</span>
+              {% endfor %}
+            {% else %}
+              <p class="text-muted small mb-0">Nenhuma trust boundary detectada.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header fw-semibold">🏗️ Componentes Detectados</div>
+      <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0 small">
+          <thead><tr>
+            <th>Componente</th><th>Tipo</th><th>Trust Boundary</th>
+            <th>Externo</th><th>Ameaças</th><th>Severidade Máx.</th>
+          </tr></thead>
+          <tbody>
+          {% set sc = {'Critical':'danger','High':'warning','Medium':'warning','Low':'success'} %}
+          {% for comp in components %}
+            {% set cname = comp.get('name','') %}
+            {% set ct = threats.get(cname, []) %}
+            {% set nc = ct|selectattr('severity','equalto','Critical')|list|length %}
+            {% set nh = ct|selectattr('severity','equalto','High')|list|length %}
+            {% set nm = ct|selectattr('severity','equalto','Medium')|list|length %}
+            {% set ms = 'Critical' if nc > 0 else ('High' if nh > 0 else ('Medium' if nm > 0 else 'Low')) %}
+            <tr>
+              <td class="fw-semibold">{{ cname }}</td>
+              <td><code>{{ comp.get('type','') }}</code></td>
+              <td>{{ comp.get('trust_boundary','') }}</td>
+              <td>{{ '✅' if comp.get('is_external') else '—' }}</td>
+              <td>{{ ct|length }}</td>
+              <td><span class="badge bg-{{ sc.get(ms,'secondary') }}">{{ ms }}</span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {# ── Tab 2: Threats ── #}
+  <div class="tab-pane fade" id="tab-threats">
+    {% set icons = {
+      'database':'🗄️','web_server':'🌐','api_gateway':'🔀','load_balancer':'⚖️',
+      'application_server':'⚙️','cache':'⚡','message_queue':'📨',
+      'authentication_service':'🔐','cdn':'🌍','firewall':'🛡️','storage':'📦',
+      'microservice':'🔧','container':'📦','function':'λ','network':'🔗',
+      'external_service':'🌐','monitoring':'📊','user':'👤'
+    } %}
+    {% set sc  = {'Critical':'danger','High':'warning','Medium':'warning','Low':'success'} %}
+    {% set sem = {'Critical':'🔴','High':'🟠','Medium':'🟡','Low':'🟢'} %}
+
+    <div class="accordion" id="acc">
+    {% for comp in components %}
+      {% set cname = comp.get('name','') %}
+      {% set ctype = comp.get('type','') %}
+      {% set ct    = threats.get(cname, []) %}
+      {% set nc = ct|selectattr('severity','equalto','Critical')|list|length %}
+      {% set nh = ct|selectattr('severity','equalto','High')|list|length %}
+      {% set nm = ct|selectattr('severity','equalto','Medium')|list|length %}
+      {% set ms = 'Critical' if nc > 0 else ('High' if nh > 0 else ('Medium' if nm > 0 else 'Low')) %}
+
+      <div class="accordion-item mb-2 rounded overflow-hidden border-secondary">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#c{{ loop.index }}">
+            <span class="me-2">{{ icons.get(ctype,'🔵') }}</span>
+            <strong>{{ cname }}</strong>
+            <code class="text-muted ms-2 me-auto small">({{ ctype }})</code>
+            <span class="badge bg-{{ sc.get(ms,'secondary') }} me-2">{{ ms }}</span>
+            <span class="badge bg-secondary">{{ ct|length }} ameaças</span>
+          </button>
+        </h2>
+        <div id="c{{ loop.index }}" class="accordion-collapse collapse">
+          <div class="accordion-body">
+            <div class="row mb-3 small">
+              <div class="col-md-4">
+                <p class="mb-1"><strong>Tipo:</strong> <code>{{ ctype }}</code></p>
+                <p class="mb-1"><strong>Boundary:</strong> {{ comp.get('trust_boundary','—') }}</p>
+                <p class="mb-0"><strong>Externo:</strong> {{ 'Sim' if comp.get('is_external') else 'Não' }}</p>
+                {% if comp.get('connections') %}
+                <p class="mt-2 mb-0"><strong>Conexões:</strong>
+                  {% for c in comp.get('connections',[]) %}<br>→ {{ c }}{% endfor %}
+                </p>
+                {% endif %}
+              </div>
+              <div class="col-md-8 text-muted fst-italic">{{ comp.get('description','') }}</div>
+            </div>
+
+            {% for t in ct %}
+            {% set sev = t.get('severity','Medium') %}
+            <div class="threat-card threat-{{ sev|lower }}">
+              <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                {{ sem.get(sev,'') }}
+                <strong class="small">[{{ t.get('threat_id','') }}] {{ t.get('stride_letter','') }} — {{ t.get('stride_category','') }}</strong>
+                <span class="badge bg-{{ sc.get(sev,'secondary') }} ms-auto">{{ sev }}</span>
+              </div>
+              <p class="mb-1 text-muted small fst-italic">{{ t.get('description','') }}</p>
+              <p class="mb-1 small">🔧 <strong>Fix:</strong> {{ t.get('countermeasure','') }}</p>
+              {% if t.get('cwe_reference') %}
+              <p class="mb-0 text-muted small">📎 {{ t.get('cwe_reference','') }}</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+
+  {# ── Tab 3: Report ── #}
+  <div class="tab-pane fade" id="tab-report">
+    <div class="card">
+      <div class="card-body px-4" id="report-html">
+        <p class="text-muted">Carregando relatório...</p>
+      </div>
+    </div>
+  </div>
+
+  {# ── Tab 4: Export ── #}
+  <div class="tab-pane fade" id="tab-export">
+    <div class="row g-4 mb-4">
+      <div class="col-md-4">
+        <div class="card text-center p-4 h-100 d-flex flex-column">
+          <div class="fs-1 mb-2">📄</div>
+          <h6>Markdown Report</h6>
+          <p class="text-muted small flex-grow-1">Relatório completo formatado em Markdown.</p>
+          <a href="/download/{{ run_id }}/md" class="btn btn-outline-primary">⬇️ Baixar .md</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center p-4 h-100 d-flex flex-column">
+          <div class="fs-1 mb-2">📊</div>
+          <h6>JSON Data</h6>
+          <p class="text-muted small flex-grow-1">Dados estruturados da análise completa.</p>
+          <a href="/download/{{ run_id }}/json" class="btn btn-outline-primary">⬇️ Baixar .json</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center p-4 h-100 d-flex flex-column">
+          <div class="fs-1 mb-2">📋</div>
+          <h6>CSV Threats</h6>
+          <p class="text-muted small flex-grow-1">Lista de ameaças em formato tabular CSV.</p>
+          <a href="/download/{{ run_id }}/csv" class="btn btn-outline-primary">⬇️ Baixar .csv</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header fw-semibold">📋 Descrição Bruta da Arquitetura</div>
+      <div class="card-body">
+        <pre class="small mb-0">{{ state.get('raw_description','') }}</pre>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const md = {{ report_markdown | tojson }};
+document.getElementById('report-html').innerHTML = marked.parse(md);
+</script>
+{% endblock %}
