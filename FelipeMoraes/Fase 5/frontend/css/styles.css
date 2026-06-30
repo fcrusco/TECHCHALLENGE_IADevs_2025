@@ -1,8 +1,8 @@
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-card: #111827;
-  --bg-elevated: #1f2937;
-  --border: #374151;
+  --bg-primary: #000000;
+  --bg-card: #0d0d0d;
+  --bg-elevated: #1a1a1a;
+  --border: #2a2a2a;
   --text-primary: #f9fafb;
   --text-secondary: #9ca3af;
   --accent: #3b82f6;
@@ -37,29 +37,24 @@ body {
 
 /* ─── Header ──────────────────────────────────────────────── */
 header {
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border);
-  padding: 1rem 2rem;
+  background: #000000;
+  border-bottom: 1px solid #1c1c1c;
+  padding: 1rem 2.5rem;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  justify-content: space-between;
 }
 
 header img {
-  height: 48px;
+  height: 80px;
   width: auto;
 }
 
-.header-title h1 {
-  font-size: 1.25rem;
+.header-title {
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--text-primary);
-}
-
-.header-title p {
-  font-size: 0.875rem;
-  color: var(--accent);
-  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 /* ─── Layout ──────────────────────────────────────────────── */
@@ -85,7 +80,7 @@ main {
   color: var(--text-primary);
 }
 
-/* ─── Upload Section ──────────────────────────────────────── */
+/* ─── Provider row ────────────────────────────────────────── */
 .provider-row {
   display: flex;
   align-items: center;
@@ -119,6 +114,54 @@ select option:disabled {
   color: var(--text-secondary);
 }
 
+/* ─── Local LLM config fields ─────────────────────────────── */
+.local-config {
+  margin-bottom: 1rem;
+  padding: 0.875rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.local-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.field-group label {
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+input[type="text"] {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+input[type="text"]:focus {
+  border-color: var(--accent);
+}
+
+/* ─── Dropzone ────────────────────────────────────────────── */
+input[type="file"] {
+  display: none;
+}
+
 .dropzone {
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg);
@@ -126,7 +169,6 @@ select option:disabled {
   text-align: center;
   cursor: pointer;
   transition: border-color 0.2s, background 0.2s;
-  position: relative;
 }
 
 .dropzone:hover,
@@ -151,10 +193,7 @@ select option:disabled {
   color: var(--text-primary);
 }
 
-input[type="file"] {
-  display: none;
-}
-
+/* ─── Preview ─────────────────────────────────────────────── */
 .preview-wrap {
   margin-top: 1rem;
   display: none;
@@ -179,6 +218,7 @@ input[type="file"] {
   margin-top: 0.5rem;
 }
 
+/* ─── Buttons ─────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -223,14 +263,6 @@ input[type="file"] {
 }
 
 /* ─── Loading ─────────────────────────────────────────────── */
-#loading-section {
-  display: none;
-}
-
-#loading-section.visible {
-  display: block;
-}
-
 .loading-spinner {
   display: flex;
   align-items: center;
@@ -269,13 +301,8 @@ input[type="file"] {
   color: var(--text-secondary);
 }
 
-.step.done {
-  color: var(--success);
-}
-
-.step.active {
-  color: var(--text-primary);
-}
+.step.done  { color: var(--success); }
+.step.active { color: var(--text-primary); }
 
 .step-icon {
   width: 18px;
@@ -283,16 +310,7 @@ input[type="file"] {
   flex-shrink: 0;
 }
 
-/* ─── Results ─────────────────────────────────────────────── */
-#results-section {
-  display: none;
-}
-
-#results-section.visible {
-  display: block;
-}
-
-/* Executive summary */
+/* ─── Summary card ────────────────────────────────────────── */
 .summary-card {
   background: rgba(59, 130, 246, 0.07);
   border-color: rgba(59, 130, 246, 0.25);
@@ -301,10 +319,14 @@ input[type="file"] {
 .summary-card p {
   color: var(--text-secondary);
   font-size: 0.9rem;
-  white-space: pre-wrap;
+  line-height: 1.7;
 }
 
-/* Components grid */
+.summary-card p + p {
+  margin-top: 0.75rem;
+}
+
+/* ─── Components grid ─────────────────────────────────────── */
 .components-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -321,23 +343,11 @@ input[type="file"] {
   gap: 0.4rem;
 }
 
-.component-icon {
-  font-size: 1.75rem;
-}
+.component-icon { font-size: 1.75rem; }
+.component-name { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+.component-desc { font-size: 0.775rem; color: var(--text-secondary); flex: 1; }
 
-.component-name {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-}
-
-.component-desc {
-  font-size: 0.775rem;
-  color: var(--text-secondary);
-  flex: 1;
-}
-
-/* Risk badges */
+/* ─── Risk badges ─────────────────────────────────────────── */
 .badge {
   display: inline-block;
   padding: 0.2rem 0.6rem;
@@ -356,7 +366,7 @@ input[type="file"] {
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  50%       { opacity: 0.7; }
 }
 
 /* ─── STRIDE Accordion ────────────────────────────────────── */
@@ -374,12 +384,10 @@ input[type="file"] {
   padding: 0.85rem 1rem;
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s;
+  transition: filter 0.15s;
 }
 
-.stride-header:hover {
-  filter: brightness(1.1);
-}
+.stride-header:hover { filter: brightness(1.1); }
 
 .stride-header-left {
   display: flex;
@@ -403,18 +411,10 @@ input[type="file"] {
   color: #fff;
 }
 
-.stride-section.open .stride-chevron {
-  transform: rotate(90deg);
-}
+.stride-section.open .stride-chevron { transform: rotate(90deg); }
 
-.stride-body {
-  display: none;
-  background: var(--bg-card);
-}
-
-.stride-section.open .stride-body {
-  display: block;
-}
+.stride-body { display: none; background: var(--bg-card); }
+.stride-section.open .stride-body { display: block; }
 
 .threat-card {
   border-top: 1px solid var(--border);
@@ -428,24 +428,9 @@ input[type="file"] {
   margin-bottom: 0.35rem;
 }
 
-.threat-component {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.threat-desc {
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.countermeasures-label {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
+.threat-component { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; }
+.threat-desc { font-size: 0.875rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+.countermeasures-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.25rem; }
 
 .countermeasures-list {
   list-style: none;
@@ -468,7 +453,7 @@ input[type="file"] {
   color: var(--accent);
 }
 
-/* ─── Result Actions ──────────────────────────────────────── */
+/* ─── Result actions ──────────────────────────────────────── */
 .result-actions {
   display: flex;
   gap: 1rem;
@@ -492,50 +477,32 @@ input[type="file"] {
   animation: slide-in 0.25s ease;
 }
 
-#toast.visible {
-  display: block;
-}
+#toast.visible { display: block; }
 
 @keyframes slide-in {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.toast-title {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--danger);
-  margin-bottom: 0.25rem;
-}
-
-.toast-body {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
+.toast-title { font-size: 0.875rem; font-weight: 700; color: var(--danger); margin-bottom: 0.25rem; }
+.toast-body  { font-size: 0.8rem; color: var(--text-secondary); }
 
 /* ─── Responsive ──────────────────────────────────────────── */
 @media (max-width: 768px) {
   header {
     padding: 0.875rem 1rem;
-    flex-wrap: wrap;
   }
 
-  main {
-    padding: 1rem;
-  }
+  header img { height: 56px; }
+  .header-title { font-size: 1rem; }
 
-  .components-grid {
-    grid-template-columns: 1fr 1fr;
-  }
+  main { padding: 1rem; }
+
+  .components-grid { grid-template-columns: 1fr 1fr; }
+
+  .local-config-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
-  .components-grid {
-    grid-template-columns: 1fr;
-  }
-
-  header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  .components-grid { grid-template-columns: 1fr; }
 }

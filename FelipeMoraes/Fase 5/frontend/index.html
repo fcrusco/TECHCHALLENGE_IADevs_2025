@@ -3,33 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>STRIDE Threat Modeling — Tech Challenge Fase 5</title>
-  <link rel="stylesheet" href="css/styles.css" />
+  <title>STRIDE Threat Modeling — Hackaton Fase 5</title>
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
 
   <!-- ─── Header ─────────────────────────────────────────────── -->
   <header>
-    <img src="../images/logo_fiap.png" alt="FIAP" onerror="this.style.display='none'" />
-    <div class="header-title">
-      <h1>Tech Challenge — Fase 5</h1>
-      <p>STRIDE Threat Modeling</p>
-    </div>
+    <img src="/images/logo_fiap.png" alt="FIAP" />
+    <span class="header-title">Hackaton — Fase 5</span>
   </header>
 
   <main>
 
     <!-- ─── Upload Section ──────────────────────────────────── -->
-    <section id="upload-section" class="card visible" style="display:block;">
+    <section id="upload-section" class="card" style="display:block;">
       <div class="card-title">Analisar Diagrama de Arquitetura</div>
 
       <div class="provider-row">
         <label for="provider-select">Provider LLM:</label>
         <select id="provider-select">
-          <option value="openai">OpenAI (GPT-4o)</option>
+          <option value="openai">OpenAI</option>
           <option value="ollama">Ollama (local)</option>
           <option value="lmstudio">LM Studio (local)</option>
         </select>
+      </div>
+
+      <!-- Campos extras para LLMs locais -->
+      <div id="local-config" class="local-config" style="display:none;">
+        <div class="local-config-grid">
+          <div class="field-group">
+            <label for="local-url">URL do servidor</label>
+            <input type="text" id="local-url" placeholder="http://localhost:11434" />
+          </div>
+          <div class="field-group">
+            <label for="local-model">Modelo</label>
+            <input type="text" id="local-model" placeholder="llava" />
+          </div>
+        </div>
       </div>
 
       <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Área de upload de imagem">
@@ -78,28 +89,25 @@
     <!-- ─── Results Section ─────────────────────────────────── -->
     <section id="results-section" style="display:none;">
 
-      <!-- Executive Summary -->
       <div class="card summary-card">
         <div class="card-title">📋 Resumo Executivo</div>
         <p id="summary-text"></p>
       </div>
 
-      <!-- Detected Components -->
       <div class="card">
         <div class="card-title">🔍 Componentes Detectados</div>
         <div id="components-grid" class="components-grid"></div>
       </div>
 
-      <!-- STRIDE Report -->
       <div class="card">
         <div class="card-title">🛡️ Relatório STRIDE por Categoria</div>
         <div id="stride-accordion"></div>
       </div>
 
-      <!-- Actions -->
       <div class="card">
         <div class="result-actions">
-          <button id="download-btn" class="btn btn-secondary">↓ Baixar Relatório JSON</button>
+          <button id="download-btn" class="btn btn-secondary">↓ Exportar JSON</button>
+          <button id="pdf-btn" class="btn btn-secondary">🖨 Exportar PDF</button>
           <button id="reset-btn" class="btn btn-primary">↺ Nova Análise</button>
         </div>
         <p style="margin-top:.75rem;font-size:.75rem;color:var(--text-secondary);" id="provider-info"></p>
@@ -115,6 +123,6 @@
     <div id="toast-body" class="toast-body"></div>
   </div>
 
-  <script src="js/app.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>
