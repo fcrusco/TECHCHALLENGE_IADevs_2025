@@ -1,8 +1,6 @@
 import json
 import logging
 
-from fastapi import HTTPException
-
 from models.schemas import Component, StrideReport, StrideThreat, ProviderType
 from services.llm_factory import get_llm_client
 
@@ -35,6 +33,10 @@ Be specific and actionable. Focus on threats relevant to each component type.
 Return ONLY valid JSON, no markdown."""
 
 VALID_RISK_LEVELS = {"low", "medium", "high", "critical"}
+CATEGORIES = [
+    "spoofing", "tampering", "repudiation",
+    "information_disclosure", "denial_of_service", "elevation_of_privilege"
+]
 
 
 def _build_components_text(components: list[Component]) -> str:
@@ -52,18 +54,14 @@ def _parse_stride_report(raw: str) -> StrideReport:
 
     try:
         data = json.loads(raw)
-    except json.JSONDecodeError as exc:
+    except json.JSONDecodeError:
         logger.error("STRIDE LLM returned invalid JSON: %s", raw[:500])
-        raise HTTPException(status_code=500, detail="Failed to parse LLM response") from exc
-
-    categories = ["spoofing", "tampering", "repudiation",
-                  "information_disclosure", "denial_of_service", "elevation_of_privilege"]
+        raise ValueError("Failed to parse LLM response")
 
     parsed: dict[str, list[StrideThreat]] = {}
-    for cat in categories:
-        threats_raw = data.get(cat, [])
+    for cat in CATEGORIES:
         threats: list[StrideThreat] = []
-        for t in threats_raw:
+        for t in data.get(cat, []):
             if t.get("risk_level") not in VALID_RISK_LEVELS:
                 t["risk_level"] = "medium"
             threats.append(StrideThreat(**t))
@@ -72,25 +70,18 @@ def _parse_stride_report(raw: str) -> StrideReport:
     return StrideReport(**parsed)
 
 
-async def analyze_stride(components: list[Component], provider: ProviderType | None = None) -> StrideReport:
+def analyze_stride(components: list[Component], provider: ProviderType | None = None) -> StrideReport:
     client, model = get_llm_client(provider)
-    components_text = _build_components_text(components)
 
-    try:
-        response = await client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": components_text},
-            ],
-            max_tokens=4000,
-            timeout=120,
-        )
-    except Exception as exc:
-        err = str(exc)
-        if "timed out" in err.lower():
-            raise HTTPException(status_code=504, detail="LLM request timed out")
-        raise HTTPException(status_code=503, detail=f"LLM request failed: {err}") from exc
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": _build_components_text(components)},
+        ],
+        max_tokens=4000,
+        timeout=120,
+    )
 
     content = response.choices[0].message.content or ""
     return _parse_stride_report(content)

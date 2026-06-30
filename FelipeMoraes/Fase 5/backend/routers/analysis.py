@@ -1,10 +1,10 @@
 import logging
 
-import httpx
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+import requests as req
+from flask import Blueprint, jsonify, request
 
 from config import settings
-from models.schemas import AnalysisResponse, ProviderInfo, ProviderType
+from models.schemas import ProviderType
 from services.llm_factory import get_llm_client
 from services.report import generate_report
 from services.stride import analyze_stride
@@ -12,104 +12,104 @@ from services.vision import identify_components
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+analysis_bp = Blueprint("analysis", __name__)
 
 ALLOWED_CONTENT_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/webp"}
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
 
 
-@router.get("/health")
-async def health():
+@analysis_bp.get("/health")
+def health():
     _, model = get_llm_client()
-    return {"status": "ok", "provider": settings.llm_provider, "model": model}
+    return jsonify({"status": "ok", "provider": settings.llm_provider, "model": model})
 
 
-@router.get("/providers", response_model=list[ProviderInfo])
-async def list_providers():
-    providers: list[ProviderInfo] = []
+@analysis_bp.get("/providers")
+def list_providers():
+    providers = []
 
-    # OpenAI: available when key is set
-    providers.append(ProviderInfo(
-        id="openai",
-        name="OpenAI (GPT-4o)",
-        available=bool(settings.openai_api_key and not settings.openai_api_key.startswith("sk-...")),
-        model=settings.openai_model,
-    ))
+    providers.append({
+        "id": "openai",
+        "name": "OpenAI (GPT-4o)",
+        "available": bool(
+            settings.openai_api_key and not settings.openai_api_key.startswith("sk-...")
+        ),
+        "model": settings.openai_model,
+    })
 
-    # Ollama: ping base URL
-    ollama_ok = await _ping(settings.ollama_base_url)
-    providers.append(ProviderInfo(
-        id="ollama",
-        name="Ollama (local)",
-        available=ollama_ok,
-        model=settings.ollama_model,
-    ))
+    providers.append({
+        "id": "ollama",
+        "name": "Ollama (local)",
+        "available": _ping(settings.ollama_base_url),
+        "model": settings.ollama_model,
+    })
 
-    # LM Studio: ping base URL (strip trailing /v1 suffix for root ping)
     lmstudio_url = settings.lmstudio_base_url
     lmstudio_base = lmstudio_url[:-3] if lmstudio_url.endswith("/v1") else lmstudio_url
-    lmstudio_ok = await _ping(lmstudio_base.rstrip("/"))
-    providers.append(ProviderInfo(
-        id="lmstudio",
-        name="LM Studio (local)",
-        available=lmstudio_ok,
-        model=settings.lmstudio_model,
-    ))
+    providers.append({
+        "id": "lmstudio",
+        "name": "LM Studio (local)",
+        "available": _ping(lmstudio_base.rstrip("/")),
+        "model": settings.lmstudio_model,
+    })
 
-    return providers
+    return jsonify(providers)
 
 
-@router.post("/analyze", response_model=AnalysisResponse)
-async def analyze(
-    file: UploadFile = File(...),
-    provider: ProviderType | None = Form(None),
-):
-    # Validate content type
-    if file.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=422,
-            detail="File must be an image (PNG, JPG, JPEG, WEBP)",
-        )
+@analysis_bp.post("/analyze")
+def analyze():
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"detail": "No file provided"}), 422
 
-    image_bytes = await file.read()
+    content_type = file.content_type or ""
+    if content_type not in ALLOWED_CONTENT_TYPES:
+        return jsonify({"detail": "File must be an image (PNG, JPG, JPEG, WEBP)"}), 422
 
-    # Validate file size
+    image_bytes = file.read()
     if len(image_bytes) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=422, detail="File size exceeds 20MB limit")
+        return jsonify({"detail": "File size exceeds 20MB limit"}), 422
 
-    active_provider: ProviderType = provider or settings.llm_provider
+    provider_param = request.form.get("provider")
+    active_provider: ProviderType = provider_param or settings.llm_provider  # type: ignore[assignment]
 
-    # Guard: OpenAI needs a real key
     if active_provider == "openai" and (
         not settings.openai_api_key or settings.openai_api_key.startswith("sk-...")
     ):
-        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        return jsonify({"detail": "OpenAI API key not configured"}), 500
 
     _, model = get_llm_client(active_provider)
-
     logger.info("Starting analysis with provider=%s model=%s", active_provider, model)
 
-    components = await identify_components(image_bytes, active_provider)
-    logger.info("Identified %d components", len(components))
-
-    stride_report = await analyze_stride(components, active_provider)
-    logger.info("STRIDE analysis complete")
-
-    result = await generate_report(
-        components=components,
-        stride_report=stride_report,
-        provider=active_provider,
-        model_used=model,
-        provider_used=active_provider,
-    )
-
-    return result
-
-
-async def _ping(url: str) -> bool:
     try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
-            response = await client.get(url)
-            return response.status_code < 500
+        components = identify_components(image_bytes, active_provider)
+        logger.info("Identified %d components", len(components))
+
+        stride_report = analyze_stride(components, active_provider)
+        logger.info("STRIDE analysis complete")
+
+        result = generate_report(
+            components=components,
+            stride_report=stride_report,
+            provider=active_provider,
+            model_used=model,
+            provider_used=active_provider,
+        )
+    except ValueError as exc:
+        return jsonify({"detail": str(exc)}), 500
+    except Exception as exc:
+        err = str(exc)
+        if "timed out" in err.lower():
+            return jsonify({"detail": "LLM request timed out"}), 504
+        logger.exception("Unexpected error during analysis")
+        return jsonify({"detail": f"Analysis failed: {err}"}), 503
+
+    return jsonify(result.model_dump())
+
+
+def _ping(url: str) -> bool:
+    try:
+        r = req.get(url, timeout=3)
+        return r.status_code < 500
     except Exception:
         return False

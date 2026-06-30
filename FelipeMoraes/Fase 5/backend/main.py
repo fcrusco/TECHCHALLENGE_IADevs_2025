@@ -1,14 +1,13 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from routers.analysis import router
+from flask import Flask
+from flask_cors import CORS
 
-app = FastAPI(title="STRIDE Threat Modeling API", version="1.0.0")
+from config import settings
+from routers.analysis import analysis_bp
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = Flask(__name__)
+CORS(app)
 
-app.include_router(router, prefix="/api")
+app.register_blueprint(analysis_bp, url_prefix="/api")
+
+if __name__ == "__main__":
+    app.run(host=settings.backend_host, port=settings.backend_port, debug=True)
