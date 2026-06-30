@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STRIDE Threat Modeling — Hackaton Fase 5</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+
+  <!-- ─── Header ─────────────────────────────────────────────── -->
+  <header>
+    <img src="/images/logo_fiap.png" alt="FIAP" />
+    <span class="header-title">Hackaton — Fase 5</span>
+  </header>
+
+  <main>
+
+    <!-- ─── Upload Section ──────────────────────────────────── -->
+    <section id="upload-section" class="card" style="display:block;">
+      <div class="card-title">Analisar Diagrama de Arquitetura</div>
+
+      <div class="provider-row">
+        <label for="provider-select">Provider LLM:</label>
+        <select id="provider-select">
+          <option value="openai">OpenAI</option>
+          <option value="ollama">Ollama (local)</option>
+          <option value="lmstudio">LM Studio (local)</option>
+        </select>
+      </div>
+
+      <!-- Campos extras para LLMs locais -->
+      <div id="local-config" class="local-config" style="display:none;">
+        <div class="local-config-grid">
+          <div class="field-group">
+            <label for="local-url">URL do servidor</label>
+            <input type="text" id="local-url" placeholder="http://localhost:11434" />
+          </div>
+          <div class="field-group">
+            <label for="local-model">Modelo</label>
+            <input type="text" id="local-model" placeholder="llava" />
+          </div>
+        </div>
+      </div>
+
+      <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Área de upload de imagem">
+        <span class="dropzone-icon">☁</span>
+        <strong>Arraste uma imagem aqui</strong>
+        <p>ou clique para selecionar</p>
+        <p>PNG · JPG · JPEG · WEBP · máx 20MB</p>
+      </div>
+
+      <input type="file" id="file-input" accept="image/png,image/jpeg,image/jpg,image/webp" />
+
+      <div id="preview-wrap" class="preview-wrap">
+        <img id="preview-img" src="" alt="Preview do diagrama" />
+        <p id="preview-name"></p>
+      </div>
+
+      <div class="upload-actions">
+        <button id="analyze-btn" class="btn btn-primary" disabled>
+          ⚡ Analisar Diagrama
+        </button>
+      </div>
+    </section>
+
+    <!-- ─── Loading Section ─────────────────────────────────── -->
+    <section id="loading-section" class="card" style="display:none;">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <span>Analisando diagrama...</span>
+      </div>
+      <ul class="steps-list">
+        <li id="step-1" class="step">
+          <span class="step-icon">·</span>
+          Identificando componentes de arquitetura
+        </li>
+        <li id="step-2" class="step">
+          <span class="step-icon">·</span>
+          Aplicando metodologia STRIDE...
+        </li>
+        <li id="step-3" class="step">
+          <span class="step-icon">·</span>
+          Gerando relatório executivo
+        </li>
+      </ul>
+    </section>
+
+    <!-- ─── Results Section ─────────────────────────────────── -->
+    <section id="results-section" style="display:none;">
+
+      <div class="card summary-card">
+        <div class="card-title">📋 Resumo Executivo</div>
+        <p id="summary-text"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔍 Componentes Detectados</div>
+        <div id="components-grid" class="components-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🛡️ Relatório STRIDE por Categoria</div>
+        <div id="stride-accordion"></div>
+      </div>
+
+      <div class="card">
+        <div class="result-actions">
+          <button id="download-btn" class="btn btn-secondary">↓ Exportar JSON</button>
+          <button id="pdf-btn" class="btn btn-secondary">🖨 Exportar PDF</button>
+          <button id="reset-btn" class="btn btn-primary">↺ Nova Análise</button>
+        </div>
+        <p style="margin-top:.75rem;font-size:.75rem;color:var(--text-secondary);" id="provider-info"></p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ─── Toast ───────────────────────────────────────────────── -->
+  <div id="toast" role="alert" aria-live="assertive">
+    <div id="toast-title" class="toast-title"></div>
+    <div id="toast-body" class="toast-body"></div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
