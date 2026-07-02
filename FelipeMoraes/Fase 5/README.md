@@ -1,12 +1,12 @@
 # STRIDE Threat Modeling — Hackaton Fase 5
 
-Sistema de **modelagem de ameaças com IA** para a FIAP Software Security. O usuário faz upload de um diagrama de arquitetura de software (imagem) e a IA identifica os componentes automaticamente, aplica a metodologia **STRIDE** e gera um relatório completo de vulnerabilidades e contramedidas.
+Sistema de **modelagem de ameaças com IA** para o Tech Challenge - Fase 5. O usuário faz upload de um diagrama de arquitetura de software (imagem) e a IA identifica os componentes automaticamente, aplica a metodologia **STRIDE** e gera um relatório completo de vulnerabilidades e contramedidas.
 
 ---
 
 ## Objetivos do Projeto
 
-- Interpretar automaticamente diagramas de arquitetura via IA (LLM Vision)
+- Interpretar automaticamente diagramas de arquitetura via IA 
 - Identificar componentes: usuários, servidores, bancos de dados, APIs, etc.
 - Gerar Relatório de Modelagem de Ameaças baseado na metodologia **STRIDE**
 - Apresentar vulnerabilidades e contramedidas específicas por componente
@@ -96,15 +96,25 @@ OPENAI_MODEL=gpt-4o
 
 ## Como Executar
 
-Um único comando sobe o backend e serve o frontend:
+### 1. Instalar dependências (apenas na primeira vez)
 
-```bash
+```powershell
 cd backend
 pip install -r requirements.txt
+```
+
+### 2. Iniciar o servidor
+
+```powershell
+cd backend
 python main.py
 ```
 
+> **Importante:** execute `python main.py` de dentro da pasta `backend/`, não use `python -m`.
+
 Acesse: [http://localhost:8000](http://localhost:8000)
+
+O backend serve o frontend automaticamente na mesma porta — não é necessário rodar nenhum outro processo.
 
 ---
 

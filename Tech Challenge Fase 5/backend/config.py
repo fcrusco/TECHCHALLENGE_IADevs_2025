@@ -1,8 +1,14 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Literal
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file="../.env",
+        env_file_encoding="utf-8",
+        extra="ignore",       # silently discard unrecognised env vars
+    )
+
     llm_provider: Literal["openai", "ollama", "lmstudio"] = "openai"
 
     openai_api_key: str = ""
@@ -16,10 +22,6 @@ class Settings(BaseSettings):
 
     backend_host: str = "0.0.0.0"
     backend_port: int = 8000
-
-    class Config:
-        env_file = "../.env"
-        env_file_encoding = "utf-8"
 
 
 settings = Settings()
