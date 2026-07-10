@@ -55,39 +55,44 @@ def _get_llm(max_tokens: int | None = None) -> ChatOpenAI:
         temperature=0.1,
     )
 
-_IMAGE_ANALYSIS_SYSTEM = """You are an expert software architect and security analyst.
-Your task is to analyze architecture diagrams and extract detailed information about the
-components, their relationships, trust boundaries, and data flows.
+_IMAGE_ANALYSIS_SYSTEM = """Você é um arquiteto de software e analista de segurança especialista.
+Sua tarefa é analisar diagramas de arquitetura e extrair informações detalhadas sobre os
+componentes, seus relacionamentos, limites de confiança (trust boundaries) e fluxos de dados.
 
-When analyzing an architecture diagram, identify:
-1. All components (services, servers, databases, users, gateways, etc.)
-2. The connections and data flows between components
-3. Trust boundaries (e.g., public internet, DMZ, private network, cloud VPC)
-4. External vs internal components
-5. The type of each component (web server, database, API gateway, load balancer, etc.)
+Ao analisar um diagrama de arquitetura, identifique:
+1. Todos os componentes (serviços, servidores, bancos de dados, usuários, gateways, etc.)
+2. As conexões e fluxos de dados entre os componentes
+3. Limites de confiança (ex.: internet pública, DMZ, rede privada, VPC de nuvem)
+4. Componentes externos vs internos
+5. O tipo de cada componente (servidor web, banco de dados, API gateway, load balancer, etc.)
 
-Be thorough and precise. Include all visible components even if small or auxiliary.
+Seja minucioso e preciso. Inclua todos os componentes visíveis, mesmo que pequenos ou auxiliares.
+Responda sempre em português do Brasil.
 """
 
-_COMPONENT_EXTRACTION_SYSTEM = """You are a security architect specializing in threat modeling.
-Given a description of a software architecture, extract all components in structured JSON format.
-Return ONLY a valid JSON object — no markdown fences, no extra text.
+_COMPONENT_EXTRACTION_SYSTEM = """Você é um arquiteto de segurança especializado em modelagem de ameaças.
+Dada a descrição de uma arquitetura de software, extraia todos os componentes em formato JSON estruturado.
+Retorne APENAS um objeto JSON válido — sem blocos de código markdown, sem texto extra.
+Escreva os valores de texto (como "description") em português do Brasil; mantenha as chaves do JSON em inglês.
 """
 
-_STRIDE_ANALYSIS_SYSTEM = """You are a senior security engineer specializing in threat modeling
-using the STRIDE methodology (Spoofing, Tampering, Repudiation, Information Disclosure,
+_STRIDE_ANALYSIS_SYSTEM = """Você é um engenheiro de segurança sênior especializado em modelagem de ameaças
+usando a metodologia STRIDE (Spoofing, Tampering, Repudiation, Information Disclosure,
 Denial of Service, Elevation of Privilege).
 
-For each architecture component provided, generate specific, actionable STRIDE threats
-relevant to that exact component and its context in the architecture.
-Consider the component type, its connections, and trust boundaries.
+Para cada componente de arquitetura fornecido, gere ameaças STRIDE específicas e acionáveis
+relevantes para aquele componente exato e seu contexto na arquitetura.
+Considere o tipo do componente, suas conexões e limites de confiança.
 
-Return ONLY a valid JSON object with your analysis — no markdown fences, no extra text.
+Retorne APENAS um objeto JSON válido com sua análise — sem blocos de código markdown, sem texto extra.
+Escreva os valores de texto (description, attack_vector, vulnerability, countermeasure) em português do Brasil;
+mantenha as chaves do JSON e os valores de "severity"/"stride_letter" em inglês.
 """
 
-_REPORT_SYSTEM = """You are an expert security analyst writing formal threat modeling reports.
-Generate a comprehensive, professional Markdown threat modeling report following STRIDE methodology.
-The report should be clear, actionable, and suitable for presentation to a security or engineering team.
+_REPORT_SYSTEM = """Você é um analista de segurança especialista que escreve relatórios formais de modelagem de ameaças.
+Gere um relatório de modelagem de ameaças em Markdown abrangente e profissional, seguindo a metodologia STRIDE.
+O relatório deve ser claro, acionável e adequado para apresentação a uma equipe de segurança ou engenharia.
+Escreva o relatório inteiro em português do Brasil.
 """
 
 
@@ -147,19 +152,19 @@ def analyze_image_node(state: ThreatModelState) -> dict[str, Any]:
                 {
                     "type": "text",
                     "text": (
-                        "Analyze this software architecture diagram in detail.\n\n"
-                        "Provide a comprehensive description that includes:\n"
-                        "1. All components visible (name each one)\n"
-                        "2. The type of each component (web server, database, API gateway, "
-                        "load balancer, authentication service, CDN, firewall/WAF, storage, "
-                        "message queue, cache, microservice, container, serverless function, "
-                        "external service, monitoring, user/actor, network boundary)\n"
-                        "3. All connections/data flows between components\n"
-                        "4. Trust boundaries (public internet, DMZ, private subnet, VPC, etc.)\n"
-                        "5. Which components are external vs internal\n"
-                        "6. The overall architecture pattern (e.g., microservices, monolith, serverless, "
-                        "three-tier, event-driven)\n\n"
-                        "Be thorough and specific. Name each component exactly as shown in the diagram."
+                        "Analise este diagrama de arquitetura de software em detalhes.\n\n"
+                        "Forneça uma descrição abrangente que inclua:\n"
+                        "1. Todos os componentes visíveis (nomeie cada um)\n"
+                        "2. O tipo de cada componente (servidor web, banco de dados, API gateway, "
+                        "load balancer, serviço de autenticação, CDN, firewall/WAF, storage, "
+                        "fila de mensagens, cache, microsserviço, container, função serverless, "
+                        "serviço externo, monitoramento, usuário/ator, limite de rede)\n"
+                        "3. Todas as conexões/fluxos de dados entre os componentes\n"
+                        "4. Limites de confiança (internet pública, DMZ, sub-rede privada, VPC, etc.)\n"
+                        "5. Quais componentes são externos vs internos\n"
+                        "6. O padrão geral de arquitetura (ex.: microsserviços, monolito, serverless, "
+                        "três camadas, orientado a eventos)\n\n"
+                        "Seja minucioso e específico. Nomeie cada componente exatamente como aparece no diagrama."
                     ),
                 },
             ]
@@ -183,40 +188,40 @@ def extract_components_node(state: ThreatModelState) -> dict[str, Any]:
     # Truncate to avoid exceeding context limits on small local models
     description = (state.get("raw_description") or "")[:2000]
 
-    prompt = f"""Based on this architecture description, extract all components as a JSON object.
+    prompt = f"""Com base nesta descrição de arquitetura, extraia todos os componentes como um objeto JSON.
 
-Architecture description:
+Descrição da arquitetura:
 {description}
 
-Return a JSON object with this exact structure:
+Retorne um objeto JSON com esta estrutura exata:
 {{
   "components": [
     {{
-      "name": "Component Name",
+      "name": "Nome do Componente",
       "type": "component_type",
-      "description": "What this component does",
+      "description": "O que este componente faz",
       "trust_boundary": "public_internet | dmz | private | vpc | external",
-      "connections": ["ComponentA", "ComponentB"],
-      "is_external": true or false
+      "connections": ["ComponenteA", "ComponenteB"],
+      "is_external": true ou false
     }}
   ],
-  "trust_boundaries": ["list of distinct trust boundary names"],
+  "trust_boundaries": ["lista de nomes distintos de limites de confiança"],
   "data_flows": [
     {{
-      "from": "ComponentA",
-      "to": "ComponentB",
+      "from": "ComponenteA",
+      "to": "ComponenteB",
       "protocol": "HTTPS/TCP/etc",
-      "description": "What data flows"
+      "description": "Que dado flui"
     }}
   ],
-  "architecture_pattern": "Description of overall architecture pattern"
+  "architecture_pattern": "Descrição do padrão geral de arquitetura"
 }}
 
-Valid component types: user, web_server, api_gateway, load_balancer, application_server,
+Tipos de componente válidos: user, web_server, api_gateway, load_balancer, application_server,
 database, cache, message_queue, authentication_service, cdn, firewall, storage,
 microservice, container, function, network, external_service, monitoring, dns, vpn.
 
-If a type is unclear, use the closest match from the list above.
+Se um tipo não estiver claro, use a correspondência mais próxima da lista acima.
 """
 
     messages = [SystemMessage(content=_COMPONENT_EXTRACTION_SYSTEM), HumanMessage(content=prompt)]
@@ -275,24 +280,24 @@ def analyze_stride_node(state: ThreatModelState) -> dict[str, Any]:
         for c in components[:15]  # cap at 15 components
     )
 
-    prompt = f"""Apply STRIDE threat modeling to each component listed below.
-Return ONLY a valid JSON object — no markdown fences, no extra text.
+    prompt = f"""Aplique a modelagem de ameaças STRIDE a cada componente listado abaixo.
+Retorne APENAS um objeto JSON válido — sem blocos de código markdown, sem texto extra.
 
-Components:
+Componentes:
 {comp_lines}
 
-JSON schema per component (generate 2-3 threats each):
+Esquema JSON por componente (gere de 2 a 3 ameaças cada):
 {{
   "ComponentName": [
     {{
       "threat_id": "NAME-S01",
       "stride_letter": "S",
       "stride_category": "Spoofing",
-      "description": "Specific threat",
+      "description": "Ameaça específica",
       "severity": "Critical|High|Medium|Low",
-      "attack_vector": "How attacker exploits it",
-      "vulnerability": "Root weakness",
-      "countermeasure": "Mitigation steps",
+      "attack_vector": "Como o atacante explora isso",
+      "vulnerability": "Fraqueza raiz",
+      "countermeasure": "Passos de mitigação",
       "cwe_reference": "CWE-XXX"
     }}
   ]
@@ -354,17 +359,17 @@ def generate_report_node(state: ThreatModelState) -> dict[str, Any]:
         f"{c['name']} ({c.get('type','')})" for c in components
     )
 
-    prompt = f"""Write a professional STRIDE Threat Modeling Report in Markdown.
+    prompt = f"""Escreva um Relatório de Modelagem de Ameaças STRIDE profissional em Markdown.
 
-Architecture: {raw_description[:800]}
-Components ({len(components)}): {comp_summary}
-Trust boundaries: {', '.join(trust_boundaries) if trust_boundaries else 'N/A'}
+Arquitetura: {raw_description[:800]}
+Componentes ({len(components)}): {comp_summary}
+Limites de confiança: {', '.join(trust_boundaries) if trust_boundaries else 'N/A'}
 
-Threat summary ({sum(len(v) for v in threats.values())} total — Critical:{severity_counts['Critical']} High:{severity_counts['High']} Medium:{severity_counts['Medium']} Low:{severity_counts['Low']}):
+Resumo de ameaças ({sum(len(v) for v in threats.values())} no total — Critical:{severity_counts['Critical']} High:{severity_counts['High']} Medium:{severity_counts['Medium']} Low:{severity_counts['Low']}):
 {chr(10).join(threat_lines[:25])}
 
-Write sections: Executive Summary, Architecture Overview, STRIDE Analysis, Key Recommendations, Conclusion.
-Use 🔴🟠🟡🟢 severity badges."""
+Escreva as seções: Resumo Executivo, Visão Geral da Arquitetura, Análise STRIDE, Principais Recomendações, Conclusão.
+Use os selos de severidade 🔴🟠🟡🟢. Escreva o relatório inteiro em português do Brasil."""
 
     logger.info("  %d ameaças no resumo | %d componentes", len(threat_lines), len(components))
     messages = [SystemMessage(content=_REPORT_SYSTEM), HumanMessage(content=prompt)]

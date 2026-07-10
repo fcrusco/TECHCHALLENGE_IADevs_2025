@@ -8,20 +8,20 @@ from services.llm_factory import get_llm_client
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are a cybersecurity expert. Perform STRIDE threat analysis on the given components.
+SYSTEM_PROMPT = """Você é um especialista em cibersegurança. Realize a análise de ameaças STRIDE sobre os componentes fornecidos.
 
-Return ONLY a valid JSON object with these exact keys:
+Retorne APENAS um objeto JSON válido com estas chaves exatas:
 spoofing, tampering, repudiation, information_disclosure, denial_of_service, elevation_of_privilege
 
-Each value is an array of:
-{"component_id":"comp_1","component_name":"Name","threat":"short description","risk_level":"low|medium|high|critical","countermeasures":["one countermeasure"]}
+Cada valor é um array de:
+{"component_id":"comp_1","component_name":"Nome","threat":"descrição curta em português do Brasil","risk_level":"low|medium|high|critical","countermeasures":["uma contramedida em português do Brasil"]}
 
-Rules:
-- At most 1 threat per component per STRIDE category
-- At most 30 total threats across all categories
-- 1 countermeasure per threat only
-- Keep threat and countermeasure texts short (under 80 chars each)
-- Return ONLY the JSON object, no markdown, no explanation"""
+Regras:
+- No máximo 1 ameaça por componente por categoria STRIDE
+- No máximo 30 ameaças no total, somando todas as categorias
+- Apenas 1 contramedida por ameaça
+- Mantenha os textos de ameaça e contramedida curtos (menos de 80 caracteres cada)
+- Retorne APENAS o objeto JSON, sem markdown, sem explicação"""
 
 VALID_RISK_LEVELS = {"low", "medium", "high", "critical"}
 CATEGORIES = [
@@ -31,7 +31,7 @@ CATEGORIES = [
 
 
 def _build_components_text(components: list[Component]) -> str:
-    lines = ["Architecture components to analyze:"]
+    lines = ["Componentes da arquitetura para analisar:"]
     for comp in components:
         lines.append(f"- id:{comp.id} name:{comp.name} type:{comp.type} desc:{comp.description}")
     return "\n".join(lines)

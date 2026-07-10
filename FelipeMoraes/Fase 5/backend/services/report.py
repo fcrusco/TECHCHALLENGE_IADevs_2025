@@ -7,9 +7,9 @@ from services.llm_factory import get_llm_client
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """Based on this STRIDE threat analysis, write a 2-3 paragraph executive summary in Portuguese.
-Highlight: total threats found, highest risk components, most critical threat categories,
-and top 3 recommended countermeasures. Be concise and direct."""
+SYSTEM_PROMPT = """Com base nesta análise de ameaças STRIDE, escreva um resumo executivo de 2 a 3 parágrafos em português do Brasil.
+Destaque: total de ameaças encontradas, componentes de maior risco, categorias de ameaça mais críticas,
+e as 3 principais contramedidas recomendadas. Seja conciso e direto."""
 
 
 def _build_analysis_text(components: list[Component], stride_report: StrideReport) -> str:
@@ -22,14 +22,14 @@ def _build_analysis_text(components: list[Component], stride_report: StrideRepor
     high     = [t for t in all_threats if t.risk_level == "high"]
 
     lines = [
-        f"Components: {len(components)} | Threats: {len(all_threats)} | Critical: {len(critical)} | High: {len(high)}",
-        "Components: " + ", ".join(f"{c.name}({c.type})" for c in components),
+        f"Componentes: {len(components)} | Ameaças: {len(all_threats)} | Críticas: {len(critical)} | Altas: {len(high)}",
+        "Componentes: " + ", ".join(f"{c.name}({c.type})" for c in components),
         f"Spoofing:{len(stride_report.spoofing)} Tampering:{len(stride_report.tampering)} "
         f"Repudiation:{len(stride_report.repudiation)} InfoDisclosure:{len(stride_report.information_disclosure)} "
         f"DoS:{len(stride_report.denial_of_service)} PrivEsc:{len(stride_report.elevation_of_privilege)}",
     ]
     if critical:
-        lines.append("Most critical: " + "; ".join(f"[{t.component_name}] {t.threat}" for t in critical[:3]))
+        lines.append("Mais críticas: " + "; ".join(f"[{t.component_name}] {t.threat}" for t in critical[:3]))
 
     return "\n".join(lines)
 

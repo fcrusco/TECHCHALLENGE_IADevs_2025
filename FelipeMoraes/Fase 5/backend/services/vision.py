@@ -11,17 +11,17 @@ from services.llm_factory import get_llm_client
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are a software architecture expert. Analyze the provided architecture diagram image.
-Identify ALL components visible in the diagram (users, servers, databases, APIs, services, etc).
-Return a valid JSON array. Each item must have:
-- id: unique string like "comp_1", "comp_2"...
-- name: component name as shown in diagram
-- type: one of [user, web_browser, mobile_app, api_gateway, web_server, microservice,
+SYSTEM_PROMPT = """Você é um especialista em arquitetura de software. Analise a imagem do diagrama de arquitetura fornecida.
+Identifique TODOS os componentes visíveis no diagrama (usuários, servidores, bancos de dados, APIs, serviços, etc).
+Retorne um array JSON válido. Cada item deve ter:
+- id: string única como "comp_1", "comp_2"...
+- name: nome do componente como aparece no diagrama
+- type: um de [user, web_browser, mobile_app, api_gateway, web_server, microservice,
          database, cache, message_queue, storage, cdn, firewall,
          auth_service, external_api, monitoring, cloud_service]
-- description: brief description of its role in this architecture
+- description: breve descrição em português do Brasil do papel deste componente na arquitetura
 
-Return ONLY the JSON array, no markdown, no explanation."""
+Retorne APENAS o array JSON, sem markdown, sem explicação."""
 
 MAX_IMAGE_DIMENSION = 2000
 
@@ -34,20 +34,20 @@ KNOWN_TYPES = {
 
 def _prepare_image_base64(image_bytes: bytes) -> tuple[str, str]:
     img = Image.open(BytesIO(image_bytes))
-    media_type = "image/png"
-    if img.format == "JPEG":
-        media_type = "image/jpeg"
-    elif img.format == "WEBP":
-        media_type = "image/webp"
 
     if max(img.size) > MAX_IMAGE_DIMENSION:
         img.thumbnail((MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION), Image.LANCZOS)
         logger.debug("[vision] Image resized to fit %dpx", MAX_IMAGE_DIMENSION)
 
+    # Always normalize to PNG: some OpenAI-compatible servers (e.g. LM Studio's
+    # llama.cpp backend) reject valid JPEG/WEBP data URIs with
+    # "'url' field must be a base64 encoded image".
+    if img.mode not in ("RGB", "RGBA"):
+        img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
+
     buffer = BytesIO()
-    save_format = "PNG" if media_type == "image/png" else img.format or "PNG"
-    img.save(buffer, format=save_format)
-    return base64.b64encode(buffer.getvalue()).decode("utf-8"), media_type
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode("utf-8"), "image/png"
 
 
 def _parse_components(raw: str) -> list[Component]:
