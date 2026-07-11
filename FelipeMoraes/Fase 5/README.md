@@ -73,8 +73,10 @@ Fase 5/
 │   ├── finetune.py              # Fine-tuning LoRA (PEFT) do Qwen2.5-3B-Instruct
 │   ├── merge_adapter.py         # Mescla o adapter LoRA nos pesos base
 │   ├── evaluate.py              # Teste qualitativo do modelo treinado
+│   ├── setup_model.py           # ← Download automático do GGUF + registro no Ollama
 │   ├── data/stride_sft.jsonl    # Dataset de treino gerado (39 exemplos / 768 ameaças)
-│   └── output/                  # Adapter LoRA, modelo mesclado, GGUF e Modelfile do Ollama
+│   └── output/
+│       └── Modelfile            # Config do Ollama (template ChatML + parâmetros)
 └── backend/ + frontend/       # ← App alternativo: API JSON + SPA (ver seção "App Alternativo")
 ```
 
@@ -137,6 +139,27 @@ Se aparecer `Error: listen tcp 127.0.0.1:11434: bind: ...` o Ollama **já está 
 | App Flask | `python main.py` | Sempre — serve a UI e a API em `localhost:5000` |
 | Ollama | `ollama serve` | Só se for usar o provider "Ollama (local)" e/ou o **Modelo treinado STRIDE** |
 | LM Studio | Abrir o app e ativar o servidor local | Só se for usar o provider "LM Studio (local)" (padrão do `.env`) |
+
+### Download automático do Modelo treinado STRIDE
+
+O arquivo GGUF (~3.3 GB) **não está incluído no repositório** (muito grande para o Git). Ao iniciar o servidor, o app verifica automaticamente se o modelo está disponível e, caso não esteja, faz o download do OneDrive e registra no Ollama:
+
+```
+python main.py
+# → [setup] Baixando stride-qwen2.5-3b-q8_0.gguf (~3.3 GB) do OneDrive...
+# → [setup] stride-qwen2.5-3b registrado com sucesso.
+```
+
+**Requisitos para o download automático:** Ollama precisa estar rodando (`ollama serve`) no momento em que o servidor é iniciado.
+
+Para fazer o download e registro **manualmente** (sem subir o servidor):
+
+```powershell
+ollama serve          # em outro terminal, se não estiver rodando
+python training/setup_model.py
+```
+
+Se o Ollama não estiver rodando na inicialização, o GGUF é baixado para `training/output/` mas o registro é pulado — rode `python training/setup_model.py` depois de iniciar o Ollama.
 
 > ✅ **Validado:** `python main.py` sobe sem erros e serve a UI e a API corretamente. O fluxo
 > completo foi testado via upload real (`POST /analyze`) com Ollama (visão, `gemma3:4b`) +
@@ -280,19 +303,20 @@ Para o modelo treinado funcionar corretamente dentro de `agents/nodes.py`, a fun
 Todo o pipeline de treinamento vive em [training/](training/):
 
 | Arquivo/Pasta | O que é |
-|---|---|
-| `training/seed_kb.py` | ~60 ameaças STRIDE reais, escritas manualmente, uma para cada combinação (tipo de componente × categoria STRIDE). É a "verdade fundamental" de onde o dataset é derivado. |
-| `training/architectures.py` | 8 modelos de arquitetura (ex.: "loja virtual", "banco digital", "plataforma de microsserviços") que combinam vários tipos de componente em sistemas realistas. |
-| `training/build_dataset.py` | Combina os dois acima, gera ~39 arquiteturas sintéticas concretas, e usa um LLM local (LM Studio) para reescrever/parafrasear os textos (mantendo categoria STRIDE, severidade e CWE fixos) — evita que o modelo apenas decore o texto literal do `seed_kb.py`. |
-| `training/data/stride_sft.jsonl` | Dataset final gerado (39 exemplos, 768 ameaças), no formato chat (`system`/`user`/`assistant`) idêntico ao prompt real de produção (`backend/services/stride.py`). |
-| `training/finetune.py` | Fine-tuning LoRA do Qwen2.5-3B-Instruct usando `transformers` + `peft`. |
-| `training/output/stride-qwen2.5-3b-lora/` | **Adapter LoRA treinado** (checkpoint, ~120MB) — os pesos que efetivamente mudaram durante o treino. |
-| `training/merge_adapter.py` | Mescla o adapter LoRA nos pesos originais do Qwen, gerando um modelo completo e independente. |
-| `training/output/stride-qwen2.5-3b-merged/` | Modelo completo mesclado (safetensors, ~6GB) — formato HuggingFace, ainda não otimizado para inferência local. |
-| `training/output/stride-qwen2.5-3b-q8_0.gguf` | **Modelo final em produção**: convertido para GGUF (quantização Q8_0, ~3.3GB), é o arquivo que o Ollama carrega. |
-| `training/output/Modelfile` | Define como o Ollama deve servir o `.gguf` (inclui o template de chat ChatML do Qwen — sem isso o Ollama não formata os prompts corretamente). |
-| `training/evaluate.py` | Script de teste rápido: roda o adapter em cima de arquiteturas que não estavam no treino, para checar qualitativamente a saída. |
-| `agents/nodes.py` (`_call_stride_model`) | Ponte entre o prompt/schema do treino e o schema nativo do pipeline principal (ver acima). |
+|---|---|:---:|
+| `training/seed_kb.py` | ~60 ameaças STRIDE reais, escritas manualmente, uma para cada combinação (tipo de componente × categoria STRIDE). É a "verdade fundamental" de onde o dataset é derivado. | ✅ |
+| `training/architectures.py` | 8 modelos de arquitetura (ex.: "loja virtual", "banco digital", "plataforma de microsserviços") que combinam vários tipos de componente em sistemas realistas. | ✅ |
+| `training/build_dataset.py` | Combina os dois acima, gera ~39 arquiteturas sintéticas concretas, e usa um LLM local (LM Studio) para reescrever/parafrasear os textos (mantendo categoria STRIDE, severidade e CWE fixos) — evita que o modelo apenas decore o texto literal do `seed_kb.py`. | ✅ |
+| `training/data/stride_sft.jsonl` | Dataset final gerado (39 exemplos, 768 ameaças), no formato chat (`system`/`user`/`assistant`) idêntico ao prompt real de produção (`backend/services/stride.py`). | ✅ |
+| `training/finetune.py` | Fine-tuning LoRA do Qwen2.5-3B-Instruct usando `transformers` + `peft`. | ✅ |
+| `training/setup_model.py` | **Download automático** do GGUF do OneDrive + registro no Ollama. Chamado automaticamente por `main.py` / `run.py` na primeira execução. | ✅ |
+| `training/output/Modelfile` | Define como o Ollama deve servir o `.gguf` (inclui o template de chat ChatML do Qwen — sem isso o Ollama não formata os prompts corretamente). | ✅ |
+| `training/merge_adapter.py` | Mescla o adapter LoRA nos pesos originais do Qwen, gerando um modelo completo e independente. | ✅ |
+| `training/output/stride-qwen2.5-3b-lora/` | Adapter LoRA treinado (checkpoint, ~120MB). Gerado por `finetune.py`. | ❌ `.gitignore` |
+| `training/output/stride-qwen2.5-3b-merged/` | Modelo completo mesclado (safetensors, ~6GB). Gerado por `merge_adapter.py`. | ❌ `.gitignore` |
+| `training/output/stride-qwen2.5-3b-q8_0.gguf` | **Modelo final em produção** (GGUF Q8_0, ~3.3GB). **Baixado automaticamente** do OneDrive por `setup_model.py`. | ❌ `.gitignore` |
+| `training/evaluate.py` | Script de teste rápido: roda o adapter em cima de arquiteturas que não estavam no treino, para checar qualitativamente a saída. | ✅ |
+| `agents/nodes.py` (`_call_stride_model`) | Ponte entre o prompt/schema do treino e o schema nativo do pipeline principal (ver acima). | ✅ |
 
 ### Como o treinamento foi feito (para reproduzir)
 
@@ -328,7 +352,7 @@ python merge_adapter.py
 python <caminho-para>/llama.cpp/convert_hf_to_gguf.py output/stride-qwen2.5-3b-merged `
   --outtype q8_0 --outfile output/stride-qwen2.5-3b-q8_0.gguf
 
-# 6. Registrar no Ollama
+# 6. Registrar no Ollama (alternativa mais rápida: python training/setup_model.py)
 cd output
 ollama create stride-qwen2.5-3b -f Modelfile
 ```
@@ -348,7 +372,7 @@ ollama create stride-qwen2.5-3b -f Modelfile
 
 ### Como usar na interface
 
-1. Tenha o Ollama rodando (`ollama serve`) com o modelo registrado (`ollama list` deve mostrar `stride-qwen2.5-3b`).
+1. Tenha o Ollama rodando (`ollama serve`). O modelo `stride-qwen2.5-3b` é **baixado e registrado automaticamente** na primeira vez que `python main.py` é iniciado com o Ollama ativo (ver seção "Download automático" acima). Confirme com `ollama list`.
 2. Abra [http://localhost:5000](http://localhost:5000) — o seletor **Provedor** consulta `GET /providers` automaticamente ao carregar a página.
 3. Escolha a opção **"Modelo Treinado Stride - Ollama (Local)"** no dropdown. Se estiver offline (modelo não registrado no Ollama), a opção aparece desabilitada com "(offline)" no nome.
 4. Com essa opção selecionada, os campos **URL do servidor** e **Modelo** continuam visíveis — eles configuram o modelo usado só para a etapa de **visão** (identificar os componentes na imagem, ex.: `gemma3:4b`); a etapa de análise STRIDE sempre usa `stride-qwen2.5-3b` fixo, independente do que estiver nesses campos. Um aviso abaixo do formulário explica isso, e mostra instruções de como habilitar (`ollama serve` + registrar o modelo) se estiver offline, com um botão "Verificar novamente".

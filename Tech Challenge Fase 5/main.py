@@ -376,7 +376,17 @@ def download(run_id: str, fmt: str):
     return redirect(url_for("results", run_id=run_id))
 
 
+def _ensure_stride_model_on_startup() -> None:
+    """Verifica e baixa o modelo STRIDE na primeira execução (não bloqueia o servidor)."""
+    try:
+        from training.setup_model import ensure_stride_model
+        ensure_stride_model(silent=False)
+    except Exception as exc:
+        logger.warning("Não foi possível verificar o modelo STRIDE: %s", exc)
+
+
 if __name__ == "__main__":
+    _ensure_stride_model_on_startup()
     logger.info("Provider  : LM Studio (local)")
     logger.info("Frontend  : http://0.0.0.0:5000")
     # threaded=True: permite que o navegador consulte /progress/<run_id> enquanto
