@@ -1,4 +1,4 @@
-# Hackaton Tech Challenge Fase 5 FIAP - Detecção de ameaças STRIDE
+﻿# Hackaton Tech Challenge Fase 5 FIAP - Detecção de ameaças STRIDE
 
 Sistema de **modelagem de ameaças com IA** para o Tech Challenge - Fase 5. O usuário faz upload de um diagrama de arquitetura de software via imagem e a IA identifica os componentes automaticamente, aplica a metodologia **STRIDE** e gera um relatório completo de vulnerabilidades e contramedidas.
 
@@ -161,7 +161,7 @@ python training/setup_model.py
 
 Se o Ollama não estiver rodando na inicialização, o GGUF é baixado para `training/output/` mas o registro é pulado — rode `python training/setup_model.py` depois de iniciar o Ollama.
 
-> ✅ **Validado:** `python main.py` sobe sem erros e serve a UI e a API corretamente. O fluxo
+> **Validado:** `python main.py` sobe sem erros e serve a UI e a API corretamente. O fluxo
 > completo foi testado via upload real (`POST /analyze`) com Ollama (visão, `gemma3:4b`) +
 > Modelo treinado STRIDE — 8 componentes identificados, 15 ameaças geradas e roteadas
 > corretamente (log `Modelo STRIDE : stride-qwen2.5-3b`), relatório renderizado com sucesso.
@@ -285,11 +285,11 @@ Para Ollama, LM Studio e Modelo Treinado Stride, a URL e o modelo são editávei
 
 Além dos providers genéricos acima (que usam modelos prontos), o projeto inclui um **modelo próprio, fine-tuned especificamente para gerar ameaças STRIDE**. Ele foi treinado localmente com LoRA sobre o **Qwen2.5-3B-Instruct**, usando um dataset sintético gerado a partir de uma base de conhecimento curada manualmente.
 
-### ⚠️ Escopo: só a etapa STRIDE, não a visão
+### Escopo: só a etapa STRIDE, não a visão
 
 O modelo é **texto-somente** (sem capacidade de visão). Por isso ele **não** substitui o pipeline inteiro — ele entra apenas na etapa `analyze_stride_node`, enquanto a etapa `analyze_image_node` (ler o diagrama e identificar componentes) continua usando o provider normal selecionado na interface (OpenAI, Ollama com um modelo de visão, ou LM Studio).
 
-### ⚠️ Adaptação de prompt/schema
+### Adaptação de prompt/schema
 
 O modelo foi fine-tuned exclusivamente sobre o **prompt e o schema JSON** usados em `backend/services/stride.py` (o app alternativo — ver abaixo): JSON agrupado por categoria STRIDE (`spoofing`, `tampering`, ...), com vocabulário de tipos de componente restrito (16 tipos). O pipeline principal (`agents/nodes.py`) usa um prompt e schema **diferentes** (agrupado por nome de componente, com campos extras como `attack_vector`/`vulnerability`/`cwe_reference`, e um vocabulário de 20 tipos).
 
@@ -302,21 +302,21 @@ Para o modelo treinado funcionar corretamente dentro de `agents/nodes.py`, a fun
 
 Todo o pipeline de treinamento vive em [training/](training/):
 
-| Arquivo/Pasta | O que é |
-|---|---|:---:|
-| `training/seed_kb.py` | ~60 ameaças STRIDE reais, escritas manualmente, uma para cada combinação (tipo de componente × categoria STRIDE). É a "verdade fundamental" de onde o dataset é derivado. | ✅ |
-| `training/architectures.py` | 8 modelos de arquitetura (ex.: "loja virtual", "banco digital", "plataforma de microsserviços") que combinam vários tipos de componente em sistemas realistas. | ✅ |
-| `training/build_dataset.py` | Combina os dois acima, gera ~39 arquiteturas sintéticas concretas, e usa um LLM local (LM Studio) para reescrever/parafrasear os textos (mantendo categoria STRIDE, severidade e CWE fixos) — evita que o modelo apenas decore o texto literal do `seed_kb.py`. | ✅ |
-| `training/data/stride_sft.jsonl` | Dataset final gerado (39 exemplos, 768 ameaças), no formato chat (`system`/`user`/`assistant`) idêntico ao prompt real de produção (`backend/services/stride.py`). | ✅ |
-| `training/finetune.py` | Fine-tuning LoRA do Qwen2.5-3B-Instruct usando `transformers` + `peft`. | ✅ |
-| `training/setup_model.py` | **Download automático** do GGUF do OneDrive + registro no Ollama. Chamado automaticamente por `main.py` / `run.py` na primeira execução. | ✅ |
-| `training/output/Modelfile` | Define como o Ollama deve servir o `.gguf` (inclui o template de chat ChatML do Qwen — sem isso o Ollama não formata os prompts corretamente). | ✅ |
-| `training/merge_adapter.py` | Mescla o adapter LoRA nos pesos originais do Qwen, gerando um modelo completo e independente. | ✅ |
-| `training/output/stride-qwen2.5-3b-lora/` | Adapter LoRA treinado (checkpoint, ~120MB). Gerado por `finetune.py`. | ❌ `.gitignore` |
-| `training/output/stride-qwen2.5-3b-merged/` | Modelo completo mesclado (safetensors, ~6GB). Gerado por `merge_adapter.py`. | ❌ `.gitignore` |
-| `training/output/stride-qwen2.5-3b-q8_0.gguf` | **Modelo final em produção** (GGUF Q8_0, ~3.3GB). **Baixado automaticamente** do OneDrive por `setup_model.py`. | ❌ `.gitignore` |
-| `training/evaluate.py` | Script de teste rápido: roda o adapter em cima de arquiteturas que não estavam no treino, para checar qualitativamente a saída. | ✅ |
-| `agents/nodes.py` (`_call_stride_model`) | Ponte entre o prompt/schema do treino e o schema nativo do pipeline principal (ver acima). | ✅ |
+| Arquivo/Pasta | O que é | No repositório |
+|---|---|---|
+| `training/seed_kb.py` | ~60 ameaças STRIDE reais, escritas manualmente, uma para cada combinação (tipo de componente × categoria STRIDE). É a "verdade fundamental" de onde o dataset é derivado. | sim |
+| `training/architectures.py` | 8 modelos de arquitetura (ex.: "loja virtual", "banco digital", "plataforma de microsserviços") que combinam vários tipos de componente em sistemas realistas. | sim |
+| `training/build_dataset.py` | Combina os dois acima, gera ~39 arquiteturas sintéticas concretas, e usa um LLM local (LM Studio) para reescrever/parafrasear os textos (mantendo categoria STRIDE, severidade e CWE fixos) — evita que o modelo apenas decore o texto literal do `seed_kb.py`. | sim |
+| `training/data/stride_sft.jsonl` | Dataset final gerado (39 exemplos, 768 ameaças), no formato chat (`system`/`user`/`assistant`) idêntico ao prompt real de produção (`backend/services/stride.py`). | sim |
+| `training/finetune.py` | Fine-tuning LoRA do Qwen2.5-3B-Instruct usando `transformers` + `peft`. | sim |
+| `training/setup_model.py` | **Download automático** do GGUF do OneDrive + registro no Ollama. Chamado automaticamente por `main.py` / `run.py` na primeira execução. | sim |
+| `training/output/Modelfile` | Define como o Ollama deve servir o `.gguf` (inclui o template de chat ChatML do Qwen — sem isso o Ollama não formata os prompts corretamente). | sim |
+| `training/merge_adapter.py` | Mescla o adapter LoRA nos pesos originais do Qwen, gerando um modelo completo e independente. | sim |
+| `training/output/stride-qwen2.5-3b-lora/` | Adapter LoRA treinado (checkpoint, ~120MB). Gerado por `finetune.py`. | nao — ignorado pelo .gitignore |
+| `training/output/stride-qwen2.5-3b-merged/` | Modelo completo mesclado (safetensors, ~6GB). Gerado por `merge_adapter.py`. | nao — ignorado pelo .gitignore |
+| `training/output/stride-qwen2.5-3b-q8_0.gguf` | **Modelo final em produção** (GGUF Q8_0, ~3.3GB). **Baixado automaticamente** do OneDrive por `setup_model.py`. | nao — ignorado pelo .gitignore |
+| `training/evaluate.py` | Script de teste rápido: roda o adapter em cima de arquiteturas que não estavam no treino, para checar qualitativamente a saída. | sim |
+| `agents/nodes.py` (`_call_stride_model`) | Ponte entre o prompt/schema do treino e o schema nativo do pipeline principal (ver acima). | sim |
 
 ### Como o treinamento foi feito (para reproduzir)
 
