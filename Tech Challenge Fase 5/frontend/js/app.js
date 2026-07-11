@@ -22,15 +22,15 @@ const STRIDE_COLORS_HEX = {
 };
 
 const LOCAL_DEFAULTS = {
-  ollama:   { url: "http://localhost:11434",   model: "llava" },
+  ollama:   { url: "http://localhost:11434",   model: "gemma3:4b" },
   lmstudio: { url: "http://localhost:1234/v1", model: "local-model" },
 };
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// ─── Estado ───────────────────────────────────────────────────────────────────
 let selectedFile = null;
 let lastReport   = null;
 
-// ─── DOM refs ─────────────────────────────────────────────────────────────────
+// ─── Referências DOM ──────────────────────────────────────────────────────────
 const dropzone        = document.getElementById("dropzone");
 const fileInput       = document.getElementById("file-input");
 const previewWrap     = document.getElementById("preview-wrap");
@@ -41,19 +41,68 @@ const providerSelect  = document.getElementById("provider-select");
 const localConfig     = document.getElementById("local-config");
 const localUrlInput   = document.getElementById("local-url");
 const localModelInput = document.getElementById("local-model");
+const strideModelToggle = document.getElementById("stride-model-toggle");
+const strideModelStatus = document.getElementById("stride-model-status");
+const strideModelInstructions = document.getElementById("stride-model-instructions");
+const strideModelRefresh = document.getElementById("stride-model-refresh");
 const uploadSection   = document.getElementById("upload-section");
 const loadingSection  = document.getElementById("loading-section");
 const resultsSection  = document.getElementById("results-section");
 const toast           = document.getElementById("toast");
 const toastBody       = document.getElementById("toast-body");
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// ─── Inicialização ────────────────────────────────────────────────────────────
 (async function init() {
   await loadProviders();
   updateLocalConfig();
+  await loadStrideModelStatus();
 })();
 
-// ─── Provider loading ─────────────────────────────────────────────────────────
+// ─── Modelo STRIDE treinado (fine-tuned) ───────────────────────────────────────
+async function loadStrideModelStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/stride-model`);
+    if (!res.ok) throw new Error();
+    const info = await res.json();
+    strideModelToggle.disabled = !info.available;
+    strideModelStatus.textContent = info.available ? `(${info.id} — disponível)` : `(${info.id} — offline)`;
+    strideModelStatus.classList.toggle("offline", !info.available);
+    if (!info.available) strideModelToggle.checked = false;
+    renderStrideModelInstructions(info.available, info.id);
+  } catch {
+    strideModelToggle.disabled = true;
+    strideModelStatus.textContent = "(indisponível)";
+    strideModelStatus.classList.add("offline");
+    renderStrideModelInstructions(false, "stride-qwen2.5-3b");
+  }
+}
+
+strideModelRefresh.addEventListener("click", async () => {
+  strideModelRefresh.disabled = true;
+  strideModelRefresh.textContent = "Verificando...";
+  await loadStrideModelStatus();
+  strideModelRefresh.disabled = false;
+  strideModelRefresh.textContent = "↻ Verificar novamente";
+});
+
+function renderStrideModelInstructions(available, modelId) {
+  if (available) {
+    strideModelInstructions.innerHTML = `
+      <p class="stride-model-ok">✓ Ollama detectado com <code>${modelId}</code> registrado — pronto para usar.</p>
+    `;
+    return;
+  }
+  strideModelInstructions.innerHTML = `
+    <p><strong>Para habilitar, execute em um terminal (e deixe rodando):</strong></p>
+    <pre class="stride-model-cmd">ollama serve</pre>
+    <p>Depois confira se o modelo está registrado com <code>ollama list</code> — deve aparecer
+    <code>${modelId}</code>. Se não aparecer, veja como treinar/registrar o modelo em
+    <code>README.md</code>, seção "Modelo Treinado STRIDE (Fine-tuning Local)".</p>
+    <p>Recarregue esta página depois de iniciar o Ollama.</p>
+  `;
+}
+
+// ─── Carregamento de providers ────────────────────────────────────────────────
 async function loadProviders() {
   try {
     const res = await fetch(`${API_BASE}/api/providers`);
@@ -69,7 +118,7 @@ async function loadProviders() {
     });
     const first = providers.find(p => p.available);
     if (first) providerSelect.value = first.id;
-  } catch { /* keep static defaults */ }
+  } catch { /* mantém os valores padrão estáticos */ }
   updateLocalConfig();
 }
 
@@ -95,7 +144,7 @@ function updateLocalConfig() {
 localUrlInput.addEventListener("input",   () => { localUrlInput.dataset.userEdited   = "1"; });
 localModelInput.addEventListener("input", () => { localModelInput.dataset.userEdited = "1"; });
 
-// ─── Drag and drop ────────────────────────────────────────────────────────────
+// ─── Arrastar e soltar ────────────────────────────────────────────────────────
 dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("drag-over"); });
 dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag-over"));
 dropzone.addEventListener("drop", e => {
@@ -119,7 +168,7 @@ function setFile(file) {
   reader.readAsDataURL(file);
 }
 
-// ─── Analyze ──────────────────────────────────────────────────────────────────
+// ─── Analisar ─────────────────────────────────────────────────────────────────
 analyzeBtn.addEventListener("click", runAnalysis);
 
 async function runAnalysis() {
@@ -135,6 +184,9 @@ async function runAnalysis() {
     const model = localModelInput.value.trim();
     if (url)   formData.append("local_url",   url);
     if (model) formData.append("local_model", model);
+  }
+  if (strideModelToggle.checked) {
+    formData.append("use_stride_model", "true");
   }
 
   try {
@@ -158,7 +210,7 @@ async function runAnalysis() {
   }
 }
 
-// ─── Loading steps ────────────────────────────────────────────────────────────
+// ─── Etapas de carregamento ───────────────────────────────────────────────────
 const stepIds = ["step-1", "step-2", "step-3"];
 
 function showLoading() {
@@ -187,31 +239,32 @@ function advanceStep(index) {
   }
 }
 
-// ─── Results rendering ────────────────────────────────────────────────────────
+// ─── Renderização dos resultados ──────────────────────────────────────────────
 function renderResults(report) {
   loadingSection.style.display = "none";
 
-  // Summary — render markdown paragraphs
+  // Resumo — renderiza parágrafos markdown
   const summaryEl = document.getElementById("summary-text");
   summaryEl.innerHTML = "";
   renderMarkdownParagraphs(report.summary).forEach(p => summaryEl.appendChild(p));
 
-  // Components
+  // Componentes
   const grid = document.getElementById("components-grid");
   grid.innerHTML = "";
   report.components.forEach(comp => {
     grid.appendChild(buildComponentCard(comp, computeComponentRisk(comp.id, report.stride_report)));
   });
 
-  // STRIDE accordion
+  // Acordeão STRIDE
   const accordion = document.getElementById("stride-accordion");
   accordion.innerHTML = "";
   STRIDE_META.forEach(meta => {
     accordion.appendChild(buildStrideSection(meta, report.stride_report[meta.key] || []));
   });
 
-  document.getElementById("provider-info").textContent =
-    `Provider: ${report.provider_used} · Modelo: ${report.model_used}`;
+  document.getElementById("provider-info").textContent = report.stride_model_used
+    ? `Provedor: ${report.provider_used} · Modelo (visão): ${report.model_used} · Modelo (STRIDE): ${report.stride_model_used}`
+    : `Provedor: ${report.provider_used} · Modelo: ${report.model_used}`;
 
   resultsSection.style.display = "block";
   resultsSection.scrollIntoView({ behavior: "smooth" });
@@ -220,7 +273,7 @@ function renderResults(report) {
 function renderMarkdownParagraphs(text) {
   return text.split(/\n{2,}/).map(block => {
     const p = document.createElement("p");
-    // Convert **bold** → <strong> (content already safe via text nodes approach)
+    // Converte **negrito** → <strong> (conteúdo já é seguro via escape prévio)
     p.innerHTML = esc(block.trim()).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     return p;
   });
@@ -291,7 +344,7 @@ function buildStrideSection(meta, threats) {
   return section;
 }
 
-// ─── Actions ──────────────────────────────────────────────────────────────────
+// ─── Ações ────────────────────────────────────────────────────────────────────
 document.getElementById("download-btn").addEventListener("click", () => {
   if (!lastReport) return;
   const blob = new Blob([JSON.stringify(lastReport, null, 2)], { type: "application/json" });
@@ -320,7 +373,7 @@ function showUpload() {
   uploadSection.style.display  = "block";
 }
 
-// ─── PDF export ───────────────────────────────────────────────────────────────
+// ─── Exportação PDF ───────────────────────────────────────────────────────────
 function exportPDF(report) {
   const allThreats = Object.values(report.stride_report).flat();
   const critical   = allThreats.filter(t => t.risk_level === "critical").length;
@@ -393,8 +446,8 @@ function exportPDF(report) {
 <body>
   <h1>Relatório de Modelagem de Ameaças STRIDE</h1>
   <div class="meta">
-    Gerado em: ${date} &nbsp;|&nbsp; Provider: ${esc(report.provider_used)} &nbsp;|&nbsp;
-    Modelo: ${esc(report.model_used)} &nbsp;|&nbsp;
+    Gerado em: ${date} &nbsp;|&nbsp; Provedor: ${esc(report.provider_used)} &nbsp;|&nbsp;
+    Modelo: ${esc(report.model_used)}${report.stride_model_used ? ` &nbsp;|&nbsp; Modelo STRIDE: ${esc(report.stride_model_used)}` : ""} &nbsp;|&nbsp;
     Total: ${allThreats.length} ameaças &nbsp;|&nbsp; Críticas: ${critical} &nbsp;|&nbsp; Altas: ${high}
   </div>
 
@@ -419,7 +472,7 @@ function exportPDF(report) {
   win.document.close();
 }
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
+// ─── Notificação (toast) ──────────────────────────────────────────────────────
 function showToast(title, message) {
   document.getElementById("toast-title").textContent = title;
   toastBody.textContent = message;
@@ -427,7 +480,7 @@ function showToast(title, message) {
   setTimeout(() => toast.classList.remove("visible"), 5000);
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Funções auxiliares ───────────────────────────────────────────────────────
 function esc(str) {
   return String(str)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")

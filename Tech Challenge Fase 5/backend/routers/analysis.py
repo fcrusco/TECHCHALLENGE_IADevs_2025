@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request
 
 from config import settings
 from models.schemas import ProviderType
-from services.graph import run_analysis
+from services.graph import STRIDE_MODEL_NAME, STRIDE_MODEL_URL, run_analysis
 from services.llm_factory import get_llm_client
 
 logger = logging.getLogger(__name__)
@@ -54,65 +54,78 @@ def list_providers():
     return jsonify(providers)
 
 
+@analysis_bp.get("/stride-model")
+def stride_model_status():
+    """Disponibilidade do modelo STRIDE treinado (texto-somente, usado apenas na
+    etapa de análise STRIDE — veja backend/services/graph.py)."""
+    return jsonify({
+        "id": STRIDE_MODEL_NAME,
+        "name": "Modelo treinado STRIDE",
+        "available": _ollama_has_model(STRIDE_MODEL_URL, STRIDE_MODEL_NAME),
+    })
+
+
 @analysis_bp.post("/analyze")
 def analyze():
     t_start = time.time()
     logger.info("=" * 60)
-    logger.info("[analyze] New analysis request received")
+    logger.info("[analyze] Nova requisição de análise recebida")
 
-    # ── File validation ───────────────────────────────────────
+    # ── Validação do arquivo ───────────────────────────────────
     file = request.files.get("file")
     if not file:
-        return jsonify({"detail": "No file provided"}), 422
+        return jsonify({"detail": "Nenhum arquivo enviado"}), 422
 
     content_type = file.content_type or ""
     if content_type not in ALLOWED_CONTENT_TYPES:
-        logger.warning("[analyze] Rejected file type: %s", content_type)
-        return jsonify({"detail": "File must be an image (PNG, JPG, JPEG, WEBP)"}), 422
+        logger.warning("[analyze] Tipo de arquivo rejeitado: %s", content_type)
+        return jsonify({"detail": "O arquivo deve ser uma imagem (PNG, JPG, JPEG, WEBP)"}), 422
 
     image_bytes = file.read()
-    logger.info("[analyze] File: name=%s | size=%d bytes | type=%s",
+    logger.info("[analyze] Arquivo: nome=%s | tamanho=%d bytes | tipo=%s",
                 file.filename, len(image_bytes), content_type)
 
     if len(image_bytes) > MAX_FILE_SIZE:
-        return jsonify({"detail": "File size exceeds 20MB limit"}), 422
+        return jsonify({"detail": "O tamanho do arquivo excede o limite de 20MB"}), 422
 
-    # ── Provider resolution ───────────────────────────────────
+    # ── Resolução do provider ──────────────────────────────────
     provider_param = request.form.get("provider")
     active_provider: ProviderType = provider_param or settings.llm_provider  # type: ignore[assignment]
     local_url   = request.form.get("local_url")   or None
     local_model = request.form.get("local_model") or None
+    use_stride_model = request.form.get("use_stride_model", "").lower() in ("true", "1", "on")
 
-    logger.info("[analyze] provider=%s | local_url=%s | local_model=%s",
-                active_provider, local_url, local_model)
+    logger.info("[analyze] provider=%s | local_url=%s | local_model=%s | use_stride_model=%s",
+                active_provider, local_url, local_model, use_stride_model)
 
     if active_provider == "openai" and (
         not settings.openai_api_key or settings.openai_api_key.startswith("sk-...")
     ):
-        return jsonify({"detail": "OpenAI API key not configured"}), 500
+        return jsonify({"detail": "Chave da API da OpenAI não configurada"}), 500
 
-    # ── Execute LangGraph pipeline ────────────────────────────
-    logger.info("[analyze] Invoking LangGraph pipeline: vision → stride → report")
+    # ── Execução do pipeline LangGraph ─────────────────────────
+    logger.info("[analyze] Executando pipeline LangGraph: visão → stride → relatório")
     try:
         result = run_analysis(
             image_bytes=image_bytes,
             provider=active_provider,
             override_url=local_url,
             override_model=local_model,
+            use_stride_model=use_stride_model,
         )
     except ValueError as exc:
-        logger.error("[analyze] Parse error: %s", exc)
+        logger.error("[analyze] Erro de parse: %s", exc)
         return jsonify({"detail": str(exc)}), 500
     except Exception as exc:
         err = str(exc)
         if "timed out" in err.lower():
-            logger.error("[analyze] LLM timeout")
-            return jsonify({"detail": "LLM request timed out"}), 504
-        logger.exception("[analyze] Unexpected error in pipeline")
-        return jsonify({"detail": f"Analysis failed: {err}"}), 503
+            logger.error("[analyze] Timeout do LLM")
+            return jsonify({"detail": "A requisição ao LLM expirou (timeout)"}), 504
+        logger.exception("[analyze] Erro inesperado no pipeline")
+        return jsonify({"detail": f"Falha na análise: {err}"}), 503
 
     elapsed = time.time() - t_start
-    logger.info("[analyze] Pipeline complete in %.1fs | components=%d",
+    logger.info("[analyze] Pipeline concluído em %.1fs | componentes=%d",
                 elapsed, len(result.components))
     logger.info("=" * 60)
 
@@ -123,5 +136,16 @@ def _ping(url: str) -> bool:
     try:
         r = req.get(url, timeout=3)
         return r.status_code < 500
+    except Exception:
+        return False
+
+
+def _ollama_has_model(base_url: str, model_name: str) -> bool:
+    try:
+        r = req.get(f"{base_url.rstrip('/')}/api/tags", timeout=3)
+        if r.status_code >= 500:
+            return False
+        tags = [m.get("name", "").split(":")[0] for m in r.json().get("models", [])]
+        return model_name in tags
     except Exception:
         return False

@@ -5,3 +5,9 @@ __pycache__/
 *.pyo
 .venv/
 venv/
+
+# Arquivos de modelo ML — muito grandes para o Git (use Git LFS se necessário)
+*.gguf
+*.safetensors
+training/output/stride-qwen2.5-3b-lora/
+training/output/stride-qwen2.5-3b-merged/

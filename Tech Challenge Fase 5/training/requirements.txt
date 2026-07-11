@@ -1,0 +1,15 @@
+# Dependências do pipeline de fine-tuning (training/).
+# Instale no Python global da máquina (fora do venv do backend/) — são libs
+# pesadas de ML que não têm relação com o app Flask.
+#
+# torch NÃO está listado aqui: instale a build certa para sua GPU/CUDA antes
+# (ex.: https://pytorch.org/get-started/locally/) — no treino original foi
+# usado torch==2.11.0+cu128 numa RTX 5080.
+
+transformers>=4.46.0
+peft>=0.19.0
+accelerate>=1.0.0
+datasets<3
+sentencepiece
+protobuf
+huggingface_hub>=0.26.0

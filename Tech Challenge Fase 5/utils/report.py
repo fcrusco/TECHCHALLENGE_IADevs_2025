@@ -1,4 +1,4 @@
-"""Report formatting utilities — Markdown enrichment and HTML/PDF export helpers."""
+"""Utilitários de formatação de relatório — enriquecimento em Markdown e helpers de exportação HTML/PDF."""
 
 from __future__ import annotations
 
@@ -8,18 +8,11 @@ from typing import Any
 
 from utils.knowledge import STRIDE_CATEGORIES
 
-SEVERITY_EMOJI = {
-    "Critical": "🔴",
-    "High": "🟠",
-    "Medium": "🟡",
-    "Low": "🟢",
-}
-
 SEVERITY_ORDER = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
 
 
 def build_summary_table(threats: dict[str, list[dict]]) -> str:
-    """Build a Markdown summary table of all threats sorted by severity."""
+    """Monta uma tabela Markdown com o resumo de todas as ameaças, ordenadas por severidade."""
     rows = []
     for component, comp_threats in threats.items():
         for t in comp_threats:
@@ -35,25 +28,24 @@ def build_summary_table(threats: dict[str, list[dict]]) -> str:
     rows.sort(key=lambda r: SEVERITY_ORDER.get(r["severity"], 99))
 
     lines = [
-        "| # | Component | STRIDE | Severity | Description | CWE |",
+        "| # | Componente | STRIDE | Severidade | Descrição | CWE |",
         "|---|-----------|--------|----------|-------------|-----|",
     ]
     for i, row in enumerate(rows, 1):
-        emoji = SEVERITY_EMOJI.get(row["severity"], "")
         lines.append(
             f"| {i} | {row['component']} | {row['stride']} | "
-            f"{emoji} {row['severity']} | {row['description']} | {row['cwe']} |"
+            f"{row['severity']} | {row['description']} | {row['cwe']} |"
         )
 
     return "\n".join(lines)
 
 
 def build_risk_matrix(components: list[dict], threats: dict[str, list[dict]]) -> str:
-    """Build a component vs STRIDE risk matrix in Markdown."""
+    """Monta uma matriz de risco componente × STRIDE em Markdown."""
     stride_letters = list("STRIDE")
     stride_names = {s: STRIDE_CATEGORIES[s]["name"] for s in stride_letters}
 
-    header = "| Component | " + " | ".join(stride_names[s] for s in stride_letters) + " |"
+    header = "| Componente | " + " | ".join(stride_names[s] for s in stride_letters) + " |"
     sep = "|---|" + "---|" * len(stride_letters)
     lines = [header, sep]
 
@@ -70,7 +62,7 @@ def build_risk_matrix(components: list[dict], threats: dict[str, list[dict]]) ->
         cells = []
         for letter in stride_letters:
             sev = threat_map.get(letter, "")
-            cells.append(SEVERITY_EMOJI.get(sev, "➖") + " " + sev if sev else "➖")
+            cells.append(sev if sev else "-")
 
         lines.append(f"| **{name}** | " + " | ".join(cells) + " |")
 
@@ -78,7 +70,7 @@ def build_risk_matrix(components: list[dict], threats: dict[str, list[dict]]) ->
 
 
 def build_remediation_plan(threats: dict[str, list[dict]]) -> str:
-    """Build a prioritized remediation plan from all threats."""
+    """Monta um plano de remediação priorizado a partir de todas as ameaças."""
     all_threats = []
     for component, comp_threats in threats.items():
         for t in comp_threats:
@@ -94,12 +86,11 @@ def build_remediation_plan(threats: dict[str, list[dict]]) -> str:
         sev = t.get("severity", "Medium")
         if sev != current_severity:
             current_severity = sev
-            emoji = SEVERITY_EMOJI.get(sev, "")
-            lines.append(f"\n### {emoji} {sev} Priority\n")
+            lines.append(f"\n### Prioridade {sev}\n")
 
         lines.append(f"**{counter}. [{t['threat_id']}] {t['component']} — {t.get('stride_category', '')}**")
-        lines.append(f"- **Threat:** {t.get('description', '')}")
-        lines.append(f"- **Countermeasure:** {t.get('countermeasure', '')}")
+        lines.append(f"- **Ameaça:** {t.get('description', '')}")
+        lines.append(f"- **Contramedida:** {t.get('countermeasure', '')}")
         lines.append(f"- **CWE:** {t.get('cwe_reference', '')}")
         lines.append("")
         counter += 1
@@ -113,16 +104,16 @@ def enrich_report(
     threats: dict[str, list[dict]],
     report_json: dict[str, Any],
 ) -> str:
-    """Append auto-generated tables and remediation plan to the LLM report."""
+    """Anexa tabelas geradas automaticamente e o plano de remediação ao relatório do LLM."""
     metadata = report_json.get("metadata", {})
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    header = f"""# STRIDE Threat Modeling Report
+    header = f"""# Relatório de Modelagem de Ameaças STRIDE
 
-> **Generated:** {timestamp}
-> **Tool:** STRIDE Threat Modeler — FIAP Hackathon Fase 5
-> **Total Components:** {metadata.get('total_components', len(components))}
-> **Total Threats:** {metadata.get('total_threats', sum(len(v) for v in threats.values()))}
+> **Gerado em:** {timestamp}
+> **Ferramenta:** STRIDE Threat Modeler — FIAP Hackaton Fase 5
+> **Total de Componentes:** {metadata.get('total_components', len(components))}
+> **Total de Ameaças:** {metadata.get('total_threats', sum(len(v) for v in threats.values()))}
 
 ---
 
@@ -131,34 +122,33 @@ def enrich_report(
     summary_section = f"""
 ---
 
-## Appendix A — Complete Threat Summary Table
+## Anexo A — Tabela Completa de Resumo de Ameaças
 
 {build_summary_table(threats)}
 
 ---
 
-## Appendix B — Risk Matrix
+## Anexo B — Matriz de Risco
 
 {build_risk_matrix(components, threats)}
 
 ---
 
-## Appendix C — Prioritized Remediation Plan
+## Anexo C — Plano de Remediação Priorizado
 
 {build_remediation_plan(threats)}
 
 ---
 
-*Report generated automatically by the STRIDE Threat Modeling System using LangGraph + LM Studio.*
 """
 
     return header + report_markdown + summary_section
 
 
 def threats_to_csv(threats: dict[str, list[dict]]) -> str:
-    """Export all threats as CSV."""
+    """Exporta todas as ameaças em formato CSV."""
     lines = [
-        "Threat ID,Component,STRIDE Letter,STRIDE Category,Severity,Description,Attack Vector,Vulnerability,Countermeasure,CWE"
+        "ID da Ameaça,Componente,Letra STRIDE,Categoria STRIDE,Severidade,Descrição,Vetor de Ataque,Vulnerabilidade,Contramedida,CWE"
     ]
     for component, comp_threats in threats.items():
         for t in comp_threats:

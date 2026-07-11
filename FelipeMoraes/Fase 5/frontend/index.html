@@ -8,7 +8,7 @@
 </head>
 <body>
 
-  <!-- ─── Header ─────────────────────────────────────────────── -->
+  <!-- ─── Cabeçalho ──────────────────────────────────────────── -->
   <header>
     <img src="/images/logo_fiap.png" alt="FIAP" />
     <span class="header-title">Hackaton — Fase 5</span>
@@ -16,12 +16,12 @@
 
   <main>
 
-    <!-- ─── Upload Section ──────────────────────────────────── -->
+    <!-- ─── Seção de Upload ─────────────────────────────────── -->
     <section id="upload-section" class="card" style="display:block;">
       <div class="card-title">Analisar Diagrama de Arquitetura</div>
 
       <div class="provider-row">
-        <label for="provider-select">Provider LLM:</label>
+        <label for="provider-select">Provedor de LLM:</label>
         <select id="provider-select">
           <option value="openai">OpenAI</option>
           <option value="ollama">Ollama (local)</option>
@@ -38,9 +38,26 @@
           </div>
           <div class="field-group">
             <label for="local-model">Modelo</label>
-            <input type="text" id="local-model" placeholder="llava" />
+            <input type="text" id="local-model" placeholder="gemma3:4b" />
           </div>
         </div>
+      </div>
+
+      <!-- Modelo STRIDE fine-tuned (substitui só a etapa de análise STRIDE) -->
+      <div class="stride-model-box">
+        <div class="provider-row" id="stride-model-row">
+          <label for="stride-model-toggle">
+            <input type="checkbox" id="stride-model-toggle" />
+            Usar Modelo treinado STRIDE (local) na análise
+            <span id="stride-model-status" class="stride-model-status"></span>
+          </label>
+        </div>
+        <p class="stride-model-note">
+          Modelo Qwen2.5-3B fine-tuned localmente para gerar as ameaças STRIDE — não tem visão,
+          então a identificação dos componentes na imagem continua usando o <strong>Provedor de LLM</strong> acima.
+        </p>
+        <div id="stride-model-instructions" class="stride-model-instructions"></div>
+        <button type="button" id="stride-model-refresh" class="btn btn-outline-small">↻ Verificar novamente</button>
       </div>
 
       <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Área de upload de imagem">
@@ -64,7 +81,7 @@
       </div>
     </section>
 
-    <!-- ─── Loading Section ─────────────────────────────────── -->
+    <!-- ─── Seção de Carregamento ───────────────────────────────── -->
     <section id="loading-section" class="card" style="display:none;">
       <div class="loading-spinner">
         <div class="spinner"></div>
@@ -86,7 +103,7 @@
       </ul>
     </section>
 
-    <!-- ─── Results Section ─────────────────────────────────── -->
+    <!-- ─── Seção de Resultados ─────────────────────────────────── -->
     <section id="results-section" style="display:none;">
 
       <div class="card summary-card">
@@ -117,7 +134,7 @@
 
   </main>
 
-  <!-- ─── Toast ───────────────────────────────────────────────── -->
+  <!-- ─── Notificação (toast) ─────────────────────────────────── -->
   <div id="toast" role="alert" aria-live="assertive">
     <div id="toast-title" class="toast-title"></div>
     <div id="toast-body" class="toast-body"></div>

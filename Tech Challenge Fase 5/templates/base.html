@@ -5,50 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STRIDE Threat Modeler</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
-    body { background: #0d1117; color: #c9d1d9; }
-    .card { background: #161b22; border-color: #30363d; }
-    .navbar-custom { background: #161b22; border-bottom: 1px solid #30363d; }
-    .nav-tabs { border-bottom-color: #30363d; }
-    .nav-tabs .nav-link { color: #8b949e; border-color: transparent; }
-    .nav-tabs .nav-link.active { background: #0d1117; border-color: #30363d #30363d #0d1117; color: #e6edf3; }
-    .threat-card { border-left: 4px solid; border-radius: 6px; padding: .75rem 1rem; margin-bottom: .5rem; background: #161b22; }
+    body { background: #000000; color: #d1d5db; }
+    .card { background: #000000; border-color: #1c1c1c; }
+    .card-header { background: #000000 !important; border-bottom-color: #1c1c1c; color: #f5f5f5; }
+    .navbar-custom { background: #000000; border-bottom: 1px solid #111; }
+    .nav-tabs { border-bottom-color: #1c1c1c; }
+    .nav-tabs .nav-link { color: #6b7280; border-color: transparent; }
+    .nav-tabs .nav-link.active { background: #000000; border-color: #1c1c1c #1c1c1c #000000; color: #f5f5f5; }
+    .threat-card { border-left: 4px solid; border-radius: 6px; padding: .75rem 1rem; margin-bottom: .5rem; background: #050505; }
     .threat-critical { border-color: #da3633; }
     .threat-high     { border-color: #e3b341; }
     .threat-medium   { border-color: #d29922; }
     .threat-low      { border-color: #3fb950; }
     .metric-value { font-size: 2.2rem; font-weight: 700; line-height: 1; }
     .drop-zone {
-      border: 2px dashed #30363d; border-radius: 8px;
+      border: 2px dashed #1c1c1c; border-radius: 8px;
       padding: 3rem 1rem; text-align: center; cursor: pointer;
       transition: border-color .2s, background .2s;
     }
-    .drop-zone:hover, .drop-zone.drag-over { border-color: #58a6ff; background: rgba(88,166,255,.06); }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: #3b82f6; background: rgba(59,130,246,.04); }
+    .navbar-custom { display: flex; align-items: center; justify-content: space-between; padding-top: .5rem; padding-bottom: .5rem; }
+    .navbar-custom img { height: 96px; width: auto; }
+    .navbar-custom .navbar-title { font-size: 1.75rem; font-weight: 700; color: #f5f5f5; text-align: right; }
     #loading-overlay {
-      position: fixed; inset: 0; background: rgba(13,17,23,.93);
+      position: fixed; inset: 0; background: rgba(0,0,0,.96);
       display: none; align-items: center; justify-content: center;
       z-index: 9999; flex-direction: column; gap: 1.5rem;
     }
-    pre { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: .75rem; white-space: pre-wrap; word-break: break-word; }
-    .accordion-item { background: #161b22; border-color: #30363d; }
-    .accordion-button { background: #1e2432; color: #c9d1d9; }
-    .accordion-button:not(.collapsed) { background: #1f2937; color: #e6edf3; box-shadow: none; }
+    #loading-log {
+      max-height: 220px; overflow-y: auto; max-width: 32rem;
+      font-family: ui-monospace, monospace; line-height: 1.6;
+    }
+    pre { background: #000000; border: 1px solid #1c1c1c; border-radius: 6px; padding: .75rem; white-space: pre-wrap; word-break: break-word; }
+    .accordion-item { background: #000000; border-color: #1c1c1c; }
+    .accordion-button { background: #000000; color: #d1d5db; }
+    .accordion-button:not(.collapsed) { background: #050505; color: #f5f5f5; box-shadow: none; }
     .accordion-button:focus { box-shadow: none; }
-    .accordion-body { background: #0d1117; }
+    .accordion-body { background: #000000; }
+    /* Form controls override Bootstrap's bg-dark (#212529) */
+    .form-control, .form-select { background-color: #000000 !important; color: #f5f5f5 !important; border-color: #1c1c1c !important; }
+    .form-control:focus, .form-select:focus { background-color: #000000 !important; border-color: #3b82f6 !important; box-shadow: none !important; }
+    .form-control::placeholder { color: #4b5563; }
     /* Markdown report styling */
-    #report-html h1,#report-html h2,#report-html h3 { border-bottom: 1px solid #30363d; padding-bottom:.3rem; margin-top:1.5rem; }
+    #report-html h1,#report-html h2,#report-html h3 { border-bottom: 1px solid #1c1c1c; padding-bottom:.3rem; margin-top:1.5rem; }
     #report-html table { width:100%; border-collapse:collapse; margin:1rem 0; }
-    #report-html th,#report-html td { border:1px solid #30363d; padding:.5rem .75rem; }
-    #report-html th { background:#161b22; }
-    #report-html code { background:#161b22; padding:.1rem .4rem; border-radius:4px; font-size:.875em; }
+    #report-html th,#report-html td { border:1px solid #1c1c1c; padding:.5rem .75rem; }
+    #report-html th { background:#050505; }
+    #report-html code { background:#050505; padding:.1rem .4rem; border-radius:4px; font-size:.875em; }
     #report-html pre code { background:transparent; padding:0; }
+    /* Exportação para PDF via impressão do navegador — mostra só o relatório.
+       Esconde tudo e só reexibe a subárvore de #tab-report, forçando
+       display/opacity independente do estado das abas do Bootstrap (que usa
+       "display:none" + fade em opacity para abas inativas — sem isso a
+       impressão podia sair em branco se a aba não estivesse totalmente
+       "mostrada" no momento do print). */
+    @media print {
+      body * { visibility: hidden !important; }
+      #tab-report, #tab-report * { visibility: visible !important; }
+      #tab-report {
+        display: block !important; opacity: 1 !important;
+        position: absolute; left: 0; top: 0; width: 100%;
+      }
+      body, #tab-report, #tab-report .card { background: #fff !important; color: #000 !important; }
+      #report-html th, #report-html td, #report-html code { border-color: #999 !important; background: transparent !important; }
+      #tab-report .card { border: none !important; }
+    }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-dark navbar-custom px-4 py-2">
-    <a class="navbar-brand fw-bold" href="/">🛡️ STRIDE Threat Modeler</a>
-    <span class="text-muted small">FIAP Hackathon — Fase 5</span>
+    <a href="/">
+      <img src="/images/logo_fiap.png" alt="FIAP" />
+    </a>
+    <span class="navbar-title">Hackaton - Tech Challenge Fase 5</span>
   </nav>
   <main class="container-xl py-4">
     {% block content %}{% endblock %}

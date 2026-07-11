@@ -1,16 +1,17 @@
-# STRIDE Threat Modeling — Hackaton Fase 5
+# Hackaton Tech Challenge Fase 5 FIAP - Detecção de ameaças STRIDE
 
-Sistema de **modelagem de ameaças com IA** para o Tech Challenge - Fase 5. O usuário faz upload de um diagrama de arquitetura de software (imagem) e a IA identifica os componentes automaticamente, aplica a metodologia **STRIDE** e gera um relatório completo de vulnerabilidades e contramedidas.
+Sistema de **modelagem de ameaças com IA** para o Tech Challenge - Fase 5. O usuário faz upload de um diagrama de arquitetura de software via imagem e a IA identifica os componentes automaticamente, aplica a metodologia **STRIDE** e gera um relatório completo de vulnerabilidades e contramedidas.
 
 ---
 
 ## Objetivos do Projeto
 
-- Interpretar automaticamente diagramas de arquitetura via IA 
+- Interpretar automaticamente diagramas de arquitetura via IA
 - Identificar componentes: usuários, servidores, bancos de dados, APIs, etc.
 - Gerar Relatório de Modelagem de Ameaças baseado na metodologia **STRIDE**
 - Apresentar vulnerabilidades e contramedidas específicas por componente
-- Exportar relatório em **JSON** ou **PDF**
+- Exportar relatório em **PDF**
+- Acompanhar o progresso da análise em tempo real (log de cada etapa durante a execução)
 
 ---
 
@@ -18,25 +19,26 @@ Sistema de **modelagem de ameaças com IA** para o Tech Challenge - Fase 5. O us
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Backend | Python 3.11+ · Flask · Flask-CORS |
-| Orquestração IA | **LangGraph** (pipeline visual → STRIDE → relatório) |
+| Backend | Python 3.11+ · Flask |
+| Orquestração IA | **LangGraph** (pipeline visão → componentes → STRIDE → relatório) |
 | LLM calls | **LangChain** (`langchain-openai`) |
-| LLM padrão | OpenAI GPT-4o (vision multimodal) |
-| LLM alternativo | Ollama · LM Studio (API OpenAI-compatible) |
-| Frontend | HTML + CSS + JS puro — dark mode |
-| Relatório | JSON estruturado + exportação PDF via browser |
+| Providers suportados | OpenAI (GPT-4o) · Ollama (local) · LM Studio (local) — escolha livre na interface |
+| Modelo STRIDE próprio | Qwen2.5-3B fine-tuned localmente (ver seção própria) |
+| Frontend | Templates Jinja + Bootstrap 5 (dark mode), server-rendered |
+| Relatório | Markdown enriquecido + exportação JSON/PDF (via impressão do navegador) |
 
 ---
 
-## Arquitetura do Pipeline (LangGraph)
+## Arquitetura do Pipeline (LangGraph / agents)
 
 ```
-                    ┌────────────────────────────────────────────┐
-                    │            LangGraph Pipeline               │
-                    │                                            │
-  image_bytes  ───► │  vision_node  ──►  stride_node  ──►  report_node │ ──► AnalysisResponse
-                    │  (LLM Vision)      (LLM texto)     (LLM texto)   │
-                    └────────────────────────────────────────────┘
+                    ┌──────────────────────────────────────────────────────────────────┐
+                    │                         Pipeline (agents/nodes.py)                 │
+  imagem  ────────► │  analyze_image_node → extract_components_node → analyze_stride_node → generate_report_node │
+                    │      (LLM visão)          (LLM texto)               (LLM texto)            (LLM texto)      │
+                    └──────────────────────────────────────────────────────────────────┘
+                                                                              │
+                                                          (opcional) roteia para o Modelo treinado STRIDE
 ```
 
 Cada nó é uma chamada LangChain independente com logging completo de entrada, saída e tokens.
@@ -51,26 +53,29 @@ Fase 5/
 ├── README.md
 ├── images/
 │   └── logo_fiap.png
-├── backend/
-│   ├── main.py               # Flask entry point — serve frontend + API + logging
-│   ├── requirements.txt
-│   ├── config.py             # Settings via pydantic-settings
-│   ├── routers/
-│   │   └── analysis.py       # Blueprint Flask: /api/analyze, /api/health, /api/providers
-│   ├── services/
-│   │   ├── llm_factory.py    # Factory ChatOpenAI + LLMLogger callback
-│   │   ├── graph.py          # LangGraph StateGraph: vision → stride → report
-│   │   ├── vision.py         # Node 1: identifica componentes via LLM Vision
-│   │   ├── stride.py         # Node 2: análise STRIDE por componente
-│   │   └── report.py         # Node 3: resumo executivo em português
-│   └── models/
-│       └── schemas.py        # Schemas Pydantic (Component, StrideReport, etc.)
-└── frontend/
-    ├── index.html            # SPA single-page
-    ├── css/
-    │   └── styles.css        # Dark mode, paleta STRIDE, responsivo
-    └── js/
-        └── app.js            # Upload, drag-and-drop, render, export JSON/PDF
+├── main.py                   # ← App principal (Flask, server-rendered com templates/)
+├── run.py                    # Alternativa para subir o app principal: python run.py
+├── agents/                   # Pipeline LangGraph (nós + grafo + estado)
+│   ├── nodes.py               # analyze_image / extract_components / analyze_stride / generate_report
+│   ├── graph.py               # StateGraph opcional (main.py chama os nós diretamente)
+│   └── state.py                # ThreatModelState (TypedDict)
+├── utils/
+│   ├── knowledge.py           # Base de conhecimento STRIDE (fallback + classificação de tipo)
+│   └── report.py               # Enriquecimento do relatório (tabelas, matriz de risco, CSV)
+├── templates/                 # UI server-rendered (Jinja + Bootstrap 5)
+│   ├── base.html
+│   ├── index.html              # Upload + seleção de provider + Modelo treinado STRIDE
+│   └── results.html            # Resultado da análise
+├── training/                  # Fine-tuning do "Modelo treinado STRIDE" (ver seção própria)
+│   ├── seed_kb.py               # Base de ameaças STRIDE curada manualmente (ground truth)
+│   ├── architectures.py         # Templates de arquiteturas sintéticas para gerar dados
+│   ├── build_dataset.py         # Gera training/data/stride_sft.jsonl
+│   ├── finetune.py              # Fine-tuning LoRA (PEFT) do Qwen2.5-3B-Instruct
+│   ├── merge_adapter.py         # Mescla o adapter LoRA nos pesos base
+│   ├── evaluate.py              # Teste qualitativo do modelo treinado
+│   ├── data/stride_sft.jsonl    # Dataset de treino gerado (39 exemplos / 768 ameaças)
+│   └── output/                  # Adapter LoRA, modelo mesclado, GGUF e Modelfile do Ollama
+└── backend/ + frontend/       # ← App alternativo: API JSON + SPA (ver seção "App Alternativo")
 ```
 
 ---
@@ -87,9 +92,13 @@ Edite o `.env`:
 
 ```env
 # Provider padrão
-LLM_PROVIDER=openai
+LLM_PROVIDER=lmstudio
 OPENAI_API_KEY=sk-sua-chave-aqui
 OPENAI_MODEL=gpt-4o
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=gemma3:4b
+LM_STUDIO_URL=http://localhost:1234/v1
+LM_STUDIO_MODEL=google/gemma-4-e4b
 ```
 
 ---
@@ -99,112 +108,134 @@ OPENAI_MODEL=gpt-4o
 ### 1. Instalar dependências (apenas na primeira vez)
 
 ```powershell
-cd backend
 pip install -r requirements.txt
 ```
 
 ### 2. Iniciar o servidor
 
 ```powershell
-cd backend
 python main.py
 ```
 
-> **Importante:** execute `python main.py` de dentro da pasta `backend/`, não use `python -m`.
+Acesse: [http://localhost:5000](http://localhost:5000)
 
-Acesse: [http://localhost:8000](http://localhost:8000)
+Se preferir, `python run.py` faz a mesma coisa (`run.py` só importa o `app` de `main.py` e chama `app.run()` — existe por compatibilidade).
 
-O backend serve o frontend automaticamente na mesma porta — não é necessário rodar nenhum outro processo.
+O Ollama só precisa estar rodando se você for usar o provider "Ollama (local)" e/ou o **Modelo treinado STRIDE**:
+
+```powershell
+# Em outro terminal — precisa ficar rodando
+ollama serve
+```
+
+Se aparecer `Error: listen tcp 127.0.0.1:11434: bind: ...` o Ollama **já está rodando** em outro terminal/processo — não é um erro, pode ignorar.
+
+### Resumo dos processos necessários
+
+| Processo | Comando | Necessário para |
+|----------|---------|------------------|
+| App Flask | `python main.py` | Sempre — serve a UI e a API em `localhost:5000` |
+| Ollama | `ollama serve` | Só se for usar o provider "Ollama (local)" e/ou o **Modelo treinado STRIDE** |
+| LM Studio | Abrir o app e ativar o servidor local | Só se for usar o provider "LM Studio (local)" (padrão do `.env`) |
+
+> ✅ **Validado:** `python main.py` sobe sem erros e serve a UI e a API corretamente. O fluxo
+> completo foi testado via upload real (`POST /analyze`) com Ollama (visão, `gemma3:4b`) +
+> Modelo treinado STRIDE — 8 componentes identificados, 15 ameaças geradas e roteadas
+> corretamente (log `Modelo STRIDE : stride-qwen2.5-3b`), relatório renderizado com sucesso.
+> O caminho sem o modelo treinado (STRIDE gerado pelo mesmo provider da visão) também foi
+> testado e funciona (20 ameaças em 10 componentes no mesmo diagrama).
 
 ---
 
 ## Logs do Backend
 
-O sistema exibe logs detalhados de cada etapa no terminal:
+O sistema exibe logs detalhados de cada etapa no terminal **e também na interface**: a tela de
+carregamento consulta `GET /progress/<run_id>` a cada 600ms e mostra os mesmos passos em tempo
+real enquanto a análise roda (não é mais um texto genérico com temporizador fixo).
+
+Exemplo do log no terminal:
 
 ```
-12:34:01  INFO      main — Provider  : openai
-12:34:01  INFO      main — Frontend  : http://0.0.0.0:8000
-12:34:10  INFO      routers.analysis — [analyze] New analysis request received
-12:34:10  INFO      routers.analysis — [analyze] File: arch.png | 245312 bytes | image/png
-12:34:10  INFO      routers.analysis — [analyze] provider=openai | local_url=None
-12:34:10  INFO      routers.analysis — [analyze] Invoking LangGraph pipeline: vision → stride → report
-12:34:10  INFO      services.graph   — [graph:vision] node start
-12:34:10  INFO      services.llm_factory — ┌─ LLM call start | model=gpt-4o | messages=1
-12:34:14  INFO      services.llm_factory — └─ LLM call done  | 4.2s | finish=stop | chars=843 | tokens: prompt=1204 completion=210 total=1414
-12:34:14  INFO      services.graph   — [graph:vision] node complete | 8 components | model=gpt-4o
-12:34:14  INFO      services.graph   — [graph:stride] node start | 8 components
-12:34:14  INFO      services.llm_factory — ┌─ LLM call start | model=gpt-4o | messages=2
-12:34:28  INFO      services.llm_factory — └─ LLM call done  | 13.8s | finish=stop | chars=4512 | tokens: prompt=892 completion=1130 total=2022
-12:34:28  INFO      services.graph   — [graph:stride] node complete | 48 total threats
-12:34:28  INFO      services.graph   — [graph:report] node start
-12:34:28  INFO      services.llm_factory — ┌─ LLM call start | model=gpt-4o | messages=2
-12:34:31  INFO      services.llm_factory — └─ LLM call done  | 3.1s | finish=stop | chars=612 | tokens: prompt=410 completion=153 total=563
-12:34:31  INFO      services.graph   — [graph:report] node complete | summary chars=612
-12:34:31  INFO      routers.analysis — [analyze] Pipeline complete in 21.3s | components=8
+17:07:12  INFO     __main__              ============================================================
+17:07:12  INFO     __main__              NOVA ANÁLISE INICIADA
+17:07:12  INFO     __main__                Arquivo         : arch.png (245.3 KB)
+17:07:12  INFO     __main__                Provider        : ollama
+17:07:12  INFO     __main__                URL/Modelo local: http://localhost:11434 / gemma3:4b
+17:07:12  INFO     __main__                Modelo STRIDE   : stride-qwen2.5-3b
+17:07:12  INFO     __main__              ============================================================
+17:07:12  INFO     __main__              [1/4] analyze_image_node — iniciando
+17:07:12  INFO     agents.nodes            provider: ollama | modelo: gemma3:4b
+17:07:20  INFO     agents.nodes            analyze_image_node → LLM            resposta 4649 chars (~1162 tokens) em 8.2s
+17:07:20  INFO     __main__              [1/4] analyze_image_node — concluído em 8.9s | descrição: 4649 chars
+17:07:20  INFO     __main__              [2/4] extract_components_node — iniciando
+17:07:24  INFO     __main__              [2/4] extract_components_node — concluído em 4.3s | 8 componentes | 3 limites de confiança | 7 fluxos de dados
+17:07:24  INFO     __main__              [3/4] analyze_stride_node — iniciando
+17:07:24  INFO     agents.nodes            usando modelo STRIDE treinado: ollama/stride-qwen2.5-3b
+17:07:29  INFO     agents.nodes            Modelo treinado: 15 ameaças em 6 componentes
+17:07:29  INFO     __main__              [4/4] generate_report_node — iniciando
+17:07:37  INFO     __main__              ANÁLISE CONCLUÍDA em 28.2s — run_id: 8f600f07-...
+17:07:37  INFO     __main__                Modelo visão  : gemma3:4b (ollama)
+17:07:37  INFO     __main__                Modelo STRIDE : stride-qwen2.5-3b
 ```
 
 ---
 
-## API Endpoints
+## Rotas
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/api/health` | Status + provider ativo |
-| `GET` | `/api/providers` | Lista providers com disponibilidade |
-| `POST` | `/api/analyze` | Upload imagem → relatório STRIDE |
+| `GET` | `/` | Página de upload (seleção de provider) |
+| `GET` | `/providers` | JSON com disponibilidade de cada provider — `openai`, `ollama`, `lmstudio` e `stride-trained` (Modelo Treinado Stride) |
+| `GET` | `/stride-model` | JSON com disponibilidade do Modelo treinado STRIDE isoladamente (legado, mantido para compatibilidade — a interface usa `/providers`) |
+| `GET` | `/progress/<run_id>` | JSON com os passos já concluídos da análise em andamento (`{"steps": [...], "done": bool}`) — consultado via polling pela tela de carregamento |
+| `POST` | `/analyze` | Recebe o diagrama + form fields, roda o pipeline, redireciona para `/results/<run_id>` |
+| `GET` | `/results/<run_id>` | Página com o resultado completo da análise |
+| `GET` | `/download/<run_id>/<fmt>` | Exporta o relatório: `fmt` = `md` \| `json` (PDF é gerado no navegador via impressão, não por essa rota) |
 
-### POST /api/analyze — Form fields
+### POST /analyze — Form fields
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| `file` | UploadFile | Diagrama PNG/JPG/JPEG/WEBP (máx 20MB) |
-| `provider` | string (opt) | `openai` \| `ollama` \| `lmstudio` |
-| `local_url` | string (opt) | URL do servidor local (informada pelo usuário no frontend) |
-| `local_model` | string (opt) | Modelo local (informado pelo usuário no frontend) |
-
-### Response
-
-```json
-{
-  "components": [{ "id": "comp_1", "name": "API Gateway", "type": "api_gateway", "description": "..." }],
-  "stride_report": {
-    "spoofing": [{ "component_id": "comp_1", "component_name": "API Gateway", "threat": "...", "risk_level": "high", "countermeasures": ["..."] }],
-    "tampering": [], "repudiation": [], "information_disclosure": [], "denial_of_service": [], "elevation_of_privilege": []
-  },
-  "summary": "Resumo executivo em português...",
-  "provider_used": "openai",
-  "model_used": "gpt-4o"
-}
-```
+| `diagram` | UploadFile | Diagrama PNG/JPG/JPEG/WEBP |
+| `provider` | string | `openai` \| `ollama` \| `lmstudio` \| `stride-trained` — ver "Providers LLM" abaixo |
+| `local_url` / `local_model` | string (opt) | URL/modelo quando `provider` é `ollama`, `lmstudio` ou `stride-trained` |
+| `lm_max_tokens` | int (opt) | Limite de tokens de saída, só relevante para `lmstudio` |
+| `run_id` | string (opt) | UUID gerado no navegador (`crypto.randomUUID()`) usado para consultar `/progress/<run_id>` durante a execução |
+| `use_stride_model` | `"true"` (opt) | Alternativa direta (via API) ao `provider=stride-trained` — força o uso do Modelo treinado STRIDE mantendo `provider` como o real (`ollama`/`lmstudio`/`openai`) para a etapa de visão |
 
 ---
 
 ## Fluxo Detalhado
 
 ```
-Usuário faz upload de imagem
+Usuário faz upload do diagrama (form em /)
+        │  (gera um run_id no navegador e começa a consultar
+        │   GET /progress/<run_id> a cada 600ms)
+        ▼
+Flask POST /analyze
+        │  (cada etapa abaixo registra uma linha em _progress[run_id],
+        │   consultada pela tela de carregamento em tempo real)
+        ├── analyze_image_node       ← LangChain ChatOpenAI (visão)
+        │   HumanMessage([image_url, texto])
+        │   → descrição textual detalhada da arquitetura
+        │
+        ├── extract_components_node  ← LangChain ChatOpenAI (texto)
+        │   → converte a descrição em componentes estruturados (JSON)
+        │
+        ├── analyze_stride_node      ← LangChain ChatOpenAI (texto)
+        │   → ameaças STRIDE por componente
+        │   Se use_stride_model=true: chama o Modelo treinado STRIDE com o
+        │   prompt/schema exatos do treino, e converte a resposta para o
+        │   formato nativo deste pipeline (ver training/ e nodes.py)
+        │
+        └── generate_report_node     ← LangChain ChatOpenAI (texto)
+            → relatório STRIDE em Markdown
         │
         ▼
-Flask /api/analyze
+utils/report.enrich_report() — adiciona tabelas, matriz de risco e plano de remediação
         │
         ▼
-LangGraph: run_analysis()
-        │
-        ├── vision_node   ← LangChain ChatOpenAI (vision)
-        │   HumanMessage([image_url, text_prompt])
-        │   → identifica componentes → lista JSON
-        │
-        ├── stride_node   ← LangChain ChatOpenAI (texto)
-        │   SystemMessage(STRIDE prompt) + HumanMessage(componentes)
-        │   → ameaças por categoria STRIDE → JSON reparado se truncado
-        │
-        └── report_node   ← LangChain ChatOpenAI (texto)
-            SystemMessage(summary prompt) + HumanMessage(dados)
-            → resumo executivo em português
-        │
-        ▼
-AnalysisResponse (Pydantic) → jsonify → Frontend
+Resultado salvo em memória (run_id) → redireciona para /results/<run_id>
 ```
 
 ---
@@ -214,10 +245,119 @@ AnalysisResponse (Pydantic) → jsonify → Frontend
 | Provider | Tipo | Configuração |
 |----------|------|-------------|
 | **OpenAI** | Nuvem | `OPENAI_API_KEY` no `.env` |
-| **Ollama** | Local | `ollama run llava` + URL/model configuráveis na interface |
+| **Ollama** | Local | Um modelo com **visão** ativo (ex.: `ollama pull gemma3:4b` ou `llava`) + URL/model configuráveis na interface |
 | **LM Studio** | Local | Servidor local ativo + URL/model configuráveis na interface |
+| **Modelo Treinado Stride - Ollama (Local)** | Local | Igual ao Ollama acima (mesmos campos URL/Modelo, usados para a etapa de **visão**) — mas força a etapa de **análise STRIDE** a usar o modelo fine-tuned `stride-qwen2.5-3b` (ver seção própria abaixo) |
 
-Para Ollama e LM Studio, a URL e o modelo são editáveis diretamente no frontend sem reiniciar o servidor.
+Para Ollama, LM Studio e Modelo Treinado Stride, a URL e o modelo são editáveis diretamente na interface sem reiniciar o servidor — o seletor de provider consulta `GET /providers` ao carregar a página e desabilita os que estiverem offline (a opção "Modelo Treinado Stride" fica offline se o Ollama não tiver o modelo `stride-qwen2.5-3b` registrado).
+
+> **Nota:** o campo "Modelo" para Ollama vem preenchido com `gemma3:4b` por padrão, mas esse modelo
+> precisa estar baixado (`ollama pull gemma3:4b`) para funcionar. Se você tiver outro modelo com
+> visão baixado (ex.: `llava`), digite o nome dele no campo — confira o que está disponível
+> com `ollama list`.
+
+---
+
+## Modelo Treinado STRIDE (Fine-tuning Local)
+
+Além dos providers genéricos acima (que usam modelos prontos), o projeto inclui um **modelo próprio, fine-tuned especificamente para gerar ameaças STRIDE**. Ele foi treinado localmente com LoRA sobre o **Qwen2.5-3B-Instruct**, usando um dataset sintético gerado a partir de uma base de conhecimento curada manualmente.
+
+### ⚠️ Escopo: só a etapa STRIDE, não a visão
+
+O modelo é **texto-somente** (sem capacidade de visão). Por isso ele **não** substitui o pipeline inteiro — ele entra apenas na etapa `analyze_stride_node`, enquanto a etapa `analyze_image_node` (ler o diagrama e identificar componentes) continua usando o provider normal selecionado na interface (OpenAI, Ollama com um modelo de visão, ou LM Studio).
+
+### ⚠️ Adaptação de prompt/schema
+
+O modelo foi fine-tuned exclusivamente sobre o **prompt e o schema JSON** usados em `backend/services/stride.py` (o app alternativo — ver abaixo): JSON agrupado por categoria STRIDE (`spoofing`, `tampering`, ...), com vocabulário de tipos de componente restrito (16 tipos). O pipeline principal (`agents/nodes.py`) usa um prompt e schema **diferentes** (agrupado por nome de componente, com campos extras como `attack_vector`/`vulnerability`/`cwe_reference`, e um vocabulário de 20 tipos).
+
+Para o modelo treinado funcionar corretamente dentro de `agents/nodes.py`, a função `_call_stride_model()` faz a ponte: monta o prompt exato do treino (mapeando tipos não vistos no treino, como `load_balancer` ou `application_server`, para o tipo mais próximo do vocabulário original), chama o modelo, e converte a resposta de volta para o formato nativo do pipeline. Os campos que o modelo treinado não gera (`attack_vector`, `vulnerability`, `cwe_reference`) recebem um texto genérico indicando isso.
+
+> Sem essa conversão, o modelo — que nunca viu esse prompt/schema durante o treino — retorna
+> respostas incompletas (testamos e caiu de ~15-20 ameaças para 2 ameaças no mesmo diagrama).
+
+### Onde ele está no projeto
+
+Todo o pipeline de treinamento vive em [training/](training/):
+
+| Arquivo/Pasta | O que é |
+|---|---|
+| `training/seed_kb.py` | ~60 ameaças STRIDE reais, escritas manualmente, uma para cada combinação (tipo de componente × categoria STRIDE). É a "verdade fundamental" de onde o dataset é derivado. |
+| `training/architectures.py` | 8 modelos de arquitetura (ex.: "loja virtual", "banco digital", "plataforma de microsserviços") que combinam vários tipos de componente em sistemas realistas. |
+| `training/build_dataset.py` | Combina os dois acima, gera ~39 arquiteturas sintéticas concretas, e usa um LLM local (LM Studio) para reescrever/parafrasear os textos (mantendo categoria STRIDE, severidade e CWE fixos) — evita que o modelo apenas decore o texto literal do `seed_kb.py`. |
+| `training/data/stride_sft.jsonl` | Dataset final gerado (39 exemplos, 768 ameaças), no formato chat (`system`/`user`/`assistant`) idêntico ao prompt real de produção (`backend/services/stride.py`). |
+| `training/finetune.py` | Fine-tuning LoRA do Qwen2.5-3B-Instruct usando `transformers` + `peft`. |
+| `training/output/stride-qwen2.5-3b-lora/` | **Adapter LoRA treinado** (checkpoint, ~120MB) — os pesos que efetivamente mudaram durante o treino. |
+| `training/merge_adapter.py` | Mescla o adapter LoRA nos pesos originais do Qwen, gerando um modelo completo e independente. |
+| `training/output/stride-qwen2.5-3b-merged/` | Modelo completo mesclado (safetensors, ~6GB) — formato HuggingFace, ainda não otimizado para inferência local. |
+| `training/output/stride-qwen2.5-3b-q8_0.gguf` | **Modelo final em produção**: convertido para GGUF (quantização Q8_0, ~3.3GB), é o arquivo que o Ollama carrega. |
+| `training/output/Modelfile` | Define como o Ollama deve servir o `.gguf` (inclui o template de chat ChatML do Qwen — sem isso o Ollama não formata os prompts corretamente). |
+| `training/evaluate.py` | Script de teste rápido: roda o adapter em cima de arquiteturas que não estavam no treino, para checar qualitativamente a saída. |
+| `agents/nodes.py` (`_call_stride_model`) | Ponte entre o prompt/schema do treino e o schema nativo do pipeline principal (ver acima). |
+
+### Como o treinamento foi feito (para reproduzir)
+
+Requisitos: GPU NVIDIA com uns 12GB+ de VRAM livres, e o [LM Studio](https://lmstudio.ai) aberto localmente (usado só para gerar/parafrasear o dataset).
+
+```powershell
+cd training
+
+# 0. Instalar dependências (Python global da máquina, NÃO um venv do projeto)
+#    Instale antes o torch certo para sua GPU: https://pytorch.org/get-started/locally/
+pip install -r requirements.txt
+
+# 1. Gerar o dataset de treino (chama o LM Studio local para parafrasear)
+python build_dataset.py
+# → gera data/stride_sft.jsonl
+
+# 2. Fine-tuning LoRA (roda ~2min numa RTX 5080; ajusta pelo tamanho da GPU)
+python finetune.py
+# → salva o adapter em output/stride-qwen2.5-3b-lora/
+
+# 3. Avaliar qualitativamente (opcional, mas recomendado)
+python evaluate.py
+
+# 4. Mesclar o adapter LoRA nos pesos base
+python merge_adapter.py
+# → gera output/stride-qwen2.5-3b-merged/
+
+# 5. Converter para GGUF (precisa do conversor do llama.cpp — não incluso no repo)
+#    git clone --depth 1 --filter=blob:none --no-checkout https://github.com/ggml-org/llama.cpp
+#    git sparse-checkout set convert_hf_to_gguf.py convert_hf_to_gguf_update.py gguf-py conversion
+#    git checkout
+#    pip install gguf sentencepiece protobuf
+python <caminho-para>/llama.cpp/convert_hf_to_gguf.py output/stride-qwen2.5-3b-merged `
+  --outtype q8_0 --outfile output/stride-qwen2.5-3b-q8_0.gguf
+
+# 6. Registrar no Ollama
+cd output
+ollama create stride-qwen2.5-3b -f Modelfile
+```
+
+> **Pontos de atenção descobertos na prática:**
+> - Sempre feche o LM Studio (ou descarregue o modelo) antes de treinar — a VRAM concorrente entre os dois processos já causou lentidão extrema (~20x) e uma tela azul nesta máquina.
+> - Use `per_device_eval_batch_size=1` (não o padrão 8) — um batch de avaliação maior estoura VRAM ao converter logits para fp32 num vocabulário de ~152k tokens.
+> - O `Modelfile` do Ollama **precisa** de um `TEMPLATE` explícito em ChatML — por padrão o Ollama não extrai o chat template embutido no GGUF, e sem ele o modelo recebe um prompt sem estrutura de papéis (system/user) e produz respostas completamente fora do esperado.
+> - Rode os scripts de `training/` com o **Python global** da máquina (`torch`/`peft`/etc.), não com um venv do projeto — são ambientes separados.
+> - O modelo é sensível ao **prompt/schema exatos** do treino — usá-lo com um prompt diferente (mesmo que semanticamente equivalente) degrada muito a qualidade da saída (ver seção "Adaptação de prompt/schema" acima).
+
+### Limitações conhecidas
+
+- Dataset pequeno (39 exemplos sintéticos) — o modelo tende a repetir frases entre componentes do mesmo tipo e nunca gera severidade `low` (não havia nenhum exemplo `low` no `seed_kb.py`).
+- Sem capacidade de visão — não pode substituir o `analyze_image_node`.
+- Os campos `attack_vector`, `vulnerability` e `cwe_reference` do relatório ficam genéricos quando o modelo treinado é usado (ele não os gera — ver "Adaptação de prompt/schema").
+
+### Como usar na interface
+
+1. Tenha o Ollama rodando (`ollama serve`) com o modelo registrado (`ollama list` deve mostrar `stride-qwen2.5-3b`).
+2. Abra [http://localhost:5000](http://localhost:5000) — o seletor **Provedor** consulta `GET /providers` automaticamente ao carregar a página.
+3. Escolha a opção **"Modelo Treinado Stride - Ollama (Local)"** no dropdown. Se estiver offline (modelo não registrado no Ollama), a opção aparece desabilitada com "(offline)" no nome.
+4. Com essa opção selecionada, os campos **URL do servidor** e **Modelo** continuam visíveis — eles configuram o modelo usado só para a etapa de **visão** (identificar os componentes na imagem, ex.: `gemma3:4b`); a etapa de análise STRIDE sempre usa `stride-qwen2.5-3b` fixo, independente do que estiver nesses campos. Um aviso abaixo do formulário explica isso, e mostra instruções de como habilitar (`ollama serve` + registrar o modelo) se estiver offline, com um botão "Verificar novamente".
+5. Faça upload do diagrama e analise. No resultado, a linha de informações mostra os dois modelos usados: `Provedor: ollama · Modelo (visão): gemma3:4b · Modelo (STRIDE): stride-qwen2.5-3b`.
+
+> Internamente, ao selecionar essa opção o formulário envia `provider=stride-trained`; o backend
+> (`main.py`) traduz isso para `provider=ollama` + `use_stride_model=True` antes de rodar o
+> pipeline — `stride-trained` não é um provider de LLM de verdade, é só uma opção de interface
+> que combina "visão via Ollama" com "STRIDE via modelo treinado" em uma única escolha.
 
 ---
 
@@ -236,5 +376,26 @@ Para Ollama e LM Studio, a URL e o modelo são editáveis diretamente no fronten
 
 ## Exportação do Relatório
 
-- **JSON** — dados brutos estruturados para integração com outras ferramentas
-- **PDF** — relatório formatado gerado via `window.print()` do browser (sem dependências externas), incluindo resumo executivo, tabela de componentes e ameaças STRIDE por categoria
+Na página de resultado (`/results/<run_id>`), aba "Exportar", a interface tem **um único botão: "Exportar .pdf"**. Ele troca para a aba "Relatório" e abre a caixa de impressão do navegador (`window.print()`); um CSS específico (`@media print` em `templates/base.html`) esconde tudo (navegação, cards de métricas, abas, botões) e mostra só o conteúdo de `#tab-report` — forçando `display`/`opacity`/`visibility` independente do estado das abas do Bootstrap, para não sair em branco. Use a opção "Salvar como PDF" da caixa de impressão do navegador.
+
+> As exportações em Markdown (`GET /download/<run_id>/md`), JSON (`GET /download/<run_id>/json`)
+> e CSV (`GET /download/<run_id>/csv`) continuam existindo no backend por compatibilidade, mas
+> não têm mais botão na interface — foram substituídas pela exportação em PDF.
+
+---
+
+## App Alternativo (backend/ + frontend/)
+
+O projeto também inclui uma segunda implementação, com **API JSON separada do frontend** (SPA em HTML/CSS/JS puro) em vez do server-rendered do app principal. É funcionalmente equivalente (mesmos providers, mesmo Modelo treinado STRIDE), mas com uma API REST própria — útil se você quiser consumir a análise de outro cliente que não seja a UI.
+
+> Nesse app alternativo, o Modelo Treinado STRIDE ainda é um **checkbox separado** do seletor de
+> provider (não foi migrado para uma opção de dropdown como no app principal) — a mesma lógica de
+> backend (`use_stride_model=True`), só a UI é diferente.
+
+```powershell
+cd backend
+pip install -r requirements.txt
+python main.py
+```
+
+Acesse [http://localhost:8000](http://localhost:8000) (porta diferente do app principal, dá pra rodar os dois ao mesmo tempo). Endpoints: `GET /api/health`, `GET /api/providers`, `GET /api/stride-model`, `POST /api/analyze` (retorna JSON em vez de redirecionar para uma página HTML). Detalhes da API, schemas e exemplos de resposta estão nos arquivos de `backend/routers/analysis.py` e `backend/models/schemas.py`.

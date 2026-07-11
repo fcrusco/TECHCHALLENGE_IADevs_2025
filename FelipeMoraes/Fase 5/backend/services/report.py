@@ -7,6 +7,32 @@ from services.llm_factory import get_llm_client
 
 logger = logging.getLogger(__name__)
 
+_FOOTER_PATTERNS = [
+    "relatório gerado automaticamente",
+    "generated automatically",
+    "this report was generated",
+    "langchain",
+    "langgraph",
+    "lm studio",
+    "openai",
+    "sistema de modelagem de ameaças stride",
+]
+
+
+def _clean_summary(text: str) -> str:
+    """Remove auto-generated footers that some LLMs append."""
+    text = text.strip()
+    lines = text.splitlines()
+    clean: list[str] = []
+    for line in lines:
+        low = line.lower()
+        if any(p in low for p in _FOOTER_PATTERNS):
+            break
+        clean.append(line)
+    result = "\n".join(clean).strip()
+    return result or text  # fallback to original if we stripped everything
+
+
 SYSTEM_PROMPT = """Com base nesta análise de ameaças STRIDE, escreva um resumo executivo de 2 a 3 parágrafos em português do Brasil.
 Destaque: total de ameaças encontradas, componentes de maior risco, categorias de ameaça mais críticas,
 e as 3 principais contramedidas recomendadas. Seja conciso e direto."""
@@ -43,21 +69,21 @@ def generate_report(
     model_used: str = "",
     provider_used: ProviderType = "openai",
 ) -> AnalysisResponse:
-    logger.info("[report] Generating executive summary | provider=%s", provider)
+    logger.info("[report] Gerando resumo executivo | provider=%s", provider)
 
     llm, model = get_llm_client(provider, override_url, override_model)
-    logger.info("[report] Using model=%s", model)
+    logger.info("[report] Usando modelo=%s", model)
 
     messages = [
         SystemMessage(content=SYSTEM_PROMPT),
         HumanMessage(content=_build_analysis_text(components, stride_report)),
     ]
 
-    logger.info("[report] Calling LLM via LangChain...")
+    logger.info("[report] Chamando o LLM via LangChain...")
     response = llm.invoke(messages)
-    summary = response.content or "Relatório de análise STRIDE gerado com sucesso."
+    summary = _clean_summary(response.content or "")
 
-    logger.info("[report] Summary generated | chars=%d", len(summary))
+    logger.info("[report] Resumo gerado | chars=%d", len(summary))
 
     return AnalysisResponse(
         components=components,

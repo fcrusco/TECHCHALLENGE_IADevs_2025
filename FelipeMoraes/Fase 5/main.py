@@ -1,4 +1,4 @@
-"""Flask web application for the STRIDE Threat Modeling System."""
+"""Aplicação web Flask do Sistema de Modelagem de Ameaças STRIDE."""
 
 from __future__ import annotations
 
@@ -12,18 +12,19 @@ import time
 import uuid
 from pathlib import Path
 
+import requests as req
 from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, request, send_file, url_for
+from flask import Flask, jsonify, redirect, render_template, request, send_file, send_from_directory, url_for
 
 load_dotenv()
 
-# ── Logging setup ─────────────────────────────────────────────────────────────
+# ── Configuração de logging ────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-7s  %(name)-20s  %(message)s",
     datefmt="%H:%M:%S",
 )
-# Silence noisy third-party loggers
+# Silencia loggers de terceiros muito verbosos
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
@@ -31,12 +32,52 @@ logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-# ── Flask app ─────────────────────────────────────────────────────────────────
+# ── App Flask ───────────────────────────────────────────────────────────────
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get("FLASK_SECRET", "stride-hackathon-fase5")
 
-# In-memory result store — keyed by run UUID (single-process / local use)
+BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+IMAGES_DIR = os.path.join(BASE_DIR, "images")
+
+# Armazenamento em memória dos resultados — indexado pelo UUID da execução (uso local/single-process)
 _store: dict[str, dict] = {}
+
+# Log de progresso de cada execução em andamento — indexado pelo mesmo run_id,
+# consultado pelo frontend via polling em /progress/<run_id> enquanto a análise roda.
+_progress: dict[str, list[str]] = {}
+
+
+def _log_step(run_id: str, message: str) -> None:
+    """Registra uma etapa no terminal e no log de progresso consultado pelo frontend."""
+    logger.info(message)
+    _progress.setdefault(run_id, []).append(message)
+
+
+@app.get("/images/<path:filename>")
+def serve_images(filename):
+    return send_from_directory(IMAGES_DIR, filename)
+
+# Mesmo modelo STRIDE fine-tuned usado pelo backend/ (ver training/) — servido via Ollama
+from agents.nodes import STRIDE_MODEL_NAME, STRIDE_MODEL_URL  # noqa: E402
+
+
+def _ping(url: str) -> bool:
+    try:
+        r = req.get(url, timeout=3)
+        return r.status_code < 500
+    except Exception:
+        return False
+
+
+def _ollama_has_model(base_url: str, model_name: str) -> bool:
+    try:
+        r = req.get(f"{base_url.rstrip('/')}/api/tags", timeout=3)
+        if r.status_code >= 500:
+            return False
+        tags = [m.get("name", "").split(":")[0] for m in r.json().get("models", [])]
+        return model_name in tags
+    except Exception:
+        return False
 
 
 @app.route("/")
@@ -49,14 +90,91 @@ def index():
     )
 
 
+@app.route("/providers")
+def providers():
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
+    lmstudio_url = os.environ.get("LM_STUDIO_URL", "http://localhost:1234/v1")
+    lmstudio_base = lmstudio_url[:-3] if lmstudio_url.endswith("/v1") else lmstudio_url
+
+    return jsonify([
+        {
+            "id": "openai",
+            "name": "OpenAI",
+            "available": bool(openai_key and not openai_key.startswith("sk-...")),
+            "model": os.environ.get("OPENAI_MODEL", "gpt-4o"),
+        },
+        {
+            "id": "ollama",
+            "name": "Ollama (local)",
+            "available": _ping(os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")),
+            "model": os.environ.get("OLLAMA_MODEL", "gemma3:4b"),
+        },
+        {
+            "id": "lmstudio",
+            "name": "LM Studio (local)",
+            "available": _ping(lmstudio_base.rstrip("/")),
+            "model": os.environ.get("LM_STUDIO_MODEL", "google/gemma-4-e4b"),
+        },
+        {
+            "id": "stride-trained",
+            "name": "Modelo Treinado Stride - Ollama (Local)",
+            "available": _ollama_has_model(STRIDE_MODEL_URL, STRIDE_MODEL_NAME),
+            "model": os.environ.get("OLLAMA_MODEL", "gemma3:4b"),
+        },
+    ])
+
+
+@app.route("/stride-model")
+def stride_model_status():
+    return jsonify({
+        "id": STRIDE_MODEL_NAME,
+        "name": "Modelo treinado STRIDE",
+        "available": _ollama_has_model(STRIDE_MODEL_URL, STRIDE_MODEL_NAME),
+    })
+
+
+@app.route("/progress/<run_id>")
+def progress(run_id: str):
+    return jsonify({"steps": _progress.get(run_id, []), "done": run_id in _store})
+
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
+    # O run_id é gerado no navegador (crypto.randomUUID()) antes do envio do
+    # formulário, para que o frontend já possa consultar /progress/<run_id>
+    # enquanto esta requisição (síncrona) ainda está em andamento.
+    run_id = request.form.get("run_id") or str(uuid.uuid4())
+    _progress[run_id] = []
+
+    provider = request.form.get("provider") or os.environ.get("LLM_PROVIDER", "lmstudio")
+    local_url = request.form.get("local_url") or None
+    local_model = request.form.get("local_model") or None
+
+    # "stride-trained" é uma opção do dropdown Provedor, não um provider de
+    # verdade: o modelo treinado STRIDE não tem visão, então a etapa de visão
+    # continua rodando via Ollama (com o modelo escolhido no campo "Modelo"),
+    # e só a etapa de análise STRIDE é roteada para o modelo treinado fixo.
+    use_stride_model = provider == "stride-trained" or request.form.get("use_stride_model", "").lower() in ("true", "1", "on")
+    if provider == "stride-trained":
+        provider = "ollama"
+
+    # LM Studio usa Max Tokens configurável (modelos locais de contexto menor)
     lm_url = request.form.get("lm_url", "http://localhost:1234/v1")
     lm_model = request.form.get("lm_model", "google/gemma-4-e4b")
     lm_max_tokens = request.form.get("lm_max_tokens", "1024")
     os.environ["LM_STUDIO_URL"] = lm_url
     os.environ["LM_STUDIO_MODEL"] = lm_model
     os.environ["LM_STUDIO_MAX_TOKENS"] = lm_max_tokens
+
+    if provider == "openai" and (
+        not os.environ.get("OPENAI_API_KEY") or os.environ["OPENAI_API_KEY"].startswith("sk-...")
+    ):
+        return render_template(
+            "index.html",
+            error="Chave da API da OpenAI não configurada",
+            traceback="Configure OPENAI_API_KEY no arquivo .env para usar o provider OpenAI.",
+            lm_url=lm_url, lm_model=lm_model, lm_max_tokens=lm_max_tokens,
+        ), 500
 
     file = request.files.get("diagram")
     if not file or not file.filename:
@@ -70,11 +188,11 @@ def analyze():
     ext = Path(file.filename).suffix.lower() or ".png"
 
     logger.info("=" * 60)
-    logger.info("NOVA ANÁLISE INICIADA")
-    logger.info("  Arquivo : %s (%.1f KB)", file.filename, file_size_kb)
-    logger.info("  Modelo  : %s", lm_model)
-    logger.info("  URL API : %s", lm_url)
-    logger.info("  MaxTok  : %s", lm_max_tokens)
+    _log_step(run_id, "Nova análise iniciada")
+    logger.info("  Arquivo         : %s (%.1f KB)", file.filename, file_size_kb)
+    logger.info("  Provider        : %s", provider)
+    logger.info("  URL/Modelo local: %s / %s", local_url, local_model)
+    logger.info("  Modelo STRIDE   : %s", STRIDE_MODEL_NAME if use_stride_model else "(não usado)")
     logger.info("=" * 60)
 
     run_start = time.time()
@@ -95,6 +213,10 @@ def analyze():
         state: dict = {
             "image_path": tmp_path,
             "image_base64": image_b64,
+            "provider": provider,
+            "override_url": local_url,
+            "override_model": local_model,
+            "use_stride_model": use_stride_model,
             "raw_description": None,
             "components": None,
             "trust_boundaries": None,
@@ -105,49 +227,57 @@ def analyze():
             "current_step": "start",
             "error": None,
             "messages": [],
+            "model_used": None,
+            "provider_used": None,
+            "stride_model_used": None,
         }
 
-        # ── Step 1 ────────────────────────────────────────────────────────────
+        # ── Etapa 1 ───────────────────────────────────────────────────────────
         t = time.time()
-        logger.info("[1/4] analyze_image_node — iniciando")
+        _log_step(run_id, "[1/4] Analisando o diagrama com visão computacional...")
         state.update(analyze_image_node(state))
         desc_len = len(state.get("raw_description") or "")
-        logger.info("[1/4] analyze_image_node — concluído em %.1fs | descrição: %d chars", time.time() - t, desc_len)
+        _log_step(run_id, f"[1/4] Concluído em {time.time() - t:.1f}s — descrição gerada com {desc_len} caracteres")
 
-        # ── Step 2 ────────────────────────────────────────────────────────────
+        # ── Etapa 2 ───────────────────────────────────────────────────────────
         t = time.time()
-        logger.info("[2/4] extract_components_node — iniciando")
+        _log_step(run_id, "[2/4] Extraindo e classificando componentes da arquitetura...")
         state.update(extract_components_node(state))
         n_comp = len(state.get("components") or [])
         n_tb = len(state.get("trust_boundaries") or [])
         n_df = len(state.get("data_flows") or [])
-        logger.info(
-            "[2/4] extract_components_node — concluído em %.1fs | %d componentes | %d trust boundaries | %d data flows",
-            time.time() - t, n_comp, n_tb, n_df,
+        _log_step(
+            run_id,
+            f"[2/4] Concluído em {time.time() - t:.1f}s — {n_comp} componentes, "
+            f"{n_tb} limites de confiança, {n_df} fluxos de dados",
         )
         if state.get("components"):
             for c in state["components"]:
-                logger.info("      componente: %-30s tipo=%-25s boundary=%s",
-                            c.get("name", "?"), c.get("type", "?"), c.get("trust_boundary", "?"))
+                _log_step(run_id, f"      componente identificado: {c.get('name', '?')} (tipo: {c.get('type', '?')})")
 
-        # ── Step 3 ────────────────────────────────────────────────────────────
+        # ── Etapa 3 ───────────────────────────────────────────────────────────
         t = time.time()
-        logger.info("[3/4] analyze_stride_node — iniciando")
+        if use_stride_model:
+            _log_step(run_id, f"[3/4] Aplicando metodologia STRIDE com o modelo treinado ({STRIDE_MODEL_NAME})...")
+        else:
+            _log_step(run_id, "[3/4] Aplicando metodologia STRIDE por componente...")
         state.update(analyze_stride_node(state))
         threats = state.get("threats") or {}
         total_threats = sum(len(v) for v in threats.values())
-        logger.info("[3/4] analyze_stride_node — concluído em %.1fs | %d ameaças em %d componentes",
-                    time.time() - t, total_threats, len(threats))
+        _log_step(
+            run_id,
+            f"[3/4] Concluído em {time.time() - t:.1f}s — {total_threats} ameaças em {len(threats)} componentes",
+        )
 
-        # ── Step 4 ────────────────────────────────────────────────────────────
+        # ── Etapa 4 ───────────────────────────────────────────────────────────
         t = time.time()
-        logger.info("[4/4] generate_report_node — iniciando")
+        _log_step(run_id, "[4/4] Gerando o relatório executivo...")
         state.update(generate_report_node(state))
         report_len = len(state.get("report_markdown") or "")
-        logger.info("[4/4] generate_report_node — concluído em %.1fs | relatório: %d chars", time.time() - t, report_len)
+        _log_step(run_id, f"[4/4] Concluído em {time.time() - t:.1f}s — relatório com {report_len} caracteres")
 
-        # ── Enrich ────────────────────────────────────────────────────────────
-        logger.info("Enriquecendo relatório com tabelas e matriz de risco...")
+        # ── Enriquecimento ────────────────────────────────────────────────────
+        _log_step(run_id, "Adicionando tabelas, matriz de risco e plano de remediação ao relatório...")
         full_report = enrich_report(
             state.get("report_markdown", ""),
             state.get("components", []),
@@ -157,15 +287,17 @@ def analyze():
         state["report_markdown"] = full_report
         state.pop("messages", None)
 
-        run_id = str(uuid.uuid4())
         _store[run_id] = state
 
         elapsed = time.time() - run_start
+        _log_step(run_id, f"Análise concluída em {elapsed:.1f}s")
         logger.info("=" * 60)
         logger.info("ANÁLISE CONCLUÍDA em %.1fs — run_id: %s", elapsed, run_id)
-        logger.info("  Componentes : %d", n_comp)
-        logger.info("  Ameaças     : %d", total_threats)
-        logger.info("  Relatório   : %d chars", len(full_report))
+        logger.info("  Componentes   : %d", n_comp)
+        logger.info("  Ameaças       : %d", total_threats)
+        logger.info("  Relatório     : %d chars", len(full_report))
+        logger.info("  Modelo visão  : %s (%s)", state.get("model_used"), state.get("provider_used"))
+        logger.info("  Modelo STRIDE : %s", state.get("stride_model_used") or "(mesmo provider acima)")
         logger.info("=" * 60)
 
         return redirect(url_for("results", run_id=run_id))
@@ -173,6 +305,7 @@ def analyze():
     except Exception as exc:
         import traceback as tb
 
+        _log_step(run_id, f"Erro na análise: {exc}")
         logger.error("ERRO na análise após %.1fs: %s", time.time() - run_start, exc, exc_info=True)
         return render_template(
             "index.html",
@@ -241,3 +374,11 @@ def download(run_id: str, fmt: str):
                          as_attachment=True, download_name="stride_threats.csv")
 
     return redirect(url_for("results", run_id=run_id))
+
+
+if __name__ == "__main__":
+    logger.info("Provider  : LM Studio (local)")
+    logger.info("Frontend  : http://0.0.0.0:5000")
+    # threaded=True: permite que o navegador consulte /progress/<run_id> enquanto
+    # a requisição síncrona POST /analyze ainda está em andamento.
+    app.run(debug=True, port=5000, host="0.0.0.0", threaded=True)

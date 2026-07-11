@@ -37,14 +37,14 @@ def _build_components_text(components: list[Component]) -> str:
     return "\n".join(lines)
 
 
-# ── JSON recovery helpers ──────────────────────────────────────────────────────
+# ── Helpers de recuperação de JSON ───────────────────────────────────────────
 
 def _repair_json(raw: str) -> str:
-    """Recover truncated JSON.
+    """Recupera um JSON truncado.
 
-    Pass 1 – if we end inside an unclosed string (token-limit cut), truncate back
-             to the last '}' that was outside a string.
-    Pass 2 – close all remaining unclosed arrays / objects.
+    Passo 1 – se terminarmos dentro de uma string não fechada (corte por limite
+              de tokens), trunca de volta até o último '}' que estava fora de uma string.
+    Passo 2 – fecha todos os arrays/objetos ainda abertos.
     """
     last_obj_close = -1
     in_string = False
@@ -67,11 +67,11 @@ def _repair_json(raw: str) -> str:
 
     if in_string:
         if last_obj_close >= 0:
-            # Truncated beyond last complete object — cut there
+            # Truncado além do último objeto completo — corta ali
             raw = raw[:last_obj_close + 1]
         else:
-            # No complete object at all — close the open string so Pass 2
-            # can at least close the partial object and array brackets
+            # Nenhum objeto completo — fecha a string aberta para que o Passo 2
+            # consiga ao menos fechar as chaves/colchetes do objeto parcial
             raw = raw + '"'
 
     raw = raw.rstrip().rstrip(",")
@@ -102,11 +102,11 @@ def _repair_json(raw: str) -> str:
 
 
 def _extract_array(text: str, key: str) -> list:
-    """Extract the JSON array for `key` using bracket-depth parsing.
+    """Extrai o array JSON de `key` usando parsing de profundidade de colchetes.
 
-    Works even when the surrounding JSON is malformed — we find the '[' that
-    belongs to the key and walk forward counting depth until it closes (or the
-    string ends, in which case we repair and retry).
+    Funciona mesmo quando o JSON ao redor está malformado — encontramos o '['
+    que pertence à chave e avançamos contando a profundidade até fechar (ou o
+    texto acabar, caso em que reparamos e tentamos de novo).
     """
     marker = f'"{key}"'
     idx = text.find(marker)
@@ -152,7 +152,7 @@ def _extract_array(text: str, key: str) -> list:
                     except (json.JSONDecodeError, ValueError):
                         return []
 
-    # Array never closed — take what we have and repair
+    # Array nunca fechou — usa o que tem e repara
     chunk = text[bracket:]
     try:
         return json.loads(_repair_json(chunk))
@@ -161,51 +161,51 @@ def _extract_array(text: str, key: str) -> list:
 
 
 def _extract_per_category(raw: str) -> dict:
-    """Last-resort recovery: extract each STRIDE category array independently."""
-    logger.warning("[stride] Falling back to per-category array extraction")
+    """Recuperação de último recurso: extrai o array de cada categoria STRIDE independentemente."""
+    logger.warning("[stride] Recorrendo à extração de array por categoria")
     result = {}
     for cat in CATEGORIES:
         result[cat] = _extract_array(raw, cat)
         if result[cat]:
-            logger.info("[stride]   recovered %-30s %d entries", cat, len(result[cat]))
+            logger.info("[stride]   recuperado %-30s %d entradas", cat, len(result[cat]))
         else:
-            logger.warning("[stride]   could not recover %s", cat)
+            logger.warning("[stride]   não foi possível recuperar %s", cat)
     return result
 
 
-# ── Parse ──────────────────────────────────────────────────────────────────────
+# ── Parse ─────────────────────────────────────────────────────────────────────
 
 def _parse_stride_report(raw: str) -> StrideReport:
     raw = raw.strip()
-    # Strip markdown code fence if present
+    # Remove o bloco de código markdown, se houver
     if raw.startswith("```"):
         lines = raw.split("\n")
         raw = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
 
     data: dict | None = None
 
-    # Attempt 1: direct parse
+    # Tentativa 1: parse direto
     try:
         data = json.loads(raw)
-        logger.info("[stride] JSON parsed successfully")
+        logger.info("[stride] JSON parseado com sucesso")
     except json.JSONDecodeError as exc:
-        logger.warning("[stride] JSON parse failed (%s) — attempting repair", exc)
+        logger.warning("[stride] Falha ao parsear JSON (%s) — tentando reparar", exc)
 
-        # Attempt 2: repair (handles truncated strings + unclosed brackets)
+        # Tentativa 2: reparo (trata strings truncadas + colchetes não fechados)
         try:
             repaired = _repair_json(raw)
             data = json.loads(repaired)
-            logger.info("[stride] JSON recovered after repair | repaired_chars=%d", len(repaired))
+            logger.info("[stride] JSON recuperado após reparo | chars_reparados=%d", len(repaired))
         except (json.JSONDecodeError, ValueError):
             pass
 
-    # Attempt 3: per-category extraction (handles missing commas, garbage chars, etc.)
+    # Tentativa 3: extração por categoria (trata vírgulas faltando, caracteres estranhos, etc.)
     if data is None:
         data = _extract_per_category(raw)
         total = sum(len(v) for v in data.values())
         if total == 0:
-            logger.error("[stride] All recovery attempts failed | first 400 chars: %s", raw[:400])
-            raise ValueError("Failed to parse STRIDE report from LLM response")
+            logger.error("[stride] Todas as tentativas de recuperação falharam | primeiros 400 chars: %s", raw[:400])
+            raise ValueError("Falha ao parsear o relatório STRIDE na resposta do LLM")
 
     parsed: dict[str, list[StrideThreat]] = {}
     for cat in CATEGORIES:
@@ -220,12 +220,12 @@ def _parse_stride_report(raw: str) -> StrideReport:
             except Exception:
                 pass
         parsed[cat] = threats
-        logger.info("[stride]   %-30s %d threats", cat, len(threats))
+        logger.info("[stride]   %-30s %d ameaças", cat, len(threats))
 
     return StrideReport(**parsed)
 
 
-# ── Public API ─────────────────────────────────────────────────────────────────
+# ── API pública ───────────────────────────────────────────────────────────────
 
 def analyze_stride(
     components: list[Component],
@@ -233,22 +233,22 @@ def analyze_stride(
     override_url: str | None = None,
     override_model: str | None = None,
 ) -> StrideReport:
-    logger.info("[stride] Starting STRIDE analysis | %d components | provider=%s",
+    logger.info("[stride] Iniciando análise STRIDE | %d componentes | provider=%s",
                 len(components), provider)
 
     llm, model = get_llm_client(provider, override_url, override_model)
-    logger.info("[stride] Using model=%s", model)
+    logger.info("[stride] Usando modelo=%s", model)
 
     messages = [
         SystemMessage(content=SYSTEM_PROMPT),
         HumanMessage(content=_build_components_text(components)),
     ]
 
-    logger.info("[stride] Calling LLM via LangChain...")
+    logger.info("[stride] Chamando o LLM via LangChain...")
     response = llm.invoke(messages)
     content = response.content or ""
 
-    logger.info("[stride] LLM responded | chars=%d", len(content))
-    logger.debug("[stride] Raw response (first 300): %s", content[:300])
+    logger.info("[stride] LLM respondeu | chars=%d", len(content))
+    logger.debug("[stride] Resposta bruta (primeiros 300): %s", content[:300])
 
     return _parse_stride_report(content)

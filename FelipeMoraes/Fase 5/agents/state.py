@@ -27,6 +27,12 @@ class ThreatModelState(TypedDict):
     image_path: str
     image_base64: Optional[str]
 
+    # ── seleção de provider/modelo ──────────────────────────────
+    provider: Optional[str]           # "openai" | "ollama" | "lmstudio"
+    override_url: Optional[str]
+    override_model: Optional[str]
+    use_stride_model: Optional[bool]  # usa o Modelo treinado STRIDE só na etapa de análise STRIDE
+
     raw_description: Optional[str]
 
     components: Optional[List[ArchitectureComponent]]
@@ -41,3 +47,8 @@ class ThreatModelState(TypedDict):
     current_step: str
     error: Optional[str]
     messages: Annotated[List[Any], add]
+
+    # ── modelo/provider efetivamente usados (para exibição) ─────
+    model_used: Optional[str]
+    provider_used: Optional[str]
+    stride_model_used: Optional[str]

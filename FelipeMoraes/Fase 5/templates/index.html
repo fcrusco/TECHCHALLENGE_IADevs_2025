@@ -5,7 +5,7 @@
 <div class="col-lg-8">
 
   <div class="text-center mb-4">
-    <h1 class="fw-bold">STRIDE Threat Modeling System</h1>
+    <h1 class="fw-bold">Tech Challenge Fase 5 - Relatório STRIDE</h1>
     <p class="text-muted">Faça upload de um diagrama de arquitetura e gere um relatório STRIDE completo com IA local.</p>
   </div>
 
@@ -20,42 +20,64 @@
   {% endif %}
 
   <form id="analyze-form" action="/analyze" method="POST" enctype="multipart/form-data">
+    <input type="hidden" id="run-id-input" name="run_id" value="">
 
-    <!-- LM Studio config -->
+    <!-- Provider LLM -->
     <div class="card mb-4">
-      <div class="card-header fw-semibold">⚙️ Configuração do LM Studio</div>
-      <div class="card-body row g-3">
-        <div class="col-md-6">
-          <label class="form-label small">URL da API</label>
-          <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary"
-                 name="lm_url" value="{{ lm_url }}" placeholder="http://localhost:1234/v1">
+      <div class="card-header fw-semibold">Provedor de LLM</div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label class="form-label small">Provedor</label>
+            <select id="provider-select" name="provider" class="form-select form-select-sm bg-dark text-light border-secondary">
+              <option value="openai">OpenAI</option>
+              <option value="ollama">Ollama (local)</option>
+              <option value="lmstudio" selected>LM Studio (local)</option>
+              <option value="stride-trained">Modelo Treinado Stride - Ollama (Local)</option>
+            </select>
+          </div>
         </div>
-        <div class="col-md-4">
-          <label class="form-label small">Modelo</label>
-          <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary"
-                 name="lm_model" value="{{ lm_model }}" placeholder="google/gemma-4-e4b">
+
+        <div id="local-config" class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label small">URL do servidor</label>
+            <input type="text" id="local-url" name="local_url" class="form-control form-control-sm bg-dark text-light border-secondary"
+                   value="{{ lm_url }}" placeholder="http://localhost:1234/v1">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">Modelo</label>
+            <input type="text" id="local-model" name="local_model" class="form-control form-control-sm bg-dark text-light border-secondary"
+                   value="{{ lm_model }}" placeholder="google/gemma-4-e4b">
+          </div>
+          <div class="col-md-2" id="lm-max-tokens-wrap">
+            <label class="form-label small">Max Tokens</label>
+            <input type="number" name="lm_max_tokens" class="form-control form-control-sm bg-dark text-light border-secondary"
+                   value="{{ lm_max_tokens }}" min="256" max="8192" step="256">
+          </div>
+          <div class="col-12">
+            <small class="text-muted">
+              Use um modelo com suporte a visão. Reduza <strong>Max Tokens</strong> se receber erro de contexto (só se aplica ao LM Studio).
+            </small>
+          </div>
         </div>
-        <div class="col-md-2">
-          <label class="form-label small">Max Tokens</label>
-          <input type="number" class="form-control form-control-sm bg-dark text-light border-secondary"
-                 name="lm_max_tokens" value="{{ lm_max_tokens }}" min="256" max="8192" step="256">
-        </div>
-        <div class="col-12">
-          <small class="text-muted">
-            <i class="bi bi-info-circle"></i>
-            Use um modelo com suporte a visão. Reduza <strong>Max Tokens</strong> se receber erro de contexto.
-          </small>
+
+        <div id="stride-trained-info" class="mt-3" style="display:none">
+          <p class="text-muted small mb-2">
+            A etapa de análise STRIDE usa o modelo Qwen2.5-3B fine-tuned localmente (<code>stride-qwen2.5-3b</code>) —
+            ele não tem visão, então a identificação dos componentes na imagem continua usando o modelo escolhido acima.
+          </p>
+          <div id="stride-trained-instructions" class="small text-muted"></div>
+          <button type="button" id="stride-trained-refresh" class="btn btn-outline-secondary btn-sm mt-2">Verificar novamente</button>
         </div>
       </div>
     </div>
 
     <!-- File upload -->
     <div class="card mb-4">
-      <div class="card-header fw-semibold">📤 Diagrama de Arquitetura</div>
+      <div class="card-header fw-semibold">Diagrama de Arquitetura</div>
       <div class="card-body">
         <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
           <div id="drop-label">
-            <i class="bi bi-cloud-upload fs-1 text-muted"></i>
             <p class="mt-2 mb-1 fw-semibold">Arraste e solte a imagem aqui</p>
             <p class="text-muted small mb-0">ou clique para selecionar — PNG, JPG, WebP</p>
           </div>
@@ -69,13 +91,13 @@
     </div>
 
     <button type="submit" id="submit-btn" class="btn btn-primary btn-lg w-100" disabled>
-      <i class="bi bi-rocket-takeoff me-2"></i>Executar Análise STRIDE
+      Executar Análise STRIDE
     </button>
   </form>
 
   <!-- STRIDE legend -->
   <div class="card mt-4">
-    <div class="card-header fw-semibold">📖 Metodologia STRIDE</div>
+    <div class="card-header fw-semibold">Metodologia STRIDE</div>
     <div class="card-body">
       <div class="row row-cols-2 row-cols-md-3 g-2 small">
         <div><span class="badge bg-secondary">S</span> <strong>Spoofing</strong> — Autenticação</div>
@@ -96,13 +118,112 @@
   <div class="spinner-border text-primary" style="width:3rem;height:3rem" role="status"></div>
   <div class="text-center">
     <h5 id="loading-step" class="mb-1">Iniciando análise...</h5>
-    <p class="text-muted small mb-0">Aguarde — o modelo local está processando o diagrama.</p>
+    <div id="loading-log" class="small text-muted text-start mt-3"></div>
   </div>
 </div>
 
 {% endblock %}
 {% block scripts %}
 <script>
+// ─── Provedor de LLM ────────────────────────────────────────────────────────
+const providerSelect   = document.getElementById('provider-select');
+const localConfig      = document.getElementById('local-config');
+const localUrlInput    = document.getElementById('local-url');
+const localModelInput  = document.getElementById('local-model');
+const lmMaxTokensWrap  = document.getElementById('lm-max-tokens-wrap');
+const strideTrainedInfo         = document.getElementById('stride-trained-info');
+const strideTrainedInstructions = document.getElementById('stride-trained-instructions');
+const strideTrainedRefresh      = document.getElementById('stride-trained-refresh');
+
+// "stride-trained" roda a etapa de visão via Ollama (por isso usa as mesmas
+// URL/Modelo padrão do Ollama comum) — só a etapa STRIDE é que é fixa no backend.
+const LOCAL_DEFAULTS = {
+  ollama:         { url: 'http://localhost:11434',   model: 'gemma3:4b' },
+  'stride-trained': { url: 'http://localhost:11434', model: 'gemma3:4b' },
+  lmstudio:       { url: '{{ lm_url }}' || 'http://localhost:1234/v1', model: '{{ lm_model }}' || 'google/gemma-4-e4b' },
+};
+
+let providersCache = [];
+
+async function loadProviders() {
+  try {
+    const res = await fetch('/providers');
+    if (!res.ok) throw new Error();
+    providersCache = await res.json();
+    providerSelect.innerHTML = '';
+    providersCache.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.available ? p.name : `${p.name} (offline)`;
+      opt.disabled = !p.available;
+      providerSelect.appendChild(opt);
+    });
+    const first = providersCache.find(p => p.available);
+    if (first) providerSelect.value = first.id;
+  } catch { /* mantém os valores padrão estáticos */ }
+  updateLocalConfig();
+}
+
+function updateLocalConfig() {
+  const provider = providerSelect.value;
+  const isLocal = provider === 'ollama' || provider === 'lmstudio' || provider === 'stride-trained';
+  localConfig.style.display = isLocal ? 'flex' : 'none';
+  // Desabilita (não só esconde) os campos quando não são relevantes, para que
+  // o navegador não envie esses valores junto com o formulário (evita que um
+  // valor de outro provider vaze para o override_model do provider atual).
+  localUrlInput.disabled = !isLocal;
+  localModelInput.disabled = !isLocal;
+  lmMaxTokensWrap.style.display = provider === 'lmstudio' ? 'block' : 'none';
+  lmMaxTokensWrap.querySelector('input').disabled = provider !== 'lmstudio';
+  if (isLocal) {
+    const d = LOCAL_DEFAULTS[provider];
+    if (!localUrlInput.dataset.userEdited)   localUrlInput.value   = d.url;
+    if (!localModelInput.dataset.userEdited) localModelInput.value = d.model;
+    localUrlInput.placeholder   = d.url;
+    localModelInput.placeholder = d.model;
+  }
+
+  strideTrainedInfo.style.display = provider === 'stride-trained' ? 'block' : 'none';
+  if (provider === 'stride-trained') {
+    const info = providersCache.find(p => p.id === 'stride-trained');
+    renderStrideTrainedInstructions(info ? info.available : false);
+  }
+}
+
+providerSelect.addEventListener('change', () => {
+  delete localUrlInput.dataset.userEdited;
+  delete localModelInput.dataset.userEdited;
+  updateLocalConfig();
+});
+localUrlInput.addEventListener('input',   () => { localUrlInput.dataset.userEdited   = '1'; });
+localModelInput.addEventListener('input', () => { localModelInput.dataset.userEdited = '1'; });
+
+function renderStrideTrainedInstructions(available) {
+  if (available) {
+    strideTrainedInstructions.innerHTML = `<p class="text-success mb-0">Ollama detectado com <code>stride-qwen2.5-3b</code> registrado — pronto para usar.</p>`;
+    return;
+  }
+  strideTrainedInstructions.innerHTML = `
+    <p class="mb-1"><strong>Para habilitar, execute em um terminal (e deixe rodando):</strong></p>
+    <pre class="small bg-black p-2 rounded border border-secondary">ollama serve</pre>
+    <p class="mb-1">Depois confira se o modelo está registrado com <code>ollama list</code> — deve aparecer
+    <code>stride-qwen2.5-3b</code>. Veja como treinar/registrar em <code>README.md</code>,
+    seção "Modelo Treinado STRIDE (Fine-tuning Local)".</p>
+    <p class="mb-0">Recarregue esta página depois de iniciar o Ollama.</p>
+  `;
+}
+
+strideTrainedRefresh.addEventListener('click', async () => {
+  strideTrainedRefresh.disabled = true;
+  strideTrainedRefresh.textContent = 'Verificando...';
+  await loadProviders();
+  strideTrainedRefresh.disabled = false;
+  strideTrainedRefresh.textContent = 'Verificar novamente';
+});
+
+loadProviders();
+
+// ─── Upload de arquivo ──────────────────────────────────────────────────────
 const fileInput   = document.getElementById('file-input');
 const dropZone    = document.getElementById('drop-zone');
 const submitBtn   = document.getElementById('submit-btn');
@@ -142,22 +263,45 @@ dropZone.addEventListener('drop', e => {
   }
 });
 
-const steps = [
-  'Analisando diagrama com visão computacional...',
-  'Extraindo e classificando componentes...',
-  'Executando análise STRIDE por componente...',
-  'Gerando relatório de ameaças...',
-];
-let stepIdx = 0;
+// ─── Progresso real da análise (polling em /progress/<run_id>) ─────────────
+const loadingStepEl = document.getElementById('loading-step');
+const loadingLogEl  = document.getElementById('loading-log');
+const runIdInput    = document.getElementById('run-id-input');
+let pollTimer = null;
+let shownSteps = 0;
+
+function esc(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function pollProgress(runId) {
+  pollTimer = setInterval(async () => {
+    try {
+      const res = await fetch(`/progress/${runId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.steps.length > shownSteps) {
+        shownSteps = data.steps.length;
+        loadingStepEl.textContent = data.steps[data.steps.length - 1];
+        loadingLogEl.innerHTML = data.steps.map(s => `<div>${esc(s)}</div>`).join('');
+        loadingLogEl.scrollTop = loadingLogEl.scrollHeight;
+      }
+      if (data.done) {
+        clearInterval(pollTimer);
+      }
+    } catch { /* mantém o último estado exibido */ }
+  }, 600);
+}
+
 document.getElementById('analyze-form').addEventListener('submit', () => {
+  const runId = crypto.randomUUID();
+  runIdInput.value = runId;
+  shownSteps = 0;
+  loadingLogEl.innerHTML = '';
   document.getElementById('loading-overlay').style.display = 'flex';
-  const interval = setInterval(() => {
-    if (stepIdx < steps.length - 1) {
-      document.getElementById('loading-step').textContent = steps[++stepIdx];
-    } else {
-      clearInterval(interval);
-    }
-  }, 10000);
+  pollProgress(runId);
 });
 </script>
 {% endblock %}

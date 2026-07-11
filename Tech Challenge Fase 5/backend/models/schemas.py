@@ -42,6 +42,7 @@ class AnalysisResponse(BaseModel):
     summary: str
     provider_used: ProviderType
     model_used: str
+    stride_model_used: str | None = None
 
 
 class ProviderInfo(BaseModel):

@@ -1,4 +1,4 @@
-"""Entry point — run from project root: python run.py"""
+"""Ponto de entrada — execute a partir da raiz do projeto: python run.py"""
 from main import app
 
 if __name__ == "__main__":
