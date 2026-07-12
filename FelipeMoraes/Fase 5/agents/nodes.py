@@ -153,8 +153,12 @@ def _get_llm(
     """
     provider = provider or os.environ.get("LLM_PROVIDER", "lmstudio")
 
-    # LM_STUDIO_MAX_TOKENS só se aplica ao LM Studio — não contamina OpenAI/Ollama
-    lm_max = int(os.environ.get("LM_STUDIO_MAX_TOKENS", max_tokens or 1024))
+    # LM_STUDIO_MAX_TOKENS: preferência do usuário (memória da GPU/RAM).
+    # Cada nó passa max_tokens como mínimo necessário — usamos o maior dos dois
+    # para garantir que modelos de raciocínio (ex.: gemma-4-e4b) tenham tokens
+    # suficientes para o conteúdo mesmo quando o usuário reduziu o limite.
+    env_lm_max = int(os.environ.get("LM_STUDIO_MAX_TOKENS", 1024))
+    lm_max = max(env_lm_max, max_tokens) if max_tokens else env_lm_max
 
     if provider == "openai":
         model = override_model or os.environ.get("OPENAI_MODEL", "gpt-4o")

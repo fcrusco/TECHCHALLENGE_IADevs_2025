@@ -126,6 +126,8 @@
 {% block scripts %}
 <script>
 // ─── Provedor de LLM ────────────────────────────────────────────────────────
+const _STRIDE_GGUF_URL = 'https://1drv.ms/u/c/00d0a6a099986c76/IQCQa17fkDcwRqPt04rnq-QzAcwb1jkWhpkIjwjtfkCwfxs?e=YO1bcI';
+
 const providerSelect   = document.getElementById('provider-select');
 const localConfig      = document.getElementById('local-config');
 const localUrlInput    = document.getElementById('local-url');
@@ -155,12 +157,12 @@ async function loadProviders() {
       const opt = document.createElement('option');
       opt.value = p.id;
       opt.textContent = p.available ? p.name : `${p.name} (offline)`;
-      opt.disabled = !p.available;
       providerSelect.appendChild(opt);
     });
-    const first = providersCache.find(p => p.available);
+    // Seleciona o primeiro disponível; se nenhum estiver online, seleciona o primeiro da lista
+    const first = providersCache.find(p => p.available) || providersCache[0];
     if (first) providerSelect.value = first.id;
-  } catch { /* mantém os valores padrão estáticos */ }
+  } catch { /* mantém os valores padrão estáticos do HTML */ }
   updateLocalConfig();
 }
 
@@ -186,7 +188,7 @@ function updateLocalConfig() {
   strideTrainedInfo.style.display = provider === 'stride-trained' ? 'block' : 'none';
   if (provider === 'stride-trained') {
     const info = providersCache.find(p => p.id === 'stride-trained');
-    renderStrideTrainedInstructions(info ? info.available : false);
+    renderStrideTrainedInstructions(info ? info.available : false, info || null);
   }
 }
 
@@ -198,18 +200,46 @@ providerSelect.addEventListener('change', () => {
 localUrlInput.addEventListener('input',   () => { localUrlInput.dataset.userEdited   = '1'; });
 localModelInput.addEventListener('input', () => { localModelInput.dataset.userEdited = '1'; });
 
-function renderStrideTrainedInstructions(available) {
+function renderStrideTrainedInstructions(available, info) {
   if (available) {
     strideTrainedInstructions.innerHTML = `<p class="text-success mb-0">Ollama detectado com <code>stride-qwen2.5-3b</code> registrado — pronto para usar.</p>`;
     return;
   }
+
+  const ggufOnDisk    = info && info.gguf_on_disk;
+  const downloadUrl   = (info && info.gguf_download_url) || _STRIDE_GGUF_URL;
+  const destFolder    = (info && info.gguf_dest_folder)  || 'training/output/';
+  const ggufFilename  = (info && info.gguf_filename)     || 'stride-qwen2.5-3b-q8_0.gguf';
+
+  if (!ggufOnDisk) {
+    strideTrainedInstructions.innerHTML = `
+      <p class="mb-1"><strong>Arquivo do modelo nao encontrado em disco.</strong></p>
+      <p class="mb-2">Baixe o modelo fine-tuned (~3.3 GB) e salve na pasta correta:</p>
+      <ol class="mb-2 ps-3">
+        <li>Clique no link abaixo para baixar o arquivo:<br>
+            <a href="${downloadUrl}" target="_blank" rel="noopener" class="text-info">${ggufFilename}</a>
+        </li>
+        <li>Salve o arquivo baixado em:<br>
+            <code>${destFolder}${ggufFilename}</code>
+        </li>
+        <li>Com o Ollama rodando, registre o modelo:<br>
+            <code>cd training/output</code><br>
+            <code>ollama create stride-qwen2.5-3b -f Modelfile</code>
+        </li>
+      </ol>
+    `;
+    return;
+  }
+
+  // GGUF em disco mas não registrado no Ollama
   strideTrainedInstructions.innerHTML = `
-    <p class="mb-1"><strong>Para habilitar, execute em um terminal (e deixe rodando):</strong></p>
+    <p class="mb-1">Arquivo encontrado em <code>${destFolder}${ggufFilename}</code>.</p>
+    <p class="mb-1"><strong>Para registrar no Ollama, execute em um terminal (e deixe rodando):</strong></p>
     <pre class="small bg-black p-2 rounded border border-secondary">ollama serve</pre>
-    <p class="mb-1">Depois confira se o modelo está registrado com <code>ollama list</code> — deve aparecer
-    <code>stride-qwen2.5-3b</code>. Veja como treinar/registrar em <code>README.md</code>,
-    seção "Modelo Treinado STRIDE (Fine-tuning Local)".</p>
-    <p class="mb-0">Recarregue esta página depois de iniciar o Ollama.</p>
+    <p class="mb-1">Depois registre o modelo:</p>
+    <pre class="small bg-black p-2 rounded border border-secondary">cd training/output
+ollama create stride-qwen2.5-3b -f Modelfile</pre>
+    <p class="mb-0">Clique em "Verificar novamente" apos concluir.</p>
   `;
 }
 

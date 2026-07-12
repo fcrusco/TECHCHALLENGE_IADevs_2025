@@ -18,6 +18,12 @@ from flask import Flask, jsonify, redirect, render_template, request, send_file,
 
 load_dotenv()
 
+_STRIDE_GGUF_DOWNLOAD_URL = (
+    "https://1drv.ms/u/c/00d0a6a099986c76/"
+    "IQCQa17fkDcwRqPt04rnq-QzAcwb1jkWhpkIjwjtfkCwfxs?e=YO1bcI"
+)
+_STRIDE_GGUF_FILENAME = "stride-qwen2.5-3b-q8_0.gguf"
+
 # ── Configuração de logging ────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
@@ -86,15 +92,19 @@ def index():
         "index.html",
         lm_url=os.environ.get("LM_STUDIO_URL", "http://localhost:1234/v1"),
         lm_model=os.environ.get("LM_STUDIO_MODEL", "google/gemma-4-e4b"),
-        lm_max_tokens=os.environ.get("LM_STUDIO_MAX_TOKENS", "1024"),
+        lm_max_tokens=os.environ.get("LM_STUDIO_MAX_TOKENS", "4096"),
     )
 
 
 @app.route("/providers")
 def providers():
+    from pathlib import Path as _Path
+
     openai_key = os.environ.get("OPENAI_API_KEY", "")
     lmstudio_url = os.environ.get("LM_STUDIO_URL", "http://localhost:1234/v1")
     lmstudio_base = lmstudio_url[:-3] if lmstudio_url.endswith("/v1") else lmstudio_url
+
+    gguf_path = _Path(BASE_DIR) / "training" / "output" / _STRIDE_GGUF_FILENAME
 
     return jsonify([
         {
@@ -120,6 +130,10 @@ def providers():
             "name": "Modelo Treinado Stride - Ollama (Local)",
             "available": _ollama_has_model(STRIDE_MODEL_URL, STRIDE_MODEL_NAME),
             "model": os.environ.get("OLLAMA_MODEL", "gemma3:4b"),
+            "gguf_on_disk": gguf_path.exists(),
+            "gguf_dest_folder": "training/output/",
+            "gguf_filename": _STRIDE_GGUF_FILENAME,
+            "gguf_download_url": _STRIDE_GGUF_DOWNLOAD_URL,
         },
     ])
 
@@ -377,7 +391,7 @@ def download(run_id: str, fmt: str):
 
 
 def _ensure_stride_model_on_startup() -> None:
-    """Verifica e baixa o modelo STRIDE na primeira execução (não bloqueia o servidor)."""
+    """Verifica se o modelo STRIDE está disponível e registra no Ollama se o GGUF já estiver em disco."""
     try:
         from training.setup_model import ensure_stride_model
         ensure_stride_model(silent=False)

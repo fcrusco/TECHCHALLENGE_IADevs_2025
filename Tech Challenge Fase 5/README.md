@@ -73,7 +73,7 @@ Fase 5/
 │   ├── finetune.py              # Fine-tuning LoRA (PEFT) do Qwen2.5-3B-Instruct
 │   ├── merge_adapter.py         # Mescla o adapter LoRA nos pesos base
 │   ├── evaluate.py              # Teste qualitativo do modelo treinado
-│   ├── setup_model.py           # ← Download automático do GGUF + registro no Ollama
+│   ├── setup_model.py           # ← Verifica GGUF em disco e registra no Ollama se disponível
 │   ├── data/stride_sft.jsonl    # Dataset de treino gerado (39 exemplos / 768 ameaças)
 │   └── output/
 │       └── Modelfile            # Config do Ollama (template ChatML + parâmetros)
@@ -138,28 +138,33 @@ Se aparecer `Error: listen tcp 127.0.0.1:11434: bind: ...` o Ollama **já está 
 |----------|---------|------------------|
 | App Flask | `python main.py` | Sempre — serve a UI e a API em `localhost:5000` |
 | Ollama | `ollama serve` | Só se for usar o provider "Ollama (local)" e/ou o **Modelo treinado STRIDE** |
-| LM Studio | Abrir o app e ativar o servidor local | Só se for usar o provider "LM Studio (local)" (padrão do `.env`) |
+| LM Studio | Abrir o app, carregar um modelo e ativar o servidor local (aba Developer) | Só se for usar o provider "LM Studio (local)" (padrão do `.env`) |
 
-### Download automático do Modelo treinado STRIDE
+**LM Studio — modelos de raciocínio e Max Tokens**
 
-O arquivo GGUF (~3.3 GB) **não está incluído no repositório** (muito grande para o Git). Ao iniciar o servidor, o app verifica automaticamente se o modelo está disponível e, caso não esteja, faz o download do OneDrive e registra no Ollama:
+O campo **Max Tokens** na interface controla o limite de saída do LM Studio (padrão: 4096). Modelos de raciocínio como `google/gemma-4-e4b` consomem centenas de tokens internamente antes de responder — com o valor muito baixo (ex.: 1024) a resposta visível fica com menos de 20 tokens e o pipeline retorna 0 componentes. Mantenha o valor em pelo menos 4096 para esses modelos. O pipeline garante internamente que cada etapa receba no mínimo os tokens necessários independente do valor configurado na interface.
 
-```
-python main.py
-# → [setup] Baixando stride-qwen2.5-3b-q8_0.gguf (~3.3 GB) do OneDrive...
-# → [setup] stride-qwen2.5-3b registrado com sucesso.
-```
+### Download do Modelo treinado STRIDE
 
-**Requisitos para o download automático:** Ollama precisa estar rodando (`ollama serve`) no momento em que o servidor é iniciado.
+O arquivo GGUF (~3.3 GB) **não está incluído no repositório** (muito grande para o Git) e **não é baixado automaticamente**. Você precisa fazer o download manualmente uma única vez:
 
-Para fazer o download e registro **manualmente** (sem subir o servidor):
+1. **Baixe o arquivo** (~3.3 GB) pelo link abaixo:
+   [stride-qwen2.5-3b-q8_0.gguf — OneDrive](https://1drv.ms/u/c/00d0a6a099986c76/IQCQa17fkDcwRqPt04rnq-QzAcwb1jkWhpkIjwjtfkCwfxs?e=YO1bcI)
 
-```powershell
-ollama serve          # em outro terminal, se não estiver rodando
-python training/setup_model.py
-```
+2. **Salve o arquivo** na pasta `training/output/`:
+   ```
+   training/output/stride-qwen2.5-3b-q8_0.gguf
+   ```
 
-Se o Ollama não estiver rodando na inicialização, o GGUF é baixado para `training/output/` mas o registro é pulado — rode `python training/setup_model.py` depois de iniciar o Ollama.
+3. **Registre no Ollama** (com o Ollama já rodando):
+   ```powershell
+   cd training/output
+   ollama create stride-qwen2.5-3b -f Modelfile
+   ```
+
+Enquanto o GGUF não estiver em disco, a interface mostra o link de download diretamente no painel do provider — basta selecionar **"Modelo Treinado Stride - Ollama (Local)"** e seguir as instruções exibidas.
+
+Se o GGUF já estiver em disco mas o Ollama não tiver o modelo registrado, a interface também mostra os comandos de registro.
 
 > **Validado:** `python main.py` sobe sem erros e serve a UI e a API corretamente. O fluxo
 > completo foi testado via upload real (`POST /analyze`) com Ollama (visão, `gemma3:4b`) +
@@ -272,7 +277,7 @@ Resultado salvo em memória (run_id) → redireciona para /results/<run_id>
 | **LM Studio** | Local | Servidor local ativo + URL/model configuráveis na interface |
 | **Modelo Treinado Stride - Ollama (Local)** | Local | Igual ao Ollama acima (mesmos campos URL/Modelo, usados para a etapa de **visão**) — mas força a etapa de **análise STRIDE** a usar o modelo fine-tuned `stride-qwen2.5-3b` (ver seção própria abaixo) |
 
-Para Ollama, LM Studio e Modelo Treinado Stride, a URL e o modelo são editáveis diretamente na interface sem reiniciar o servidor — o seletor de provider consulta `GET /providers` ao carregar a página e desabilita os que estiverem offline (a opção "Modelo Treinado Stride" fica offline se o Ollama não tiver o modelo `stride-qwen2.5-3b` registrado).
+Para Ollama, LM Studio e Modelo Treinado Stride, a URL e o modelo são editáveis diretamente na interface sem reiniciar o servidor. O seletor de provider consulta `GET /providers` ao carregar a página e marca como "(offline)" os providers indisponíveis — eles continuam selecionáveis para que o usuário veja as instruções de como habilitá-los (a opção "Modelo Treinado Stride" aparece offline se o Ollama não tiver o modelo `stride-qwen2.5-3b` registrado, e a interface exibe o link de download e os comandos de registro diretamente no painel).
 
 > **Nota:** o campo "Modelo" para Ollama vem preenchido com `gemma3:4b` por padrão, mas esse modelo
 > precisa estar baixado (`ollama pull gemma3:4b`) para funcionar. Se você tiver outro modelo com
@@ -309,12 +314,12 @@ Todo o pipeline de treinamento vive em [training/](training/):
 | `training/build_dataset.py` | Combina os dois acima, gera ~39 arquiteturas sintéticas concretas, e usa um LLM local (LM Studio) para reescrever/parafrasear os textos (mantendo categoria STRIDE, severidade e CWE fixos) — evita que o modelo apenas decore o texto literal do `seed_kb.py`. | sim |
 | `training/data/stride_sft.jsonl` | Dataset final gerado (39 exemplos, 768 ameaças), no formato chat (`system`/`user`/`assistant`) idêntico ao prompt real de produção (`backend/services/stride.py`). | sim |
 | `training/finetune.py` | Fine-tuning LoRA do Qwen2.5-3B-Instruct usando `transformers` + `peft`. | sim |
-| `training/setup_model.py` | **Download automático** do GGUF do OneDrive + registro no Ollama. Chamado automaticamente por `main.py` / `run.py` na primeira execução. | sim |
+| `training/setup_model.py` | Verifica se o GGUF está em disco e registra no Ollama se disponível. Chamado por `main.py` / `run.py` na inicialização. O download do GGUF é manual (ver seção "Download do Modelo"). | sim |
 | `training/output/Modelfile` | Define como o Ollama deve servir o `.gguf` (inclui o template de chat ChatML do Qwen — sem isso o Ollama não formata os prompts corretamente). | sim |
 | `training/merge_adapter.py` | Mescla o adapter LoRA nos pesos originais do Qwen, gerando um modelo completo e independente. | sim |
 | `training/output/stride-qwen2.5-3b-lora/` | Adapter LoRA treinado (checkpoint, ~120MB). Gerado por `finetune.py`. | nao — ignorado pelo .gitignore |
 | `training/output/stride-qwen2.5-3b-merged/` | Modelo completo mesclado (safetensors, ~6GB). Gerado por `merge_adapter.py`. | nao — ignorado pelo .gitignore |
-| `training/output/stride-qwen2.5-3b-q8_0.gguf` | **Modelo final em produção** (GGUF Q8_0, ~3.3GB). **Baixado automaticamente** do OneDrive por `setup_model.py`. | nao — ignorado pelo .gitignore |
+| `training/output/stride-qwen2.5-3b-q8_0.gguf` | **Modelo final em produção** (GGUF Q8_0, ~3.3GB). **Download manual** — link na seção "Download do Modelo" e na interface web. | nao — ignorado pelo .gitignore |
 | `training/evaluate.py` | Script de teste rápido: roda o adapter em cima de arquiteturas que não estavam no treino, para checar qualitativamente a saída. | sim |
 | `agents/nodes.py` (`_call_stride_model`) | Ponte entre o prompt/schema do treino e o schema nativo do pipeline principal (ver acima). | sim |
 
@@ -372,9 +377,9 @@ ollama create stride-qwen2.5-3b -f Modelfile
 
 ### Como usar na interface
 
-1. Tenha o Ollama rodando (`ollama serve`). O modelo `stride-qwen2.5-3b` é **baixado e registrado automaticamente** na primeira vez que `python main.py` é iniciado com o Ollama ativo (ver seção "Download automático" acima). Confirme com `ollama list`.
+1. Tenha o Ollama rodando (`ollama serve`) e o modelo `stride-qwen2.5-3b` registrado (ver seção "Download do Modelo" acima). Confirme com `ollama list`.
 2. Abra [http://localhost:5000](http://localhost:5000) — o seletor **Provedor** consulta `GET /providers` automaticamente ao carregar a página.
-3. Escolha a opção **"Modelo Treinado Stride - Ollama (Local)"** no dropdown. Se estiver offline (modelo não registrado no Ollama), a opção aparece desabilitada com "(offline)" no nome.
+3. Escolha a opção **"Modelo Treinado Stride - Ollama (Local)"** no dropdown. Se estiver offline (modelo não registrado no Ollama), a opção aparece com "(offline)" no nome e pode ser selecionada — a interface exibe o link de download do GGUF e os comandos para registrar no Ollama.
 4. Com essa opção selecionada, os campos **URL do servidor** e **Modelo** continuam visíveis — eles configuram o modelo usado só para a etapa de **visão** (identificar os componentes na imagem, ex.: `gemma3:4b`); a etapa de análise STRIDE sempre usa `stride-qwen2.5-3b` fixo, independente do que estiver nesses campos. Um aviso abaixo do formulário explica isso, e mostra instruções de como habilitar (`ollama serve` + registrar o modelo) se estiver offline, com um botão "Verificar novamente".
 5. Faça upload do diagrama e analise. No resultado, a linha de informações mostra os dois modelos usados: `Provedor: ollama · Modelo (visão): gemma3:4b · Modelo (STRIDE): stride-qwen2.5-3b`.
 
