@@ -155,9 +155,9 @@ def _get_llm(
 
     # LM_STUDIO_MAX_TOKENS: preferência do usuário (memória da GPU/RAM).
     # Cada nó passa max_tokens como mínimo necessário — usamos o maior dos dois
-    # para garantir que modelos de raciocínio (ex.: gemma-4-e4b) tenham tokens
+    # para garantir que modelos de raciocínio (ex.: gemma-4-12b-qat) tenham tokens
     # suficientes para o conteúdo mesmo quando o usuário reduziu o limite.
-    env_lm_max = int(os.environ.get("LM_STUDIO_MAX_TOKENS", 1024))
+    env_lm_max = int(os.environ.get("LM_STUDIO_MAX_TOKENS", 4098))
     lm_max = max(env_lm_max, max_tokens) if max_tokens else env_lm_max
 
     if provider == "openai":
@@ -180,18 +180,28 @@ def _get_llm(
             model=model,
             api_key="ollama",
             max_tokens=ollama_max,
+            # extra_body força o nome de campo "max_tokens" no payload real —
+            # versões recentes do langchain_openai renomeiam o max_tokens acima
+            # para "max_completion_tokens" (nome atual da API da OpenAI), que o
+            # Ollama ignora silenciosamente. Sem isso, o limite nunca é
+            # respeitado e o modelo pode gerar até estourar o contexto (já visto
+            # gerar 200s/48k tokens numa única chamada do modelo STRIDE treinado).
+            extra_body={"max_tokens": ollama_max},
             temperature=0.1,
         )
         return llm, model
 
     # lmstudio (padrão)
     base_url = override_url or os.environ.get("LM_STUDIO_URL", "http://localhost:1234/v1")
-    model = override_model or os.environ.get("LM_STUDIO_MODEL", "google/gemma-4-e4b")
+    model = override_model or os.environ.get("LM_STUDIO_MODEL", "google/gemma-4-12b-qat")
     llm = ChatOpenAI(
         base_url=base_url,
         model=model,
         api_key="lm-studio",
         max_tokens=lm_max,
+        # ver comentário equivalente no branch "ollama" acima — mesmo problema
+        # de max_tokens vs. max_completion_tokens também se aplica ao LM Studio.
+        extra_body={"max_tokens": lm_max},
         temperature=0.1,
     )
     return llm, model
@@ -344,9 +354,54 @@ def analyze_image_node(state: ThreatModelState) -> dict[str, Any]:
     }
 
 
+def analyze_image_local_node(state: ThreatModelState) -> dict[str, Any]:
+    """Nó 1+2 (combinado): detecta componentes via modelo de visão treinado
+    localmente (YOLO, ver agents/vision_local.py e training/vision/), sem
+    chamar nenhuma LLM externa. Substitui analyze_image_node +
+    extract_components_node numa única etapa, já que a detecção já retorna
+    componentes estruturados — não precisa de um segundo passo de LLM para
+    extrair JSON de uma descrição em texto livre.
+
+    Limitação conhecida: o modelo detecta só componentes (é o que o edital
+    do hackathon pede), não conexões/fluxos de dados nem limites de
+    confiança — por isso trust_boundaries e data_flows ficam vazios.
+    """
+    from agents.vision_local import detect_components_local
+
+    image_base64 = state.get("image_base64")
+    if not image_base64 and state.get("image_path"):
+        image_base64 = _load_image_base64(state["image_path"])
+
+    image_bytes = base64.b64decode(image_base64)
+    components = detect_components_local(image_bytes)
+
+    if components:
+        comp_list = ", ".join(f"{c['name']} ({c['type']})" for c in components)
+        summary = (
+            f"Detecção automática via modelo de visão treinado localmente (YOLO): "
+            f"{len(components)} componentes identificados: {comp_list}."
+        )
+    else:
+        summary = "Modelo de visão treinado localmente não detectou nenhum componente nesta imagem."
+
+    return {
+        "image_base64": image_base64,
+        "raw_description": summary,
+        "components": components,
+        "trust_boundaries": [],
+        "data_flows": [],
+        "current_step": "components_extracted",
+        "messages": [],
+        "model_used": "stride-vision-yolov8n",
+        "provider_used": "vision-trained",
+    }
+
+
 def extract_components_node(state: ThreatModelState) -> dict[str, Any]:
     """Nó 2: converte a descrição bruta em dados estruturados de componentes."""
-    llm, _ = _get_llm(state.get("provider"), state.get("override_url"), state.get("override_model"), max_tokens=1024)
+    provider = state.get("provider")
+    override_url = state.get("override_url")
+    override_model = state.get("override_model")
 
     # Trunca apenas para modelos locais menores; OpenAI suporta contextos longos
     raw = state.get("raw_description") or ""
@@ -389,15 +444,32 @@ Se um tipo não estiver claro, use a correspondência mais próxima da lista aci
 """
 
     messages = [SystemMessage(content=_COMPONENT_EXTRACTION_SYSTEM), HumanMessage(content=prompt)]
-    response = _llm_call(llm, messages, "extract_components_node → LLM")
 
-    try:
-        data = json.loads(_extract_json(response.content))
-        logger.info("  JSON parseado com sucesso")
-    except json.JSONDecodeError as e:
-        logger.warning("  Falha ao parsear JSON: %s — usando estrutura vazia", e)
-        logger.warning("  Resposta bruta (primeiros 500): %s", (response.content or "")[:500])
-        data = {"components": [], "trust_boundaries": [], "data_flows": []}
+    # Modelos de "raciocínio" (ex.: google/gemma-4-12b-qat no LM Studio) gastam
+    # tokens pensando antes de responder — se o max_tokens configurado não for
+    # suficiente, a resposta é cortada no meio do JSON (finish_reason="length")
+    # e o parse falha, zerando os componentes. Em vez de desistir direto,
+    # tenta de novo com um budget bem maior antes de cair no fallback vazio.
+    token_budgets = [2048, 6144]
+    data: dict = {"components": [], "trust_boundaries": [], "data_flows": []}
+    response = None
+    for attempt, budget in enumerate(token_budgets, start=1):
+        llm, _ = _get_llm(provider, override_url, override_model, max_tokens=budget)
+        label = "extract_components_node → LLM" if attempt == 1 else f"extract_components_node → LLM (retry, {budget} tokens)"
+        response = _llm_call(llm, messages, label)
+        try:
+            data = json.loads(_extract_json(response.content))
+            logger.info("  JSON parseado com sucesso")
+            break
+        except json.JSONDecodeError as e:
+            finish_reason = (response.response_metadata or {}).get("finish_reason")
+            logger.warning("  Falha ao parsear JSON: %s (finish_reason=%s)", e, finish_reason)
+            if finish_reason == "length" and attempt < len(token_budgets):
+                logger.warning("  Resposta truncada por limite de tokens — tentando de novo com mais tokens")
+                continue
+            logger.warning("  Resposta bruta (primeiros 500): %s", (response.content or "")[:500])
+            data = {"components": [], "trust_boundaries": [], "data_flows": []}
+            break
 
     components = data.get("components", [])
     for comp in components:

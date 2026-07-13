@@ -65,6 +65,7 @@ def serve_images(filename):
 
 # Mesmo modelo STRIDE fine-tuned usado pelo backend/ (ver training/) — servido via Ollama
 from agents.nodes import STRIDE_MODEL_NAME, STRIDE_MODEL_URL  # noqa: E402
+from agents.vision_local import VISION_WEIGHTS_PATH  # noqa: E402
 
 
 def _ping(url: str) -> bool:
@@ -91,8 +92,8 @@ def index():
     return render_template(
         "index.html",
         lm_url=os.environ.get("LM_STUDIO_URL", "http://localhost:1234/v1"),
-        lm_model=os.environ.get("LM_STUDIO_MODEL", "google/gemma-4-e4b"),
-        lm_max_tokens=os.environ.get("LM_STUDIO_MAX_TOKENS", "4096"),
+        lm_model=os.environ.get("LM_STUDIO_MODEL", "google/gemma-4-12b-qat"),
+        lm_max_tokens=os.environ.get("LM_STUDIO_MAX_TOKENS", "4098"),
     )
 
 
@@ -123,17 +124,25 @@ def providers():
             "id": "lmstudio",
             "name": "LM Studio (local)",
             "available": _ping(lmstudio_base.rstrip("/")),
-            "model": os.environ.get("LM_STUDIO_MODEL", "google/gemma-4-e4b"),
+            "model": os.environ.get("LM_STUDIO_MODEL", "google/gemma-4-12b-qat"),
         },
         {
             "id": "stride-trained",
-            "name": "Modelo Treinado Stride - Ollama (Local)",
+            "name": "Ollama Local - Fine Tuning (Sem Visão)",
             "available": _ollama_has_model(STRIDE_MODEL_URL, STRIDE_MODEL_NAME),
             "model": os.environ.get("OLLAMA_MODEL", "gemma3:4b"),
             "gguf_on_disk": gguf_path.exists(),
             "gguf_dest_folder": "training/output/",
             "gguf_filename": _STRIDE_GGUF_FILENAME,
             "gguf_download_url": _STRIDE_GGUF_DOWNLOAD_URL,
+        },
+        {
+            "id": "vision-trained",
+            "name": "Ollama Local - Fine Tuning (Com Visão)",
+            "available": VISION_WEIGHTS_PATH.exists() and _ollama_has_model(STRIDE_MODEL_URL, STRIDE_MODEL_NAME),
+            "model": "stride-vision-yolov8n + " + STRIDE_MODEL_NAME,
+            "vision_weights_on_disk": VISION_WEIGHTS_PATH.exists(),
+            "vision_train_instructions": "cd training/vision && python generate_dataset.py && python train.py",
         },
     ])
 
@@ -164,18 +173,27 @@ def analyze():
     local_url = request.form.get("local_url") or None
     local_model = request.form.get("local_model") or None
 
-    # "stride-trained" é uma opção do dropdown Provedor, não um provider de
-    # verdade: o modelo treinado STRIDE não tem visão, então a etapa de visão
-    # continua rodando via Ollama (com o modelo escolhido no campo "Modelo"),
-    # e só a etapa de análise STRIDE é roteada para o modelo treinado fixo.
-    use_stride_model = provider == "stride-trained" or request.form.get("use_stride_model", "").lower() in ("true", "1", "on")
-    if provider == "stride-trained":
+    # "stride-trained" e "vision-trained" são opções do dropdown Provedor, não
+    # providers de LLM de verdade:
+    # - "stride-trained": o modelo STRIDE treinado não tem visão, então a etapa
+    #   de visão continua rodando via Ollama (campo "Modelo"), e só a etapa de
+    #   análise STRIDE é roteada para o modelo treinado fixo.
+    # - "vision-trained": combina o modelo de visão treinado (YOLO, sem LLM)
+    #   com o modelo STRIDE treinado — 100% local nas duas etapas. Os campos
+    #   URL/Modelo do formulário passam a configurar só a etapa de relatório
+    #   final (texto), que continua precisando de um LLM.
+    use_local_vision = provider == "vision-trained"
+    use_stride_model = (
+        provider in ("stride-trained", "vision-trained")
+        or request.form.get("use_stride_model", "").lower() in ("true", "1", "on")
+    )
+    if provider in ("stride-trained", "vision-trained"):
         provider = "ollama"
 
     # LM Studio usa Max Tokens configurável (modelos locais de contexto menor)
     lm_url = request.form.get("lm_url", "http://localhost:1234/v1")
-    lm_model = request.form.get("lm_model", "google/gemma-4-e4b")
-    lm_max_tokens = request.form.get("lm_max_tokens", "1024")
+    lm_model = request.form.get("lm_model", "google/gemma-4-12b-qat")
+    lm_max_tokens = request.form.get("lm_max_tokens", "4098")
     os.environ["LM_STUDIO_URL"] = lm_url
     os.environ["LM_STUDIO_MODEL"] = lm_model
     os.environ["LM_STUDIO_MAX_TOKENS"] = lm_max_tokens
@@ -206,6 +224,7 @@ def analyze():
     logger.info("  Arquivo         : %s (%.1f KB)", file.filename, file_size_kb)
     logger.info("  Provider        : %s", provider)
     logger.info("  URL/Modelo local: %s / %s", local_url, local_model)
+    logger.info("  Modelo Visão    : %s", "stride-vision-yolov8n (local)" if use_local_vision else "(provider acima)")
     logger.info("  Modelo STRIDE   : %s", STRIDE_MODEL_NAME if use_stride_model else "(não usado)")
     logger.info("=" * 60)
 
@@ -217,6 +236,7 @@ def analyze():
             tmp_path = tmp.name
 
         from agents.nodes import (
+            analyze_image_local_node,
             analyze_image_node,
             analyze_stride_node,
             extract_components_node,
@@ -246,25 +266,36 @@ def analyze():
             "stride_model_used": None,
         }
 
-        # ── Etapa 1 ───────────────────────────────────────────────────────────
+        # ── Etapas 1+2 ────────────────────────────────────────────────────────
         t = time.time()
-        _log_step(run_id, "[1/4] Analisando o diagrama com visão computacional...")
-        state.update(analyze_image_node(state))
-        desc_len = len(state.get("raw_description") or "")
-        _log_step(run_id, f"[1/4] Concluído em {time.time() - t:.1f}s — descrição gerada com {desc_len} caracteres")
+        if use_local_vision:
+            _log_step(run_id, "[1-2/4] Detectando componentes com o modelo de visão treinado (YOLO, local)...")
+            state.update(analyze_image_local_node(state))
+            n_comp = len(state.get("components") or [])
+            n_tb = len(state.get("trust_boundaries") or [])
+            n_df = len(state.get("data_flows") or [])
+            _log_step(
+                run_id,
+                f"[1-2/4] Concluído em {time.time() - t:.1f}s — {n_comp} componentes detectados "
+                f"(sem limites de confiança/fluxos de dados — o detector só identifica componentes)",
+            )
+        else:
+            _log_step(run_id, "[1/4] Analisando o diagrama com visão computacional...")
+            state.update(analyze_image_node(state))
+            desc_len = len(state.get("raw_description") or "")
+            _log_step(run_id, f"[1/4] Concluído em {time.time() - t:.1f}s — descrição gerada com {desc_len} caracteres")
 
-        # ── Etapa 2 ───────────────────────────────────────────────────────────
-        t = time.time()
-        _log_step(run_id, "[2/4] Extraindo e classificando componentes da arquitetura...")
-        state.update(extract_components_node(state))
-        n_comp = len(state.get("components") or [])
-        n_tb = len(state.get("trust_boundaries") or [])
-        n_df = len(state.get("data_flows") or [])
-        _log_step(
-            run_id,
-            f"[2/4] Concluído em {time.time() - t:.1f}s — {n_comp} componentes, "
-            f"{n_tb} limites de confiança, {n_df} fluxos de dados",
-        )
+            t = time.time()
+            _log_step(run_id, "[2/4] Extraindo e classificando componentes da arquitetura...")
+            state.update(extract_components_node(state))
+            n_comp = len(state.get("components") or [])
+            n_tb = len(state.get("trust_boundaries") or [])
+            n_df = len(state.get("data_flows") or [])
+            _log_step(
+                run_id,
+                f"[2/4] Concluído em {time.time() - t:.1f}s — {n_comp} componentes, "
+                f"{n_tb} limites de confiança, {n_df} fluxos de dados",
+            )
         if state.get("components"):
             for c in state["components"]:
                 _log_step(run_id, f"      componente identificado: {c.get('name', '?')} (tipo: {c.get('type', '?')})")

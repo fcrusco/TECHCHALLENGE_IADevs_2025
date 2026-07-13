@@ -33,7 +33,8 @@
               <option value="openai">OpenAI</option>
               <option value="ollama">Ollama (local)</option>
               <option value="lmstudio" selected>LM Studio (local)</option>
-              <option value="stride-trained">Modelo Treinado Stride - Ollama (Local)</option>
+              <option value="stride-trained">Ollama Local - Fine Tuning (Sem Visão)</option>
+              <option value="vision-trained">Ollama Local - Fine Tuning (Com Visão)</option>
             </select>
           </div>
         </div>
@@ -44,19 +45,22 @@
             <input type="text" id="local-url" name="local_url" class="form-control form-control-sm bg-dark text-light border-secondary"
                    value="{{ lm_url }}" placeholder="http://localhost:1234/v1">
           </div>
-          <div class="col-md-4">
+          <div class="col-md-4" id="local-model-wrap">
             <label class="form-label small">Modelo</label>
             <input type="text" id="local-model" name="local_model" class="form-control form-control-sm bg-dark text-light border-secondary"
-                   value="{{ lm_model }}" placeholder="google/gemma-4-e4b">
+                   value="{{ lm_model }}" placeholder="google/gemma-4-12b-qat">
           </div>
           <div class="col-md-2" id="lm-max-tokens-wrap">
             <label class="form-label small">Max Tokens</label>
             <input type="number" name="lm_max_tokens" class="form-control form-control-sm bg-dark text-light border-secondary"
-                   value="{{ lm_max_tokens }}" min="256" max="8192" step="256">
+                   value="{{ lm_max_tokens }}" min="256" max="16384" step="256">
           </div>
-          <div class="col-12">
+          <div class="col-12" id="lmstudio-info" style="display:none">
             <small class="text-muted">
-              Use um modelo com suporte a visão. Reduza <strong>Max Tokens</strong> se receber erro de contexto (só se aplica ao LM Studio).
+              <strong>google/gemma-4-12b-qat</strong> foi o modelo usado durante os testes deste projeto — é um
+              modelo de "raciocínio" (gasta tokens pensando antes de responder), por isso o <strong>Max Tokens</strong>
+              padrão é mais alto (4098). Se ainda assim vier um resultado vazio (JSON cortado no meio),
+              aumente esse valor.
             </small>
           </div>
         </div>
@@ -68,6 +72,18 @@
           </p>
           <div id="stride-trained-instructions" class="small text-muted"></div>
           <button type="button" id="stride-trained-refresh" class="btn btn-outline-secondary btn-sm mt-2">Verificar novamente</button>
+        </div>
+
+        <div id="vision-trained-info" class="mt-3" style="display:none">
+          <p class="text-muted small mb-2">
+            A identificação de componentes usa um detector de visão treinado localmente (YOLO,
+            <code>stride-vision-yolov8n</code>) e a análise STRIDE usa o modelo Qwen2.5-3B fine-tuned
+            (<code>stride-qwen2.5-3b</code>) — nenhuma das duas etapas chama uma LLM externa. Os campos
+            acima configuram só o modelo que escreve o relatório final em texto. Esta opção não detecta
+            conexões, fluxos de dados ou limites de confiança — só os componentes.
+          </p>
+          <div id="vision-trained-instructions" class="small text-muted"></div>
+          <button type="button" id="vision-trained-refresh" class="btn btn-outline-secondary btn-sm mt-2">Verificar novamente</button>
         </div>
       </div>
     </div>
@@ -132,17 +148,25 @@ const providerSelect   = document.getElementById('provider-select');
 const localConfig      = document.getElementById('local-config');
 const localUrlInput    = document.getElementById('local-url');
 const localModelInput  = document.getElementById('local-model');
+const localModelWrap   = document.getElementById('local-model-wrap');
 const lmMaxTokensWrap  = document.getElementById('lm-max-tokens-wrap');
+const lmstudioInfo     = document.getElementById('lmstudio-info');
 const strideTrainedInfo         = document.getElementById('stride-trained-info');
 const strideTrainedInstructions = document.getElementById('stride-trained-instructions');
 const strideTrainedRefresh      = document.getElementById('stride-trained-refresh');
+const visionTrainedInfo         = document.getElementById('vision-trained-info');
+const visionTrainedInstructions = document.getElementById('vision-trained-instructions');
+const visionTrainedRefresh      = document.getElementById('vision-trained-refresh');
 
 // "stride-trained" roda a etapa de visão via Ollama (por isso usa as mesmas
 // URL/Modelo padrão do Ollama comum) — só a etapa STRIDE é que é fixa no backend.
+// "vision-trained" fixa visão (YOLO) + STRIDE — os campos configuram só o LLM
+// do relatório final, por isso também usa os defaults do Ollama.
 const LOCAL_DEFAULTS = {
   ollama:         { url: 'http://localhost:11434',   model: 'gemma3:4b' },
   'stride-trained': { url: 'http://localhost:11434', model: 'gemma3:4b' },
-  lmstudio:       { url: '{{ lm_url }}' || 'http://localhost:1234/v1', model: '{{ lm_model }}' || 'google/gemma-4-e4b' },
+  'vision-trained': { url: 'http://localhost:11434', model: 'gemma3:4b' },
+  lmstudio:       { url: '{{ lm_url }}' || 'http://localhost:1234/v1', model: '{{ lm_model }}' || 'google/gemma-4-12b-qat' },
 };
 
 let providersCache = [];
@@ -168,7 +192,7 @@ async function loadProviders() {
 
 function updateLocalConfig() {
   const provider = providerSelect.value;
-  const isLocal = provider === 'ollama' || provider === 'lmstudio' || provider === 'stride-trained';
+  const isLocal = provider === 'ollama' || provider === 'lmstudio' || provider === 'stride-trained' || provider === 'vision-trained';
   localConfig.style.display = isLocal ? 'flex' : 'none';
   // Desabilita (não só esconde) os campos quando não são relevantes, para que
   // o navegador não envie esses valores junto com o formulário (evita que um
@@ -177,6 +201,7 @@ function updateLocalConfig() {
   localModelInput.disabled = !isLocal;
   lmMaxTokensWrap.style.display = provider === 'lmstudio' ? 'block' : 'none';
   lmMaxTokensWrap.querySelector('input').disabled = provider !== 'lmstudio';
+  lmstudioInfo.style.display = provider === 'lmstudio' ? 'block' : 'none';
   if (isLocal) {
     const d = LOCAL_DEFAULTS[provider];
     if (!localUrlInput.dataset.userEdited)   localUrlInput.value   = d.url;
@@ -185,10 +210,22 @@ function updateLocalConfig() {
     localModelInput.placeholder = d.model;
   }
 
+  // "stride-trained"/"vision-trained" sempre usam o Ollama local com os
+  // modelos fine-tuned fixos — a caixa "Modelo" some porque não há nada pra
+  // escolher (o front assume a combinação de fine-tuning correspondente).
+  const hideModelBox = provider === 'stride-trained' || provider === 'vision-trained';
+  localModelWrap.style.display = hideModelBox ? 'none' : '';
+
   strideTrainedInfo.style.display = provider === 'stride-trained' ? 'block' : 'none';
   if (provider === 'stride-trained') {
     const info = providersCache.find(p => p.id === 'stride-trained');
     renderStrideTrainedInstructions(info ? info.available : false, info || null);
+  }
+
+  visionTrainedInfo.style.display = provider === 'vision-trained' ? 'block' : 'none';
+  if (provider === 'vision-trained') {
+    const info = providersCache.find(p => p.id === 'vision-trained');
+    renderVisionTrainedInstructions(info || null);
   }
 }
 
@@ -249,6 +286,39 @@ strideTrainedRefresh.addEventListener('click', async () => {
   await loadProviders();
   strideTrainedRefresh.disabled = false;
   strideTrainedRefresh.textContent = 'Verificar novamente';
+});
+
+function renderVisionTrainedInstructions(info) {
+  const strideInfo = providersCache.find(p => p.id === 'stride-trained');
+  const strideReady = strideInfo ? strideInfo.available : false;
+  const visionOnDisk = info && info.vision_weights_on_disk;
+  const trainCmd = (info && info.vision_train_instructions) || 'cd training/vision && python generate_dataset.py && python train.py';
+
+  if (visionOnDisk && strideReady) {
+    visionTrainedInstructions.innerHTML = `<p class="text-success mb-0">Modelo de visão treinado e <code>stride-qwen2.5-3b</code> registrados no Ollama — pronto para usar.</p>`;
+    return;
+  }
+
+  let html = '';
+  if (!visionOnDisk) {
+    html += `
+      <p class="mb-1"><strong>Modelo de visão ainda não foi treinado.</strong></p>
+      <p class="mb-2">Gere o dataset sintético e treine localmente (requer GPU recomendada, mas roda em CPU também):</p>
+      <pre class="small bg-black p-2 rounded border border-secondary">${trainCmd}</pre>
+    `;
+  }
+  if (!strideReady) {
+    html += `<p class="mb-0">O modelo STRIDE treinado também precisa estar registrado no Ollama — veja as instruções na opção "Ollama Local - Fine Tuning (Sem Visão)" acima.</p>`;
+  }
+  visionTrainedInstructions.innerHTML = html;
+}
+
+visionTrainedRefresh.addEventListener('click', async () => {
+  visionTrainedRefresh.disabled = true;
+  visionTrainedRefresh.textContent = 'Verificando...';
+  await loadProviders();
+  visionTrainedRefresh.disabled = false;
+  visionTrainedRefresh.textContent = 'Verificar novamente';
 });
 
 loadProviders();

@@ -1,0 +1,19 @@
+# Dataset sintético gerado (milhares de imagens — regenerado via generate_dataset.py)
+data/
+# Checkpoints/logs de treino do ultralytics (regenerado via train.py)
+runs/
+# Imagens de teste reais do usuário e detecções anotadas (não fazem parte do código)
+samples/
+samples_output/
+__pycache__/
+
+# Ícones oficiais AWS/Azure/GCP (baixados via prepare_assets.py) — não
+# versionar: são ativos de terceiros com licença própria, mantenha só local.
+assets/icons/**/*.png
+assets/icons/**/*.svg
+
+# O peso final treinado (~6MB) FICA versionado — ver output/stride-vision-yolov8n.pt
+!output/
+!output/stride-vision-yolov8n.pt
+
+.env

@@ -1,0 +1,16 @@
+# Dependências do treino do detector de visão (training/vision/).
+# Instale no Python global da máquina (mesmo padrão do training/requirements.txt
+# do pipeline STRIDE) — são libs de ML separadas do venv do app Flask.
+#
+# torch não está listado aqui: o ultralytics instala uma build de torch
+# automaticamente, mas para treinar com GPU instale antes a build certa para
+# sua CUDA (https://pytorch.org/get-started/locally/).
+
+ultralytics>=8.3.0
+pillow
+pyyaml
+
+# Opcional — só necessário se você for usar prepare_assets.py com pacotes de
+# ícones que só vêm em SVG (ex.: Azure). Sem isso, arquivos .svg são ignorados
+# (o script continua funcionando normalmente com os .png do pacote).
+# cairosvg

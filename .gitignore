@@ -1,0 +1,24 @@
+# .gitignore geral do repositório (vale para as pastas de todos os integrantes)
+
+# Bytecode Python
+__pycache__/
+*.pyc
+
+# Configuração local com segredos (chaves de API etc.)
+.env
+
+# Ambientes virtuais Python
+venv/
+.venv/
+
+# Artefatos de treino de ML (checkpoints/logs — ex.: ultralytics, mlflow)
+runs/
+
+# ─── FelipeMoraes/Fase 5 ──────────────────────────────────────────────────
+# Saída do fine-tuning STRIDE (texto) — o .gguf final (~3.3 GB) e os
+# intermediários (lora/merged) são grandes demais para o Git. O Modelfile
+# (config do Ollama) fica versionado; o resto se baixa/gera manualmente —
+# ver FelipeMoraes/Fase 5/training/output/download_dataset.txt.
+FelipeMoraes/Fase 5/training/output/*
+!FelipeMoraes/Fase 5/training/output/Modelfile
+!FelipeMoraes/Fase 5/training/output/download_dataset.txt
