@@ -1,0 +1,20 @@
+Modelo treinado STRIDE (Qwen2.5-3B fine-tuned, GGUF Q8_0, ~3.3 GB)
+==================================================================
+
+Este arquivo não vai para o Git (grande demais). Baixe manualmente:
+
+  https://1drv.ms/u/c/00d0a6a099986c76/IQCQa17fkDcwRqPt04rnq-QzAcwb1jkWhpkIjwjtfkCwfxs?e=YO1bcI
+
+Salve o arquivo baixado nesta mesma pasta como:
+
+  training/output/stride-qwen2.5-3b-q8_0.gguf
+
+Depois, com o Ollama rodando, registre o modelo:
+
+  cd training/output
+  ollama create stride-qwen2.5-3b -f Modelfile
+
+Os diretórios intermediários do treino (stride-qwen2.5-3b-lora/,
+stride-qwen2.5-3b-merged/) não são distribuídos — são regenerados localmente
+rodando training/finetune.py + training/merge_adapter.py (ver README.md,
+seção "Modelo Treinado STRIDE").

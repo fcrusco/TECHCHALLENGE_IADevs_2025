@@ -24,6 +24,7 @@ Sistema de **modelagem de ameaças com IA** para o Tech Challenge - Fase 5. O us
 | LLM calls | **LangChain** (`langchain-openai`) |
 | Providers suportados | OpenAI (GPT-4o) · Ollama (local) · LM Studio (local) — escolha livre na interface |
 | Modelo STRIDE próprio | Qwen2.5-3B fine-tuned localmente (ver seção própria) |
+| Modelo de Visão próprio | YOLOv8n treinado do zero em dataset 100% sintético (ver seção "Modelo Treinado Visão") |
 | Frontend | Templates Jinja + Bootstrap 5 (dark mode), server-rendered |
 | Relatório | Markdown enriquecido + exportação JSON/PDF (via impressão do navegador) |
 
@@ -57,6 +58,7 @@ Fase 5/
 ├── run.py                    # Alternativa para subir o app principal: python run.py
 ├── agents/                   # Pipeline LangGraph (nós + grafo + estado)
 │   ├── nodes.py               # analyze_image / extract_components / analyze_stride / generate_report
+│   ├── vision_local.py         # Detecção local de componentes via modelo YOLO treinado (ver training/vision/)
 │   ├── graph.py               # StateGraph opcional (main.py chama os nós diretamente)
 │   └── state.py                # ThreatModelState (TypedDict)
 ├── utils/
@@ -75,8 +77,15 @@ Fase 5/
 │   ├── evaluate.py              # Teste qualitativo do modelo treinado
 │   ├── setup_model.py           # ← Verifica GGUF em disco e registra no Ollama se disponível
 │   ├── data/stride_sft.jsonl    # Dataset de treino gerado (39 exemplos / 768 ameaças)
-│   └── output/
-│       └── Modelfile            # Config do Ollama (template ChatML + parâmetros)
+│   ├── output/
+│   │   └── Modelfile            # Config do Ollama (template ChatML + parâmetros)
+│   └── vision/                  # Detector de componentes YOLOv8n (ver seção "Modelo Treinado Visão")
+│       ├── shapes.py             # Ícones procedurais por classe (PIL, sem depender de ícones de terceiros)
+│       ├── generate_dataset.py   # Gera diagramas sintéticos anotados em formato YOLO
+│       ├── train.py              # Treina o YOLOv8n sobre o dataset gerado
+│       ├── evaluate.py           # Roda o modelo sobre imagens reais de teste (training/vision/samples/)
+│       └── output/
+│           └── stride-vision-yolov8n.pt  # Modelo final treinado (~6MB — vai direto no repo)
 └── backend/ + frontend/       # ← App alternativo: API JSON + SPA (ver seção "App Alternativo")
 ```
 
@@ -100,7 +109,8 @@ OPENAI_MODEL=gpt-4o
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=gemma3:4b
 LM_STUDIO_URL=http://localhost:1234/v1
-LM_STUDIO_MODEL=google/gemma-4-e4b
+LM_STUDIO_MODEL=google/gemma-4-12b-qat
+LM_STUDIO_MAX_TOKENS=4098
 ```
 
 ---
@@ -140,9 +150,13 @@ Se aparecer `Error: listen tcp 127.0.0.1:11434: bind: ...` o Ollama **já está 
 | Ollama | `ollama serve` | Só se for usar o provider "Ollama (local)" e/ou o **Modelo treinado STRIDE** |
 | LM Studio | Abrir o app, carregar um modelo e ativar o servidor local (aba Developer) | Só se for usar o provider "LM Studio (local)" (padrão do `.env`) |
 
-**LM Studio — modelos de raciocínio e Max Tokens**
+**LM Studio — modelo testado, modelos de raciocínio e Max Tokens**
 
-O campo **Max Tokens** na interface controla o limite de saída do LM Studio (padrão: 4096). Modelos de raciocínio como `google/gemma-4-e4b` consomem centenas de tokens internamente antes de responder — com o valor muito baixo (ex.: 1024) a resposta visível fica com menos de 20 tokens e o pipeline retorna 0 componentes. Mantenha o valor em pelo menos 4096 para esses modelos. O pipeline garante internamente que cada etapa receba no mínimo os tokens necessários independente do valor configurado na interface.
+O modelo usado nos testes deste projeto foi o **`google/gemma-4-12b-qat`** — é o valor padrão já preenchido na caixa "Modelo" ao selecionar o provider LM Studio, e o campo mostra esse aviso na interface.
+
+O campo **Max Tokens** na interface controla o limite de saída do LM Studio (padrão: **4098**). `google/gemma-4-12b-qat`, como outros modelos de "raciocínio", gasta uma quantidade grande e variável de tokens **pensando** antes de escrever a resposta visível — com um limite baixo (ex.: 1024) a resposta é cortada no meio do "pensamento" e a etapa de extração de componentes recebe um JSON incompleto, retornando 0 componentes (relatório genérico, sem nada específico do diagrama). Mantenha pelo menos 4098; se ainda assim vier um resultado vazio com um diagrama grande/complexo, aumente ainda mais.
+
+Como rede de segurança adicional, `extract_components_node` (agents/nodes.py) detecta quando a resposta veio cortada por limite de tokens (`finish_reason=length`) e tenta de novo automaticamente com um budget bem maior (6144) antes de desistir e cair no relatório genérico — não depende só do valor configurado na interface.
 
 ### Download do Modelo treinado STRIDE
 
@@ -162,7 +176,7 @@ O arquivo GGUF (~3.3 GB) **não está incluído no repositório** (muito grande 
    ollama create stride-qwen2.5-3b -f Modelfile
    ```
 
-Enquanto o GGUF não estiver em disco, a interface mostra o link de download diretamente no painel do provider — basta selecionar **"Modelo Treinado Stride - Ollama (Local)"** e seguir as instruções exibidas.
+Enquanto o GGUF não estiver em disco, a interface mostra o link de download diretamente no painel do provider — basta selecionar **"Ollama Local - Fine Tuning (Sem Visão)"** e seguir as instruções exibidas.
 
 Se o GGUF já estiver em disco mas o Ollama não tiver o modelo registrado, a interface também mostra os comandos de registro.
 
@@ -172,6 +186,32 @@ Se o GGUF já estiver em disco mas o Ollama não tiver o modelo registrado, a in
 > corretamente (log `Modelo STRIDE : stride-qwen2.5-3b`), relatório renderizado com sucesso.
 > O caminho sem o modelo treinado (STRIDE gerado pelo mesmo provider da visão) também foi
 > testado e funciona (20 ameaças em 10 componentes no mesmo diagrama).
+>
+> **Validado (opção "100% Local", visão YOLO + STRIDE treinado juntos):** upload real de uma das
+> arquiteturas de avaliação do PDF via `provider=vision-trained` — 21 componentes detectados
+> localmente (YOLO, sem LLM), 18 ameaças geradas pelo `stride-qwen2.5-3b` e relatório renderizado
+> com sucesso, análise completa em **~25s**. Essa mesma chamada, antes de uma otimização (ver
+> abaixo), levava **~224s** (quase 4 minutos) só na etapa STRIDE.
+>
+> **Validado (LM Studio com `google/gemma-4-12b-qat`, Max Tokens 4098):** upload real da mesma
+> arquitetura via `provider=lmstudio` — componentes extraídos corretamente com nomes reais do
+> diagrama (`Usuários SEI`, `AWS Shield`, `Amazon CloudFront`, `AWS WAF`, `Virtual Private Cloud
+> (VPC)`, `Public Subnet`, `Private Subnet`, entre outros), relatório completo renderizado. Antes
+> do ajuste de Max Tokens/mecanismo de retry (ver seção "LM Studio — modelo testado..." acima),
+> essa mesma combinação retornava 0 componentes (JSON cortado no meio pelo modelo de raciocínio).
+
+**Otimização: `max_tokens` não era respeitado contra Ollama/LM Studio.** Ao testar a opção 100%
+local ponta a ponta, a etapa STRIDE (via `stride-qwen2.5-3b`) levou 210s numa única chamada e
+devolveu ~194 mil caracteres (bem acima do limite de ~30 ameaças definido no prompt). Causa raiz:
+versões recentes do `langchain_openai` renomeiam o parâmetro `max_tokens` para
+`max_completion_tokens` (nome atual da API da OpenAI) — mas o Ollama e o LM Studio (servidores
+`llama.cpp`) só reconhecem `max_tokens` e ignoram `max_completion_tokens` silenciosamente, então o
+limite nunca era aplicado e o modelo gerava até estourar sozinho. A correção
+(`agents/nodes.py`, função `_get_llm`) passa `extra_body={"max_tokens": ...}` além do parâmetro
+normal, forçando o nome de campo correto no payload para os providers `ollama` e `lmstudio`.
+Depois da correção, a mesma chamada caiu de 210s para **8.8s** — e isso vale para **toda** chamada
+via Ollama/LM Studio no app, não só a etapa STRIDE (visão, extração de componentes e relatório
+também respeitam o limite corretamente agora).
 
 ---
 
@@ -213,7 +253,7 @@ Exemplo do log no terminal:
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | `GET` | `/` | Página de upload (seleção de provider) |
-| `GET` | `/providers` | JSON com disponibilidade de cada provider — `openai`, `ollama`, `lmstudio` e `stride-trained` (Modelo Treinado Stride) |
+| `GET` | `/providers` | JSON com disponibilidade de cada provider — `openai`, `ollama`, `lmstudio`, `stride-trained` (Fine Tuning Sem Visão) e `vision-trained` (Fine Tuning Com Visão) |
 | `GET` | `/stride-model` | JSON com disponibilidade do Modelo treinado STRIDE isoladamente (legado, mantido para compatibilidade — a interface usa `/providers`) |
 | `GET` | `/progress/<run_id>` | JSON com os passos já concluídos da análise em andamento (`{"steps": [...], "done": bool}`) — consultado via polling pela tela de carregamento |
 | `POST` | `/analyze` | Recebe o diagrama + form fields, roda o pipeline, redireciona para `/results/<run_id>` |
@@ -275,14 +315,77 @@ Resultado salvo em memória (run_id) → redireciona para /results/<run_id>
 | **OpenAI** | Nuvem | `OPENAI_API_KEY` no `.env` |
 | **Ollama** | Local | Um modelo com **visão** ativo (ex.: `ollama pull gemma3:4b` ou `llava`) + URL/model configuráveis na interface |
 | **LM Studio** | Local | Servidor local ativo + URL/model configuráveis na interface |
-| **Modelo Treinado Stride - Ollama (Local)** | Local | Igual ao Ollama acima (mesmos campos URL/Modelo, usados para a etapa de **visão**) — mas força a etapa de **análise STRIDE** a usar o modelo fine-tuned `stride-qwen2.5-3b` (ver seção própria abaixo) |
+| **Ollama Local - Fine Tuning (Sem Visão)** | Local | A etapa de **visão** usa Ollama normalmente, mas a caixa "Modelo" some — assume-se o modelo fixo apropriado. Força a etapa de **análise STRIDE** a usar o modelo fine-tuned `stride-qwen2.5-3b` (ver seção própria abaixo) |
+| **Ollama Local - Fine Tuning (Com Visão)** | Local | Força a etapa de **visão** a usar o detector YOLO treinado localmente (`stride-vision-yolov8n`, sem LLM) e a etapa de **análise STRIDE** a usar `stride-qwen2.5-3b` — a caixa "Modelo" some; a URL configurada passa a valer só para o LLM da etapa de **relatório** final (ver seção "Modelo Treinado Visão" abaixo) |
 
-Para Ollama, LM Studio e Modelo Treinado Stride, a URL e o modelo são editáveis diretamente na interface sem reiniciar o servidor. O seletor de provider consulta `GET /providers` ao carregar a página e marca como "(offline)" os providers indisponíveis — eles continuam selecionáveis para que o usuário veja as instruções de como habilitá-los (a opção "Modelo Treinado Stride" aparece offline se o Ollama não tiver o modelo `stride-qwen2.5-3b` registrado, e a interface exibe o link de download e os comandos de registro diretamente no painel).
+Para Ollama e LM Studio, a URL e o modelo são editáveis diretamente na interface sem reiniciar o servidor. Nas duas opções "Ollama Local - Fine Tuning", a caixa "Modelo" fica escondida (o front assume os modelos fine-tuned fixos correspondentes) — só a URL do servidor Ollama continua editável. O seletor de provider consulta `GET /providers` ao carregar a página e marca como "(offline)" os providers indisponíveis — eles continuam selecionáveis para que o usuário veja as instruções de como habilitá-los (a opção "Fine Tuning (Sem Visão)" aparece offline se o Ollama não tiver o modelo `stride-qwen2.5-3b` registrado, e a interface exibe o link de download e os comandos de registro diretamente no painel).
 
 > **Nota:** o campo "Modelo" para Ollama vem preenchido com `gemma3:4b` por padrão, mas esse modelo
 > precisa estar baixado (`ollama pull gemma3:4b`) para funcionar. Se você tiver outro modelo com
 > visão baixado (ex.: `llava`), digite o nome dele no campo — confira o que está disponível
 > com `ollama list`.
+
+---
+
+## Treinamento dos Modelos Fine-Tuned (Visão Geral)
+
+O projeto treina **dois modelos próprios** localmente, um para cada etapa do pipeline que hoje
+depende de LLMs de terceiros. Esta seção é um resumo rápido de "o que é cada um e como treinar" —
+os detalhes completos (arquitetura, prompt/schema, limitações conhecidas, testes reais) estão nas
+duas seções seguintes ("Modelo Treinado STRIDE" e "Modelo Treinado Visão").
+
+| | Modelo STRIDE (texto) | Modelo de Visão (YOLO) |
+|---|---|---|
+| Etapa que substitui | `analyze_stride_node` (gerar ameaças STRIDE) | `analyze_image_node` + `extract_components_node` (identificar componentes na imagem) |
+| Modelo base | Qwen2.5-3B-Instruct + LoRA | YOLOv8n (nano) |
+| Dataset de treino | 39 arquiteturas sintéticas, parafraseadas por um LLM (`training/data/stride_sft.jsonl`, 768 ameaças) | ~1400 diagramas sintéticos desenhados via PIL (`training/vision/data/`, anotação automática) |
+| Onde ficam os scripts | [`training/`](training/) | [`training/vision/`](training/vision/) |
+| Requisitos de treino | GPU 12GB+ VRAM, LM Studio aberto (só pra parafrasear o dataset) | GPU acelera, mas roda em CPU também (YOLOv8n é leve) |
+| Saída final | `training/output/stride-qwen2.5-3b-q8_0.gguf` (~3.3GB) — **download manual**, não vai pro Git | `training/vision/output/stride-vision-yolov8n.pt` (~6MB) — **já vai no repositório** |
+| Como é servido | Registrado no Ollama (`ollama create ...`) | Carregado direto no processo Flask (`ultralytics`), sem servidor externo |
+| Opção correspondente na UI | "Ollama Local - Fine Tuning (Sem Visão)" | "Ollama Local - Fine Tuning (Com Visão)" (usa os dois modelos treinados juntos) |
+
+### Treinar os dois do zero — resumo dos comandos
+
+```powershell
+# ── Modelo STRIDE (texto) — ver seção completa "Modelo Treinado STRIDE" abaixo ──
+cd training
+pip install -r requirements.txt          # + torch certo pra sua GPU (ver pytorch.org)
+python build_dataset.py                  # usa o LM Studio local pra parafrasear o dataset
+python finetune.py                       # LoRA sobre Qwen2.5-3B-Instruct (~2min numa RTX 5080)
+python merge_adapter.py                  # mescla o adapter LoRA nos pesos base
+# converter pra GGUF (llama.cpp) e registrar no Ollama — comandos completos na seção abaixo
+
+# ── Modelo de Visão (YOLO) — ver seção completa "Modelo Treinado Visão" abaixo ──
+cd ../training/vision
+pip install -r requirements.txt
+python generate_dataset.py               # dataset 100% sintético, sem LLM nem GPU
+python train.py                          # treina o YOLOv8n sobre o dataset gerado
+python evaluate.py                       # testa em imagens reais (training/vision/samples/)
+```
+
+### Ícones reais (opcional — melhora a classificação do modelo de visão)
+
+O modelo de visão nasce treinado só com ícones **desenhados proceduralmente** (sem depender de
+nada de terceiros — ver "Dataset 100% sintético" mais abaixo). Pra melhorar a precisão em
+diagramas com ícones oficiais de nuvem (como os do PDF de avaliação do hackathon), dá pra baixar
+os pacotes gratuitos da AWS/Azure e rodar um script que organiza tudo automaticamente nas pastas
+de classe certas:
+
+- **AWS**: https://aws.amazon.com/architecture/icons/
+- **Azure**: https://learn.microsoft.com/en-us/azure/architecture/icons/
+
+```powershell
+cd training/vision
+python prepare_assets.py --source "C:/caminho/para/pasta-extraida-do-pacote"
+# imprime quantos ícones foram encontrados por classe — repita uma vez por pacote (AWS, Azure)
+
+python generate_dataset.py && python train.py   # regenera o dataset e retreina usando os ícones reais
+```
+
+Resultados reais desse processo (antes/depois de usar ícones da AWS) e a explicação de por que o
+dataset é gerado assim em vez de anotado manualmente estão na seção "Usando ícones reais" mais
+abaixo, dentro de "Modelo Treinado Visão".
 
 ---
 
@@ -379,7 +482,7 @@ ollama create stride-qwen2.5-3b -f Modelfile
 
 1. Tenha o Ollama rodando (`ollama serve`) e o modelo `stride-qwen2.5-3b` registrado (ver seção "Download do Modelo" acima). Confirme com `ollama list`.
 2. Abra [http://localhost:5000](http://localhost:5000) — o seletor **Provedor** consulta `GET /providers` automaticamente ao carregar a página.
-3. Escolha a opção **"Modelo Treinado Stride - Ollama (Local)"** no dropdown. Se estiver offline (modelo não registrado no Ollama), a opção aparece com "(offline)" no nome e pode ser selecionada — a interface exibe o link de download do GGUF e os comandos para registrar no Ollama.
+3. Escolha a opção **"Ollama Local - Fine Tuning (Sem Visão)"** no dropdown. Se estiver offline (modelo não registrado no Ollama), a opção aparece com "(offline)" no nome e pode ser selecionada — a interface exibe o link de download do GGUF e os comandos para registrar no Ollama.
 4. Com essa opção selecionada, os campos **URL do servidor** e **Modelo** continuam visíveis — eles configuram o modelo usado só para a etapa de **visão** (identificar os componentes na imagem, ex.: `gemma3:4b`); a etapa de análise STRIDE sempre usa `stride-qwen2.5-3b` fixo, independente do que estiver nesses campos. Um aviso abaixo do formulário explica isso, e mostra instruções de como habilitar (`ollama serve` + registrar o modelo) se estiver offline, com um botão "Verificar novamente".
 5. Faça upload do diagrama e analise. No resultado, a linha de informações mostra os dois modelos usados: `Provedor: ollama · Modelo (visão): gemma3:4b · Modelo (STRIDE): stride-qwen2.5-3b`.
 
@@ -387,6 +490,150 @@ ollama create stride-qwen2.5-3b -f Modelfile
 > (`main.py`) traduz isso para `provider=ollama` + `use_stride_model=True` antes de rodar o
 > pipeline — `stride-trained` não é um provider de LLM de verdade, é só uma opção de interface
 > que combina "visão via Ollama" com "STRIDE via modelo treinado" em uma única escolha.
+
+---
+
+## Modelo Treinado Visão (Detecção Local de Componentes)
+
+Além do modelo STRIDE acima (texto), o projeto inclui um **detector de objetos treinado do zero**
+para a etapa de **identificação de componentes na imagem** — é exatamente o que o edital do
+hackathon pede: "Construir ou buscar um Dataset contendo imagens de Arquitetura de Software",
+"Anotar o Dataset para treinar o modelo supervisionado" e "Treinar o modelo". Sem esse modelo, a
+identificação de componentes depende inteiramente de uma VLM de terceiros (GPT-4o/Ollama/LM Studio).
+
+### Escopo: só a etapa de visão, não STRIDE nem relatório
+
+O modelo é um detector de objetos (**YOLOv8n**, via [ultralytics](https://github.com/ultralytics/ultralytics))
+que recebe a imagem e retorna caixas delimitadoras + classe de cada componente. Ele **substitui**
+`analyze_image_node` + `extract_components_node` numa única etapa (a detecção já retorna
+componentes estruturados, não precisa de um segundo passo de LLM para extrair JSON de texto
+livre) — ver `analyze_image_local_node` em `agents/nodes.py`. Ele **não** substitui a etapa STRIDE
+nem a de relatório (que continuam usando um LLM de texto).
+
+### Dataset 100% sintético — sem depender de ícones de terceiros
+
+Diferente de tentar reunir e anotar manualmente um dataset de diagramas reais (trabalho manual
+significativo e problemas de licença se usasse os ícones oficiais AWS/Azure/GCP), o dataset é
+**gerado programaticamente**: `training/vision/shapes.py` desenha um ícone por classe (retângulo
+arredondado, cilindro, nuvem, boneco de palito, escudo, pasta, etc.) usando só primitivas do PIL,
+em dois estilos — **"icon"** (bloco colorido preenchido, no estilo de diagramas de nuvem) e
+**"generic"** (contorno com leve tremor, simulando diagrama hand-drawn). Como a posição de cada
+ícone é escolhida pelo próprio gerador, a bounding box de cada componente é conhecida exatamente
+— **zero anotação manual**.
+
+`training/vision/generate_dataset.py` compõe diagramas completos (4 a 10 componentes por imagem,
+layout em grid com jitter, setas de conexão decorativas, rótulo de texto por componente) e grava
+tudo em formato YOLO (`training/vision/data/images|labels/{train,val}/` + `dataset.yaml`).
+
+### Classes (vocabulário de `agents/nodes.py`)
+
+`user, web_server, api_gateway, load_balancer, application_server, database, cache,
+message_queue, authentication_service, cdn, firewall, storage, microservice, container, function,
+network, external_service, monitoring, dns, vpn` (20 classes).
+
+### Onde ele está no projeto
+
+| Arquivo/Pasta | O que é |
+|---|---|
+| `training/vision/shapes.py` | Ícones procedurais por classe (2 estilos) — sem depender de ícones de terceiros. |
+| `training/vision/generate_dataset.py` | Gera o dataset sintético anotado em formato YOLO. |
+| `training/vision/train.py` | Treina o YOLOv8n (`ultralytics`) sobre o dataset gerado. |
+| `training/vision/evaluate.py` | Roda o modelo treinado sobre imagens reais de teste (`training/vision/samples/`). |
+| `training/vision/requirements.txt` | Dependências do treino (`ultralytics`, `pillow`, `pyyaml`). |
+| `training/vision/prepare_assets.py` | Organiza ícones oficiais AWS/Azure/GCP (baixados manualmente pelo usuário) nas pastas `assets/icons/<classe>/` — ver seção "Usando ícones reais" abaixo. |
+| `training/vision/output/stride-vision-yolov8n.pt` | Modelo final treinado (~6MB — pequeno o bastante para ir direto no repositório, ao contrário do GGUF de 3.3GB do modelo STRIDE). |
+| `agents/vision_local.py` | Carrega o modelo treinado e roda a inferência dentro do processo Flask (import de `ultralytics` fica dentro da função, só é pago por quem usa esta opção). |
+| `agents/nodes.py` (`analyze_image_local_node`) | Nó combinado que substitui `analyze_image_node` + `extract_components_node` quando esta opção é usada. |
+
+### Como treinar (para reproduzir)
+
+```powershell
+cd training/vision
+
+# 0. Instalar dependências (pode ser o Python global da máquina, como no
+#    treino do modelo STRIDE — precisa de torch; GPU acelera bastante mas
+#    roda em CPU também para o YOLOv8n)
+pip install -r requirements.txt
+
+# 1. Gerar o dataset sintético (rápido — não usa LLM nem GPU, só PIL)
+python generate_dataset.py
+# → gera data/images|labels/{train,val}/ e data/dataset.yaml
+
+# 2. Treinar
+python train.py
+# → salva output/stride-vision-yolov8n.pt
+
+# 3. Avaliar qualitativamente sobre imagens reais
+#    Exporte as 2 arquiteturas de avaliação do PDF do hackathon como PNG
+#    e salve em training/vision/samples/, depois:
+python evaluate.py
+# → detecções anotadas em training/vision/samples_output/
+```
+
+### Como usar na interface
+
+Precisa de `ultralytics` instalado no **mesmo ambiente do app Flask** (diferente do modelo
+STRIDE, que roda via Ollama fora do processo Python — um modelo de visão custom só roda dentro do
+processo que faz a inferência):
+
+```powershell
+pip install ultralytics
+```
+
+Depois, escolha **"Ollama Local - Fine Tuning (Com Visão)"** no seletor de Provedor — a
+interface mostra se o peso do modelo já está em disco e se o `stride-qwen2.5-3b` está registrado
+no Ollama, com o comando de treino caso falte algo.
+
+### Limitações conhecidas
+
+- Dataset ainda majoritariamente sintético (posições, layout e composição sempre gerados) — mesmo
+  usando ícones reais da AWS (ver "Usando ícones reais" abaixo), a generalização para diagramas
+  reais não é perfeita. As 2 arquiteturas de avaliação do PDF do hackathon servem de teste
+  qualitativo, não de validação estatística.
+  > **Testado nas 2 arquiteturas do PDF (após integrar ícones reais da AWS via
+  > `prepare_assets.py`):** a **localização** dos componentes é forte (a maioria das detecções sai
+  > com >90% de confiança, caixa bem ajustada ao ícone). A **classificação** melhorou bastante em
+  > relação à versão só com ícones procedurais (ex.: os 3 "Application Load Balancer" do diagrama
+  > AWS agora saem corretos), mas ainda erra em vários casos — parte por confusão real entre
+  > classes visualmente parecidas (RDS/ElastiCache classificados como `cdn`; API Gateway e
+  > "Developer portal" trocados entre si no diagrama Azure) e parte porque vários ícones do
+  > diagrama AWS (CloudTrail, AWS Backup, KMS, SES) simplesmente não têm correspondência em
+  > nenhuma das 20 classes do vocabulário — não há rótulo "certo" possível para eles. Dá pra
+  > melhorar mais com mais épocas, dataset maior e o pacote de ícones do Azure (não usado nesta
+  > rodada), mas o MVP foi considerado suficiente para o escopo do hackathon (dataset construído,
+  > anotado e modelo supervisionado treinado para identificar componentes).
+- Só detecta **componentes** — não infere conexões, fluxos de dados nem limites de confiança
+  (por isso `trust_boundaries`/`data_flows` ficam vazios quando esta opção é usada). É exatamente
+  o escopo pedido pelo edital para a parte de visão; fluxos de dados continuam fora do MVP.
+
+### Usando ícones reais (opcional — melhora a classificação em diagramas com ícones oficiais)
+
+`shapes.render_icon()` já usa um PNG real de `training/vision/assets/icons/<classe>/` no lugar do
+desenho procedural, se existir, com fallback automático. `training/vision/prepare_assets.py`
+automatiza organizar pacotes de ícones oficiais baixados manualmente nessas pastas:
+
+```powershell
+cd training/vision
+
+# 1. Baixe manualmente e extraia os pacotes oficiais (gratuitos para uso em
+#    diagramas de arquitetura):
+#    AWS:   https://aws.amazon.com/architecture/icons/
+#    Azure: https://learn.microsoft.com/en-us/azure/architecture/icons/
+
+# 2. Rode uma vez por pacote extraído — organiza os ícones certos nas pastas
+#    de classe via busca por palavra-chave no nome do arquivo
+python prepare_assets.py --source "C:/caminho/para/Asset-Package_AWS"
+python prepare_assets.py --source "C:/caminho/para/Azure_Public_Service_Icons"
+# imprime, por classe, quantos ícones foram encontrados — classes sem ícone
+# continuam usando o desenho procedural (fallback automático)
+
+# 3. Se o pacote só tiver SVG (comum no Azure), instale o conversor opcional:
+pip install cairosvg
+
+# 4. Regenere o dataset e retreine
+python generate_dataset.py
+python train.py
+```
 
 ---
 
