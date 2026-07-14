@@ -658,6 +658,22 @@ Na página de resultado (`/results/<run_id>`), aba "Exportar", a interface tem *
 > e CSV (`GET /download/<run_id>/csv`) continuam existindo no backend por compatibilidade, mas
 > não têm mais botão na interface — foram substituídas pela exportação em PDF.
 
+### Diagrama enviado no relatório
+
+O diagrama de arquitetura enviado pelo usuário aparece embutido no relatório (deixa a saída mais
+profissional, com o contexto visual junto do texto) em dois lugares:
+
+- Aba **"Visão Geral"** — card "Diagrama Analisado" no topo da página de resultado.
+- Aba **"Relatório"** — a mesma imagem aparece antes do texto, e por estar dentro de `#tab-report`
+  (renderizada server-side via Jinja, não via JS) ela é incluída automaticamente na exportação em
+  PDF também.
+
+A imagem é guardada em `state["image_base64"]` (já existia, usado para a etapa de visão) +
+`state["image_media_type"]` (novo, detectado pela extensão do arquivo via `_get_image_media_type`
+em `agents/nodes.py`) — os dois persistem no resultado salvo em memória (`_store[run_id]`) e viram
+um `data:<media_type>;base64,...` direto no `<img src="...">`, sem precisar salvar a imagem em
+disco nem expor uma rota nova.
+
 ---
 
 ## App Alternativo (backend/ + frontend/)

@@ -76,6 +76,16 @@
 
   {# ── Aba 1: Visão Geral ── #}
   <div class="tab-pane fade show active" id="tab-overview">
+    {% if state.get('image_base64') %}
+    <div class="card mb-4">
+      <div class="card-header fw-semibold">Diagrama Analisado</div>
+      <div class="card-body text-center">
+        <img src="data:{{ state.get('image_media_type', 'image/png') }};base64,{{ state.image_base64 }}"
+             alt="Diagrama de arquitetura enviado" class="img-fluid rounded border border-secondary" style="max-height:480px">
+      </div>
+    </div>
+    {% endif %}
+
     <div class="row g-4 mb-4">
 
       <div class="col-md-6">
@@ -213,8 +223,18 @@
   {# ── Aba 3: Relatório ── #}
   <div class="tab-pane fade" id="tab-report">
     <div class="card">
-      <div class="card-body px-4" id="report-html">
-        <p class="text-muted">Carregando relatório...</p>
+      <div class="card-body px-4">
+        {% if state.get('image_base64') %}
+        <div class="text-center mb-4">
+          <img src="data:{{ state.get('image_media_type', 'image/png') }};base64,{{ state.image_base64 }}"
+               alt="Diagrama de arquitetura analisado" class="img-fluid rounded border border-secondary" style="max-height:500px">
+          <p class="text-muted small mt-2 mb-0">Diagrama de arquitetura analisado</p>
+        </div>
+        <hr class="my-4">
+        {% endif %}
+        <div id="report-html">
+          <p class="text-muted">Carregando relatório...</p>
+        </div>
       </div>
     </div>
   </div>
