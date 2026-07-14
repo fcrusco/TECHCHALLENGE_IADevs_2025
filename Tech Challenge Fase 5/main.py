@@ -236,6 +236,7 @@ def analyze():
             tmp_path = tmp.name
 
         from agents.nodes import (
+            _get_image_media_type,
             analyze_image_local_node,
             analyze_image_node,
             analyze_stride_node,
@@ -247,6 +248,7 @@ def analyze():
         state: dict = {
             "image_path": tmp_path,
             "image_base64": image_b64,
+            "image_media_type": _get_image_media_type(tmp_path),
             "provider": provider,
             "override_url": local_url,
             "override_model": local_model,
